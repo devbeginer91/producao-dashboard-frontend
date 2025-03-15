@@ -1,0 +1,736 @@
+/* Geral */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+}
+
+/* Cabeçalho */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.logo {
+  height: 100px;
+  margin-right: 15px;
+  object-fit: contain;
+}
+
+h1 {
+  font-size: 32px;
+  color: #2c3e50;
+  font-weight: 700;
+  margin: 0;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.btn-desenho {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-desenho:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Mensagens */
+.erro {
+  color: #e74c3c;
+  margin-bottom: 20px;
+  font-weight: 500;
+  text-align: center;
+  padding: 10px;
+  background-color: rgba(231, 76, 60, 0.1);
+  border-radius: 6px;
+}
+
+.sucesso {
+  color: #27ae60;
+  margin-bottom: 20px;
+  font-weight: 500;
+  text-align: center;
+  padding: 10px;
+  background-color: rgba(46, 204, 113, 0.1);
+  border-radius: 6px;
+}
+
+/* Botão Adicionar Pedido Novo */
+.btn-adicionar-pedido {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 20px;
+  display: block;
+  width: fit-content;
+}
+
+.btn-adicionar-pedido:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #27ae60, #219653);
+}
+
+/* Formulário */
+.formulario {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+  transition: opacity 0.3s ease, max-height 0.3s ease;
+}
+
+.formulario.hidden {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.formulario div {
+  display: flex;
+  flex-direction: column;
+}
+
+.formulario label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #34495e;
+}
+
+.formulario input,
+.formulario select {
+  padding: 10px;
+  border: 1px solid #dfe4ea;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.formulario input:focus,
+.formulario select:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+  outline: none;
+}
+
+/* Container para os botões do formulário */
+.form-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Estilo para o botão Adicionar Item */
+.btn-adicionar-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Botão Submit (Adicionar Pedido ou Salvar) */
+.btn-submit {
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Botão Cancelar */
+.btn-cancelar {
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-adicionar-item:hover,
+.btn-submit:hover,
+.btn-cancelar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Busca e Exportação */
+.busca {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.busca-container {
+  display: flex;
+  width: 100%;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.busca input {
+  flex-grow: 1;
+  padding: 12px;
+  border: 1px solid #dfe4ea;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 200px;
+}
+
+.busca input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+  outline: none;
+}
+
+.btn-exportar {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-exportar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.lista-suspensa {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border: 1px solid #dfe4ea;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  z-index: 1000;
+}
+
+.lista-suspensa li {
+  padding: 10px 15px;
+  font-size: 14px;
+  color: #34495e;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.lista-suspensa li:hover {
+  background-color: #f1f3f5;
+}
+
+/* Tabelas */
+h2 {
+  font-size: 24px;
+  color: #2c3e50;
+  margin-top: 40px;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+
+.tabela th,
+.tabela td {
+  padding: 12px 15px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabela th {
+  background: linear-gradient(135deg, #34495e, #2c3e50);
+  color: white;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.tabela td {
+  border-bottom: 1px solid #eef1f5;
+}
+
+.tabela.novos {
+  background-color: #ffffff;
+}
+
+.atrasado {
+  background-color: #ff9999 !important;
+}
+
+.atrasado td {
+  background-color: #ff9999 !important;
+}
+
+.atrasado-icon {
+  color: #e74c3c;
+  margin-left: 5px;
+  font-size: 14px;
+}
+
+.tabela td.data-hora {
+  display: flex;
+  flex-direction: column;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.tempo-pausado {
+  background-color: #f39c12 !important;
+  color: white;
+}
+
+/* Botões nas tabelas */
+.tabela td .btn-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  padding: 5px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.btn-mover,
+.btn-concluir,
+.btn-editar,
+.btn-excluir,
+.btn-observacao,
+.btn-pausar,
+.btn-retomar,
+.btn-expandir {
+  padding: 5px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-width: 50px;
+  max-width: 60px;
+  text-align: center;
+}
+
+.btn-mover {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+}
+
+.btn-concluir {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+}
+
+.btn-editar {
+  background: linear-gradient(135deg, #1abc9c, #16a085);
+  color: white;
+}
+
+.btn-excluir {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+}
+
+.btn-observacao {
+  background: linear-gradient(135deg, #e67e22, #d35400);
+  color: white;
+}
+
+.btn-pausar {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+}
+
+.btn-retomar {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+}
+
+.btn-expandir {
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  color: white;
+}
+
+/* Botão Pausar/Retomar dentro da coluna Tempo */
+.tabela td button.btn-pausar,
+.tabela td button.btn-retomar {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  padding: 4px 6px;
+  min-width: 40px;
+  max-width: 50px;
+}
+
+.btn-mover:hover,
+.btn-concluir:hover,
+.btn-editar:hover,
+.btn-excluir:hover,
+.btn-observacao:hover,
+.btn-pausar:hover,
+.btn-retomar:hover,
+.btn-expandir:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Modal (usado por ModalObservacao e ModalPesoVolume) */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  max-width: 90%;
+}
+
+.modal-content h2,
+.modal-content h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 20px;
+}
+
+.modal-content textarea,
+.modal-content input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #dfe4ea;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-content textarea:focus,
+.modal-content input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+  outline: none;
+}
+
+.modal-content textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.modal-content label {
+  font-weight: 600;
+  color: #34495e;
+  margin-bottom: 6px;
+}
+
+.modal-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn-enviar {
+  background: linear-gradient(135deg, #27ae60, #219653);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-cancelar {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-enviar:hover,
+.btn-cancelar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Tabela de Itens (usada no PedidoTable.js) */
+.tabela-itens {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.tabela-itens th,
+.tabela-itens td {
+  padding: 8px;
+  border: 1px solid #eef1f5;
+}
+
+.tabela-itens th {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  color: white;
+}
+
+/* Estilo para o grupo de itens no formulário */
+.item-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  color: #34495e;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .logo {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .btn-desenho,
+  .btn-adicionar-pedido {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .formulario {
+    grid-template-columns: 1fr;
+  }
+
+  .busca-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .busca input {
+    width: 100%;
+  }
+
+  .btn-exportar {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .tabela th,
+  .tabela td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .btn-mover,
+  .btn-concluir,
+  .btn-editar,
+  .btn-excluir,
+  .btn-observacao,
+  .btn-pausar,
+  .btn-retomar,
+  .btn-expandir {
+    padding: 4px 6px;
+    font-size: 10px;
+    min-width: 40px;
+    max-width: 50px;
+  }
+
+  .modal-content {
+    width: 90%;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 20px;
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+
+  .tabela th,
+  .tabela td {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .btn-mover,
+  .btn-concluir,
+  .btn-editar,
+  .btn-excluir,
+  .btn-observacao,
+  .btn-pausar,
+  .btn-retomar,
+  .btn-expandir {
+    padding: 3px 5px;
+    font-size: 9px;
+    min-width: 35px;
+    max-width: 45px;
+  }
+}
+
+/* Estilo para a lista de itens no ModalPesoVolume */
+.itens-list {
+  margin: 10px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #dfe4ea;
+  border-radius: 6px;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eef1f5;
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #34495e;
+}
+
+.item-info span {
+  display: block;
+}
+
+.quantidade-entregue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quantidade-entregue label {
+  font-weight: 600;
+  color: #34495e;
+  font-size: 14px;
+}
+
+.quantidade-entregue input {
+  width: 80px;
+  padding: 6px;
+  border: 1px solid #dfe4ea;
+  border-radius: 4px;
+  font-size: 14px;
+}
