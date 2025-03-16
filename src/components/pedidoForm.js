@@ -1,5 +1,5 @@
 import React from 'react';
-import axios from 'axios';
+import api from './api'; // Importando a instância centralizada api
 import { formatDateToLocalISO } from '../App'; // Importando a função de App.js
 
 const PedidoForm = ({
@@ -60,13 +60,17 @@ const PedidoForm = ({
           resetForm();
           return;
         }
-        resposta = await axios.put(`http://localhost:5000/pedidos/${pedidoParaEditar.id}`, pedidoParaEnviar);
-        await axios.post('http://localhost:5000/enviar-email', { pedido: resposta.data, observacao: '' });
+        // Substituí axios.put por api.put e removi localhost:5000
+        resposta = await api.put(`/pedidos/${pedidoParaEditar.id}`, pedidoParaEnviar);
+        // Substituí axios.post por api.post e removi localhost:5000
+        await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         atualizarListas(resposta.data);
         setMensagem('Pedido atualizado e e-mail enviado!');
       } else {
-        resposta = await axios.post('http://localhost:5000/pedidos', pedidoParaEnviar);
-        await axios.post('http://localhost:5000/enviar-email', { pedido: resposta.data, observacao: '' });
+        // Substituí axios.post por api.post e removi localhost:5000
+        resposta = await api.post('/pedidos', pedidoParaEnviar);
+        // Substituí axios.post por api.post e removi localhost:5000
+        await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         setPedidosAndamento((prev) => [...prev, resposta.data]);
         setMensagem('Pedido adicionado e e-mail enviado!');
       }

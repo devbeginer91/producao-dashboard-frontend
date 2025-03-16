@@ -1,5 +1,5 @@
 import React from 'react';
-import axios from 'axios';
+import api from './api'; // Importando a instância centralizada api
 
 const ModalObservacao = ({ pedidoSelecionado, observacao, setObservacao, setMostrarModal, setMensagem }) => {
   const enviarObservacao = async () => {
@@ -12,7 +12,8 @@ const ModalObservacao = ({ pedidoSelecionado, observacao, setObservacao, setMost
       return;
     }
     try {
-      await axios.post('http://localhost:5000/enviar-email', { pedido: pedidoSelecionado, observacao });
+      // Substituí axios.post por api.post e removi localhost:5000
+      await api.post('/enviar-email', { pedido: pedidoSelecionado, observacao });
       setMensagem('Observação enviada por e-mail!');
       setMostrarModal(false);
     } catch (error) {

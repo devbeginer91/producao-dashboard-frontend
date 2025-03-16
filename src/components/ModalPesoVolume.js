@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from './api'; // Importando a instância centralizada api
 
 const ModalPesoVolume = ({
   pedidoParaConcluir,
@@ -49,7 +49,7 @@ const ModalPesoVolume = ({
 
     const novasQuantidadesEntregues = pedidoParaConcluir.itens.map((item, index) => {
       const quantidadeAdicionadaInput = quantidadesParaAdicionar[index];
-      const quantidadeAdicionada = quantidadeAdicionadaInput === '' 
+      const quantidadeAdicionada = quantidadeAdicionadaInput === ''
         ? (item.quantidadePedido || 0) - (item.quantidadeEntregue || 0)
         : parseInt(quantidadeAdicionadaInput, 10) || 0;
       return (item.quantidadeEntregue || 0) + quantidadeAdicionada;
@@ -85,8 +85,10 @@ const ModalPesoVolume = ({
 
         console.log('Enviando pedido concluído:', pedidoConcluido);
 
-        const resposta = await axios.put(`http://localhost:5000/pedidos/${pedidoParaConcluir.id}`, pedidoConcluido);
-        await axios.post('http://localhost:5000/enviar-email', { pedido: resposta.data, observacao: '' });
+        // Substituí axios.put por api.put e removi localhost:5000
+        const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoConcluido);
+        // Substituí axios.post por api.post e removi localhost:5000
+        await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         setPedidos((prev) => prev.filter((p) => p.id !== pedidoConcluido.id));
         setPedidosConcluidos((prev) => [...prev, resposta.data]);
         setMensagem('Pedido concluído e e-mail enviado!');
@@ -101,8 +103,10 @@ const ModalPesoVolume = ({
 
         console.log('Enviando pedido atualizado:', pedidoAtualizado);
 
-        const resposta = await axios.put(`http://localhost:5000/pedidos/${pedidoParaConcluir.id}`, pedidoAtualizado);
-        await axios.post('http://localhost:5000/enviar-email', { pedido: resposta.data, observacao: '' });
+        // Substituí axios.put por api.put e removi localhost:5000
+        const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoAtualizado);
+        // Substituí axios.post por api.post e removi localhost:5000
+        await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         setPedidos((prev) => prev.map((p) => (p.id === pedidoAtualizado.id ? resposta.data : p)));
         setMensagem('Quantidades entregues atualizadas e e-mail enviado!');
       }

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
 import debounce from 'lodash/debounce';
 import './App.css';
 import jsPDF from 'jspdf';
@@ -9,8 +8,7 @@ import PedidoTable from './components/PedidoTable';
 import ModalObservacao from './components/ModalObservacao';
 import ModalPesoVolume from './components/ModalPesoVolume';
 import Busca from './components/Busca';
-
-axios.defaults.baseURL = 'https://producao-dashboard-backend.onrender.com';
+import api from './api';
 
 // Função para formatar datas no formato YYYY-MM-DD HH:MM:SS com fuso horário America/Sao_Paulo (UTC-3)
 export const formatDateToLocalISO = (date, context = 'unknown') => {
@@ -90,7 +88,7 @@ function App() {
     if (isFetching.current) return;
     isFetching.current = true;
     try {
-      const response = dados ? { data: dados } : await axios.get('http://localhost:5000/pedidos');
+      const response = dados ? { data: dados } : await api.get('/pedidos'); // Substituí axios.get por api.get e removi localhost:5000
       const pedidosAtualizados = response.data.map((pedido) => {
         const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
         const dataConclusaoValida = pedido.dataConclusao
@@ -105,7 +103,7 @@ function App() {
           if (pedido.pausado) {
             tempoFinal = pedido.tempoPausado || 0; // Mantém o tempoPausado ao pausar
           } else if (pedido.dataPausada && !pedido.pausado) {
-            // Após retomada, usa tempoPausado e calcula apenas o tempo desde dataPausada
+            // Após retomada, usa dataPausada como ponto de referência
             const tempoAcumulado = pedido.tempoPausado || 0;
             const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
             tempoFinal = Math.round(tempoAcumulado + tempoDesdeRetomada);
@@ -249,9 +247,9 @@ function App() {
     const pedido = [...pedidos, ...pedidosAndamento, ...pedidosConcluidos].find((p) => p.id === id);
     if (pedido) {
       const novoInicio = formatDateToLocalISO(new Date(), 'moverParaAndamento');
-      const pedidoAtualizado = { 
-        ...pedido, 
-        status: 'andamento', 
+      const pedidoAtualizado = {
+        ...pedido,
+        status: 'andamento',
         inicio: novoInicio,
         tempo: 0,
         tempoPausado: 0,
@@ -261,9 +259,11 @@ function App() {
       };
       try {
         console.log('Enviando pedido atualizado para andamento:', pedidoAtualizado);
-        const resposta = await axios.put(`http://localhost:5000/pedidos/${id}`, pedidoAtualizado);
+        // Substituí axios.put por api.put e removi localhost:5000
+        const resposta = await api.put(`/pedidos/${id}`, pedidoAtualizado);
+        // Substituí axios.post por api.post e removi localhost:5000
+        await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         const pedidoMovido = { ...resposta.data, tempo: 0 };
-        await axios.post('http://localhost:5000/enviar-email', { pedido: pedidoMovido, observacao: '' });
         setPedidosAndamento((prev) => prev.filter((p) => p.id !== id));
         setPedidos((prev) => [...prev.filter((p) => p.id !== id), pedidoMovido]);
         setPedidosConcluidos((prev) => prev.filter((p) => p.id !== id));
@@ -285,7 +285,8 @@ function App() {
       const pedidoPausado = { ...pedido, pausado: 1, tempoPausado: tempoAtual, dataPausada, dataInicioPausa, tempo: tempoAtual };
       try {
         console.log('Pausando pedido:', pedidoPausado);
-        await axios.put(`http://localhost:5000/pedidos/${id}`, pedidoPausado);
+        // Substituí axios.put por api.put e removi localhost:5000
+        await api.put(`/pedidos/${id}`, pedidoPausado);
         setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoPausado : p)));
         setMensagem('Pedido pausado com sucesso.');
         carregarPedidos();
@@ -304,7 +305,7 @@ function App() {
       console.log(`Retomando pedido ${id}: tempoPausado = ${tempoPausadoAnterior}, tempo atual antes = ${pedido.tempo}`);
       const pedidoRetomado = { ...pedido, pausado: 0, dataPausada: dataRetomada, dataInicioPausa: null, tempo: tempoPausadoAnterior };
       try {
-        const resposta = await axios.put(`http://localhost:5000/pedidos/${id}`, pedidoRetomado);
+        const resposta = await api.put(`/pedidos/${id}`, pedidoRetomado); // Substituí axios.put por api.put e removi localhost:5000
         setPedidos((prev) =>
           prev.map((p) =>
             p.id === id ? { ...resposta.data, tempo: tempoPausadoAnterior } : p

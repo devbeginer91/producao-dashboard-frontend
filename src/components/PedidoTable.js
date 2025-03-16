@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from './api';
 
 const PedidoTable = ({
   pedidos,
@@ -43,7 +43,7 @@ const PedidoTable = ({
   const excluirPedido = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este pedido?')) {
       try {
-        await axios.delete(`http://localhost:5000/pedidos/${id}`);
+        await api.delete(`/pedidos/${id}`); // Substituído axios por api e removido localhost:5000
         setPedidos((prev) => prev.filter((p) => p.id !== id));
         setPedidosAndamento((prev) => prev.filter((p) => p.id !== id));
         setPedidosConcluidos((prev) => prev.filter((p) => p.id !== id));
