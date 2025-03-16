@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from './api'; // Importando a instância centralizada api
+import api from '../api'; // Importando a instância centralizada api
 
 const ModalPesoVolume = ({
   pedidoParaConcluir,

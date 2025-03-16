@@ -1,5 +1,5 @@
 import React from 'react';
-import api from './api'; // Importando a instância centralizada api
+import api from '../api'; // Importando a instância centralizada api
 
 const ModalObservacao = ({ pedidoSelecionado, observacao, setObservacao, setMostrarModal, setMensagem }) => {
   const enviarObservacao = async () => {

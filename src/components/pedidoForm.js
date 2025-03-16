@@ -1,5 +1,5 @@
 import React from 'react';
-import api from './api'; // Importando a instância centralizada api
+import api from '../api'; // Importando a instância centralizada api
 import { formatDateToLocalISO } from '../App'; // Importando a função de App.js
 
 const PedidoForm = ({
