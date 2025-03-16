@@ -2,7 +2,7 @@
   "name": "producao-dashboard",
   "version": "1.0.0",
   "main": "index.js",
-  "proxy": "http://localhost:5000",
+  "proxy": "https://producao-dashboard-backend.onrender.com",
   "scripts": {
     "start": "set REACT_APP_CSP_DISABLE=true && react-scripts start",
     "build": "react-scripts build",
