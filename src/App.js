@@ -8,7 +8,9 @@ import PedidoTable from './components/PedidoTable';
 import ModalObservacao from './components/ModalObservacao';
 import ModalPesoVolume from './components/ModalPesoVolume';
 import Busca from './components/Busca';
+import Login from './components/Login';
 import api from './api';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 // Função para formatar datas no formato YYYY-MM-DD HH:MM:SS com fuso horário America/Sao_Paulo (UTC-3)
 export const formatDateToLocalISO = (date, context = 'unknown') => {
@@ -37,6 +39,9 @@ const formatarTempo = (tempo) => {
 };
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    localStorage.getItem('isAuthenticated') === 'true'
+  );
   const [pedidos, setPedidos] = useState([]);
   const [pedidosAndamento, setPedidosAndamento] = useState([]);
   const [pedidosConcluidos, setPedidosConcluidos] = useState([]);
@@ -88,7 +93,7 @@ function App() {
     if (isFetching.current) return;
     isFetching.current = true;
     try {
-      const response = dados ? { data: dados } : await api.get('/pedidos'); // Substituí axios.get por api.get e removi localhost:5000
+      const response = dados ? { data: dados } : await api.get('/pedidos');
       const pedidosAtualizados = response.data.map((pedido) => {
         const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
         const dataConclusaoValida = pedido.dataConclusao
@@ -142,11 +147,13 @@ function App() {
   }, 1000), []);
 
   useEffect(() => {
-    carregarPedidos();
+    if (isAuthenticated) {
+      carregarPedidos();
+    }
     return () => {
       carregarPedidos.cancel();
     };
-  }, [carregarPedidos]);
+  }, [carregarPedidos, isAuthenticated]);
 
   useEffect(() => {
     const intervalo = setInterval(() => {
@@ -259,9 +266,7 @@ function App() {
       };
       try {
         console.log('Enviando pedido atualizado para andamento:', pedidoAtualizado);
-        // Substituí axios.put por api.put e removi localhost:5000
         const resposta = await api.put(`/pedidos/${id}`, pedidoAtualizado);
-        // Substituí axios.post por api.post e removi localhost:5000
         await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         const pedidoMovido = { ...resposta.data, tempo: 0 };
         setPedidosAndamento((prev) => prev.filter((p) => p.id !== id));
@@ -285,7 +290,6 @@ function App() {
       const pedidoPausado = { ...pedido, pausado: 1, tempoPausado: tempoAtual, dataPausada, dataInicioPausa, tempo: tempoAtual };
       try {
         console.log('Pausando pedido:', pedidoPausado);
-        // Substituí axios.put por api.put e removi localhost:5000
         await api.put(`/pedidos/${id}`, pedidoPausado);
         setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoPausado : p)));
         setMensagem('Pedido pausado com sucesso.');
@@ -305,7 +309,7 @@ function App() {
       console.log(`Retomando pedido ${id}: tempoPausado = ${tempoPausadoAnterior}, tempo atual antes = ${pedido.tempo}`);
       const pedidoRetomado = { ...pedido, pausado: 0, dataPausada: dataRetomada, dataInicioPausa: null, tempo: tempoPausadoAnterior };
       try {
-        const resposta = await api.put(`/pedidos/${id}`, pedidoRetomado); // Substituí axios.put por api.put e removi localhost:5000
+        const resposta = await api.put(`/pedidos/${id}`, pedidoRetomado);
         setPedidos((prev) =>
           prev.map((p) =>
             p.id === id ? { ...resposta.data, tempo: tempoPausadoAnterior } : p
@@ -321,137 +325,160 @@ function App() {
     }
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isAuthenticated');
+  };
+
   return (
-    <div className="container">
-      <div className="header">
-        <img src="/logoNF.jpg" alt="Logo" className="logo" />
-        <h1>Controle de Produção</h1>
-        <button className="btn-desenho" onClick={() => window.open('https://drive.google.com/drive/folders/1vzemVbLeotHD0xirxUPsvNb9qBccQFcd?usp=sharing', '_blank')}>
-          DESENHO
-        </button>
-      </div>
+    <Router>
+      <Routes>
+        <Route path="/login" element={
+          !isAuthenticated ? (
+            <Login setIsAuthenticated={setIsAuthenticated} />
+          ) : (
+            <Navigate to="/" />
+          )
+        } />
+        <Route path="/" element={
+          isAuthenticated ? (
+            <div className="container">
+              <div className="header">
+                <img src="/logoNF.jpg" alt="Logo" className="logo" />
+                <h1>Controle de Produção</h1>
+                <button className="btn-desenho" onClick={() => window.open('https://drive.google.com/drive/folders/1vzemVbLeotHD0xirxUPsvNb9qBccQFcd?usp=sharing', '_blank')}>
+                  DESENHO
+                </button>
+                <button className="btn-logout" onClick={handleLogout}>Sair</button>
+              </div>
 
-      {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
-      {isLoading && <p>Carregando pedidos...</p>}
+              {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
+              {isLoading && <p>Carregando pedidos...</p>}
 
-      <button className="btn-adicionar-pedido" onClick={() => setMostrarFormulario(true)}>Adicionar Pedido Novo</button>
-      {mostrarFormulario && (
-        <PedidoForm
-          novoPedido={novoPedido}
-          setNovoPedido={setNovoPedido}
-          pedidoParaEditar={pedidoParaEditar}
-          setPedidoParaEditar={setPedidoParaEditar}
-          setMostrarFormulario={setMostrarFormulario}
-          setMensagem={setMensagem}
-          carregarPedidos={carregarPedidos}
-          setPedidos={setPedidos}
-          setPedidosAndamento={setPedidosAndamento}
-          setPedidosConcluidos={setPedidosConcluidos}
-          setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-          setPedidoParaConcluir={setPedidoParaConcluir}
-          moverParaAndamento={moverParaAndamento}
-          formatDateToLocalISO={formatDateToLocalISO}
-        />
-      )}
+              <button className="btn-adicionar-pedido" onClick={() => setMostrarFormulario(true)}>Adicionar Pedido Novo</button>
+              {mostrarFormulario && (
+                <PedidoForm
+                  novoPedido={novoPedido}
+                  setNovoPedido={setNovoPedido}
+                  pedidoParaEditar={pedidoParaEditar}
+                  setPedidoParaEditar={setPedidoParaEditar}
+                  setMostrarFormulario={setMostrarFormulario}
+                  setMensagem={setMensagem}
+                  carregarPedidos={carregarPedidos}
+                  setPedidos={setPedidos}
+                  setPedidosAndamento={setPedidosAndamento}
+                  setPedidosConcluidos={setPedidosConcluidos}
+                  setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+                  setPedidoParaConcluir={setPedidoParaConcluir}
+                  moverParaAndamento={moverParaAndamento}
+                  formatDateToLocalISO={formatDateToLocalISO}
+                />
+              )}
 
-      <Busca
-        busca={busca}
-        setBusca={setBusca}
-        carregarPedidos={carregarPedidos}
-        todosPedidos={[...pedidos, ...pedidosAndamento, ...pedidosConcluidos]}
-        exportarPDF={exportarPDF}
-      />
+              <Busca
+                busca={busca}
+                setBusca={setBusca}
+                carregarPedidos={carregarPedidos}
+                todosPedidos={[...pedidos, ...pedidosAndamento, ...pedidosConcluidos]}
+                exportarPDF={exportarPDF}
+              />
 
-      <h2>Pedidos em Andamento</h2>
-      <PedidoTable
-        pedidos={pedidos}
-        tipo="andamento"
-        setPedidos={setPedidos}
-        setPedidosAndamento={setPedidosAndamento}
-        setPedidosConcluidos={setPedidosConcluidos}
-        setMensagem={setMensagem}
-        setPedidoParaEditar={setPedidoParaEditar}
-        setNovoPedido={setNovoPedido}
-        setMostrarFormulario={setMostrarFormulario}
-        setMostrarModal={setMostrarModal}
-        setPedidoSelecionado={setPedidoSelecionado}
-        setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-        setPedidoParaConcluir={setPedidoParaConcluir}
-        busca={busca}
-        carregarPedidos={carregarPedidos}
-        moverParaAndamento={moverParaAndamento}
-        pausarPedido={pausarPedido}
-        retomarPedido={retomarPedido}
-        formatarTempo={formatarTempo}
-      />
+              <h2>Pedidos em Andamento</h2>
+              <PedidoTable
+                pedidos={pedidos}
+                tipo="andamento"
+                setPedidos={setPedidos}
+                setPedidosAndamento={setPedidosAndamento}
+                setPedidosConcluidos={setPedidosConcluidos}
+                setMensagem={setMensagem}
+                setPedidoParaEditar={setPedidoParaEditar}
+                setNovoPedido={setNovoPedido}
+                setMostrarFormulario={setMostrarFormulario}
+                setMostrarModal={setMostrarModal}
+                setPedidoSelecionado={setPedidoSelecionado}
+                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+                setPedidoParaConcluir={setPedidoParaConcluir}
+                busca={busca}
+                carregarPedidos={carregarPedidos}
+                moverParaAndamento={moverParaAndamento}
+                pausarPedido={pausarPedido}
+                retomarPedido={retomarPedido}
+                formatarTempo={formatarTempo}
+              />
 
-      <h2>Pedidos Novos</h2>
-      <PedidoTable
-        pedidos={pedidosAndamento}
-        tipo="novo"
-        setPedidos={setPedidos}
-        setPedidosAndamento={setPedidosAndamento}
-        setPedidosConcluidos={setPedidosConcluidos}
-        setMensagem={setMensagem}
-        setPedidoParaEditar={setPedidoParaEditar}
-        setNovoPedido={setNovoPedido}
-        setMostrarFormulario={setMostrarFormulario}
-        setMostrarModal={setMostrarModal}
-        setPedidoSelecionado={setPedidoSelecionado}
-        setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-        setPedidoParaConcluir={setPedidoParaConcluir}
-        busca={busca}
-        carregarPedidos={carregarPedidos}
-        moverParaAndamento={moverParaAndamento}
-        formatarTempo={formatarTempo}
-      />
+              <h2>Pedidos Novos</h2>
+              <PedidoTable
+                pedidos={pedidosAndamento}
+                tipo="novo"
+                setPedidos={setPedidos}
+                setPedidosAndamento={setPedidosAndamento}
+                setPedidosConcluidos={setPedidosConcluidos}
+                setMensagem={setMensagem}
+                setPedidoParaEditar={setPedidoParaEditar}
+                setNovoPedido={setNovoPedido}
+                setMostrarFormulario={setMostrarFormulario}
+                setMostrarModal={setMostrarModal}
+                setPedidoSelecionado={setPedidoSelecionado}
+                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+                setPedidoParaConcluir={setPedidoParaConcluir}
+                busca={busca}
+                carregarPedidos={carregarPedidos}
+                moverParaAndamento={moverParaAndamento}
+                formatarTempo={formatarTempo}
+              />
 
-      <h2>Pedidos Concluídos</h2>
-      <PedidoTable
-        pedidos={pedidosConcluidos}
-        tipo="concluido"
-        setPedidos={setPedidos}
-        setPedidosAndamento={setPedidosAndamento}
-        setPedidosConcluidos={setPedidosConcluidos}
-        setMensagem={setMensagem}
-        setPedidoParaEditar={setPedidoParaEditar}
-        setNovoPedido={setNovoPedido}
-        setMostrarFormulario={setMostrarFormulario}
-        setMostrarModal={setMostrarModal}
-        setPedidoSelecionado={setPedidoSelecionado}
-        setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-        setPedidoParaConcluir={setPedidoParaConcluir}
-        busca={busca}
-        carregarPedidos={carregarPedidos}
-        formatarTempo={formatarTempo}
-      />
+              <h2>Pedidos Concluídos</h2>
+              <PedidoTable
+                pedidos={pedidosConcluidos}
+                tipo="concluido"
+                setPedidos={setPedidos}
+                setPedidosAndamento={setPedidosAndamento}
+                setPedidosConcluidos={setPedidosConcluidos}
+                setMensagem={setMensagem}
+                setPedidoParaEditar={setPedidoParaEditar}
+                setNovoPedido={setNovoPedido}
+                setMostrarFormulario={setMostrarFormulario}
+                setMostrarModal={setMostrarModal}
+                setPedidoSelecionado={setPedidoSelecionado}
+                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+                setPedidoParaConcluir={setPedidoParaConcluir}
+                busca={busca}
+                carregarPedidos={carregarPedidos}
+                formatarTempo={formatarTempo}
+              />
 
-      {mostrarModal && (
-        <ModalObservacao
-          pedidoSelecionado={pedidoSelecionado}
-          observacao={observacao}
-          setObservacao={setObservacao}
-          setMostrarModal={setMostrarModal}
-          setMensagem={setMensagem}
-        />
-      )}
+              {mostrarModal && (
+                <ModalObservacao
+                  pedidoSelecionado={pedidoSelecionado}
+                  observacao={observacao}
+                  setObservacao={setObservacao}
+                  setMostrarModal={setMostrarModal}
+                  setMensagem={setMensagem}
+                />
+              )}
 
-      {mostrarModalPesoVolume && (
-        <ModalPesoVolume
-          pedidoParaConcluir={pedidoParaConcluir}
-          peso={peso}
-          setPeso={setPeso}
-          volume={volume}
-          setVolume={setVolume}
-          setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-          setPedidoParaConcluir={setPedidoParaConcluir}
-          setPedidos={setPedidos}
-          setPedidosConcluidos={setPedidosConcluidos}
-          setMensagem={setMensagem}
-          carregarPedidos={carregarPedidos}
-        />
-      )}
-    </div>
+              {mostrarModalPesoVolume && (
+                <ModalPesoVolume
+                  pedidoParaConcluir={pedidoParaConcluir}
+                  peso={peso}
+                  setPeso={setPeso}
+                  volume={volume}
+                  setVolume={setVolume}
+                  setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+                  setPedidoParaConcluir={setPedidoParaConcluir}
+                  setPedidos={setPedidos}
+                  setPedidosConcluidos={setPedidosConcluidos}
+                  setMensagem={setMensagem}
+                  carregarPedidos={carregarPedidos}
+                />
+              )}
+            </div>
+          ) : (
+            <Navigate to="/login" />
+          )
+        } />
+      </Routes>
+    </Router>
   );
 }
 
