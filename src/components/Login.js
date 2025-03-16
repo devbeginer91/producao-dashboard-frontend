@@ -10,7 +10,7 @@ const Login = ({ setIsAuthenticated }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (username === 'admin' && password === '123456') {
+    if (username === 'DCA' && password === 'DCAPRODUCAO123') {
       // Simulação de autenticação (você pode adicionar uma requisição ao backend aqui)
       setIsAuthenticated(true);
       localStorage.setItem('isAuthenticated', 'true'); // Persistir login
