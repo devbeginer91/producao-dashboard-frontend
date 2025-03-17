@@ -30,7 +30,16 @@ const PedidoTable = ({
   };
 
   const formatarData = (data) => {
-    return data ? new Date(data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Não informado';
+    if (!data || typeof data !== 'string') {
+      console.warn('Data inválida em formatarData:', data);
+      return 'Não informado';
+    }
+    const parsedDate = new Date(data.includes(' ') ? data : `${data}T00:00:00`);
+    if (isNaN(parsedDate)) {
+      console.warn('Data inválida em formatarData após parse:', data);
+      return 'Não informado';
+    }
+    return parsedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   const formatarDataHora = (data) => {
@@ -40,10 +49,15 @@ const PedidoTable = ({
     return new Date(data).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   };
 
+  const logAndRender = (label, value, fallback = 'Não informado') => {
+    console.log(label, value);
+    return value || fallback;
+  };
+
   const excluirPedido = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este pedido?')) {
       try {
-        await api.delete(`/pedidos/${id}`); // Substituído axios por api e removido localhost:5000
+        await api.delete(`/pedidos/${id}`);
         setPedidos((prev) => prev.filter((p) => p.id !== id));
         setPedidosAndamento((prev) => prev.filter((p) => p.id !== id));
         setPedidosConcluidos((prev) => prev.filter((p) => p.id !== id));
@@ -138,26 +152,26 @@ const PedidoTable = ({
         {filtrarPedidos(pedidos).map((pedido) => (
           <React.Fragment key={pedido.id}>
             <tr className={isPastDue(pedido.previsaoEntrega) ? 'atrasado' : ''}>
-              <td>{pedido.empresa}</td>
-              <td>{pedido.numeroOS}</td>
-              <td>{formatarData(pedido.dataEntrada)}</td>
+              <td>{logAndRender('empresa:', pedido.empresa)}</td>
+              <td>{logAndRender('numeroOS:', pedido.numeroOS)}</td>
+              <td>{logAndRender('dataEntrada:', pedido.dataEntrada, formatarData(pedido.dataEntrada))}</td>
               <td>
-                {formatarData(pedido.previsaoEntrega)}
+                {logAndRender('previsaoEntrega:', pedido.previsaoEntrega, formatarData(pedido.previsaoEntrega))}
                 {isPastDue(pedido.previsaoEntrega) && <span className="atrasado-icon">⚠️</span>}
               </td>
-              <td>{pedido.responsavel}</td>
+              <td>{logAndRender('responsavel:', pedido.responsavel)}</td>
               <td className="data-hora">
                 {tipo === 'concluido' ? (
                   <>
-                    {formatarDataHora(pedido.inicio) || 'Não informado'}<br />
-                    {formatarDataHora(pedido.dataConclusao) || 'Não concluído'}
+                    {logAndRender('inicio:', pedido.inicio, formatarDataHora(pedido.inicio)) || 'Não informado'}<br />
+                    {logAndRender('dataConclusao:', pedido.dataConclusao, formatarDataHora(pedido.dataConclusao)) || 'Não concluído'}
                   </>
                 ) : (
-                  formatarDataHora(pedido.inicio)
+                  logAndRender('inicio:', pedido.inicio, formatarDataHora(pedido.inicio))
                 )}
               </td>
               <td className={tipo === 'andamento' && pedido.pausado ? 'tempo-pausado' : ''}>
-                {formatarTempo(pedido.tempo)} {/* Usando a função passada como prop */}
+                {formatarTempo(pedido.tempo)}
                 {tipo === 'andamento' && (
                   <button
                     className={pedido.pausado ? 'btn-retomar' : 'btn-pausar'}
@@ -203,14 +217,26 @@ const PedidoTable = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {pedido.itens.map((item) => (
-                        <tr key={item.id}>
-                          <td>{item.codigoDesenho}</td>
-                          <td>{item.quantidadePedido}</td>
-                          <td>{item.quantidadeEntregue}</td>
-                          <td>{item.quantidadePedido - item.quantidadeEntregue}</td>
+                      {pedido.itens && pedido.itens.length > 0 ? (
+                        pedido.itens.map((item, idx) => {
+                          const qtdPedido = parseInt(item.quantidadePedido, 10) || 0;
+                          const qtdEntregue = parseInt(item.quantidadeEntregue, 10) || 0;
+                          const saldo = qtdPedido - qtdEntregue;
+                          console.log('Item:', item, 'qtdPedido:', qtdPedido, 'qtdEntregue:', qtdEntregue, 'Saldo:', saldo);
+                          return (
+                            <tr key={idx}>
+                              <td>{item.codigoDesenho || 'Não informado'}</td>
+                              <td>{qtdPedido}</td>
+                              <td>{qtdEntregue}</td>
+                              <td>{isNaN(saldo) ? '0' : saldo}</td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan="4">Nenhum item encontrado</td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </td>
