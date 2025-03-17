@@ -1,3 +1,4 @@
+import { HashRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import debounce from 'lodash/debounce';
 import './App.css';
