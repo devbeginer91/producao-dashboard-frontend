@@ -11,7 +11,6 @@ import ModalPesoVolume from './components/ModalPesoVolume';
 import Busca from './components/Busca';
 import Login from './components/Login';
 import api from './api';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 // Função para formatar datas no formato YYYY-MM-DD HH:MM:SS com fuso horário America/Sao_Paulo (UTC-3)
 export const formatDateToLocalISO = (date, context = 'unknown') => {
