@@ -412,69 +412,73 @@ const fetchPedidos = async (dados = null) => {
               />
 
               <h2>Pedidos em Andamento</h2>
-              <PedidoTable
-                pedidos={pedidos}
-                tipo="andamento"
-                setPedidos={setPedidos}
-                setPedidosAndamento={setPedidosAndamento}
-                setPedidosConcluidos={setPedidosConcluidos}
-                setMensagem={setMensagem}
-                setPedidoParaEditar={setPedidoParaEditar}
-                setNovoPedido={setNovoPedido}
-                setMostrarFormulario={setMostrarFormulario}
-                setMostrarModal={setMostrarModal}
-                setPedidoSelecionado={setPedidoSelecionado}
-                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-                setPedidoParaConcluir={setPedidoParaConcluir}
-                busca={busca}
-                carregarPedidos={carregarPedidos}
-                moverParaAndamento={moverParaAndamento}
-                pausarPedido={pausarPedido}
-                retomarPedido={retomarPedido}
-                formatarTempo={formatarTempo}
-              />
+              // Pedidos em Andamento
+<PedidoTable
+  pedidos={pedidos}
+  tipo="andamento"
+  setPedidos={setPedidos}
+  setPedidosAndamento={setPedidosAndamento}
+  setPedidosConcluidos={setPedidosConcluidos}
+  setMensagem={setMensagem}
+  setPedidoParaEditar={setPedidoParaEditar}
+  setNovoPedido={setNovoPedido}
+  setMostrarFormulario={setMostrarFormulario}
+  setMostrarModal={setMostrarModal}
+  setPedidoSelecionado={setPedidoSelecionado}
+  setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+  setPedidoParaConcluir={setPedidoParaConcluir}
+  busca={busca}
+  carregarPedidos={carregarPedidos}
+  moverParaAndamento={moverParaAndamento}
+  pausarPedido={pausarPedido} // Adiciona pausarPedido
+  retomarPedido={retomarPedido} // Adiciona retomarPedido
+  formatarTempo={formatarTempo}
+/>
 
-              <h2>Pedidos Novos</h2>
-              <PedidoTable
-                pedidos={pedidosAndamento}
-                tipo="novo"
-                setPedidos={setPedidos}
-                setPedidosAndamento={setPedidosAndamento}
-                setPedidosConcluidos={setPedidosConcluidos}
-                setMensagem={setMensagem}
-                setPedidoParaEditar={setPedidoParaEditar}
-                setNovoPedido={setNovoPedido}
-                setMostrarFormulario={setMostrarFormulario}
-                setMostrarModal={setMostrarModal}
-                setPedidoSelecionado={setPedidoSelecionado}
-                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-                setPedidoParaConcluir={setPedidoParaConcluir}
-                busca={busca}
-                carregarPedidos={carregarPedidos}
-                moverParaAndamento={moverParaAndamento}
-                formatarTempo={formatarTempo}
-              />
+// Pedidos Novos
+<PedidoTable
+  pedidos={pedidosAndamento}
+  tipo="novo"
+  setPedidos={setPedidos}
+  setPedidosAndamento={setPedidosAndamento}
+  setPedidosConcluidos={setPedidosConcluidos}
+  setMensagem={setMensagem}
+  setPedidoParaEditar={setPedidoParaEditar}
+  setNovoPedido={setNovoPedido}
+  setMostrarFormulario={setMostrarFormulario}
+  setMostrarModal={setMostrarModal}
+  setPedidoSelecionado={setPedidoSelecionado}
+  setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+  setPedidoParaConcluir={setPedidoParaConcluir}
+  busca={busca}
+  carregarPedidos={carregarPedidos}
+  moverParaAndamento={moverParaAndamento}
+  formatarTempo={formatarTempo}
+  pausarPedido={pausarPedido} // Adiciona pausarPedido
+  retomarPedido={retomarPedido} // Adiciona retomarPedido
+/>
 
-              <h2>Pedidos Concluídos</h2>
-              <PedidoTable
-                pedidos={pedidosConcluidos}
-                tipo="concluido"
-                setPedidos={setPedidos}
-                setPedidosAndamento={setPedidosAndamento}
-                setPedidosConcluidos={setPedidosConcluidos}
-                setMensagem={setMensagem}
-                setPedidoParaEditar={setPedidoParaEditar}
-                setNovoPedido={setNovoPedido}
-                setMostrarFormulario={setMostrarFormulario}
-                setMostrarModal={setMostrarModal}
-                setPedidoSelecionado={setPedidoSelecionado}
-                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-                setPedidoParaConcluir={setPedidoParaConcluir}
-                busca={busca}
-                carregarPedidos={carregarPedidos}
-                formatarTempo={formatarTempo}
-              />
-
+// Pedidos Concluídos
+<PedidoTable
+  pedidos={pedidosConcluidos}
+  tipo="concluido"
+  setPedidos={setPedidos}
+  setPedidosAndamento={setPedidosAndamento}
+  setPedidosConcluidos={setPedidosConcluidos}
+  setMensagem={setMensagem}
+  setPedidoParaEditar={setPedidoParaEditar}
+  setNovoPedido={setNovoPedido}
+  setMostrarFormulario={setMostrarFormulario}
+  setMostrarModal={setMostrarModal}
+  setPedidoSelecionado={setPedidoSelecionado}
+  setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+  setPedidoParaConcluir={setPedidoParaConcluir}
+  busca={busca}
+  carregarPedidos={carregarPedidos}
+  formatarTempo={formatarTempo}
+  pausarPedido={pausarPedido} // Adiciona pausarPedido
+  retomarPedido={retomarPedido} // Adiciona retomarPedido
+/>
               {mostrarModal && (
                 <ModalObservacao
                   pedidoSelecionado={pedidoSelecionado}

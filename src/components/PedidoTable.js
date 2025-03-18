@@ -171,18 +171,20 @@ const PedidoTable = ({
                 )}
               </td>
               {console.log('Estado do pedido:', pedido)}
+              
               <td className={tipo === 'andamento' && pedido.pausado === '1' ? 'tempo-pausado' : ''}>
   {formatarTempo(pedido.tempo)}
   {tipo === 'andamento' && (
     <button
       className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'}
-      onClick={() => (pedido.pausado === '1' ? retomarPedido(pedido.id) : pausarPedido(pedido.id))}
+      onClick={() => (pedido.pausado === '1' ? props.retomarPedido(pedido.id) : props.pausarPedido(pedido.id))}
     >
       {console.log(`Renderizando botão para pedido ${pedido.id}: pausado = ${pedido.pausado}`)}
       {pedido.pausado === '1' ? 'Retomar' : 'Pausar'}
     </button>
   )}
 </td>
+
               <td>
                 <div className="btn-container">
                   <div className="btn-row">
