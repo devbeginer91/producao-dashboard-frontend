@@ -140,7 +140,6 @@ function App() {
       isFetching.current = false;
     }
   };
-
   //fetchPedidos
 
   const carregarPedidos = useCallback(debounce((dados) => {

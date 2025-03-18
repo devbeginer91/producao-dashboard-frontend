@@ -17,7 +17,7 @@ const PedidoTable = ({
   moverParaAndamento,
   pausarPedido,
   retomarPedido,
-  formatarTempo, // Recebendo a função como prop
+  formatarTempo,
 }) => {
   const [expandedRows, setExpandedRows] = useState([]);
 
@@ -30,7 +30,7 @@ const PedidoTable = ({
   };
 
   const formatarData = (data) => {
-    if (!data || typeof data !== 'string') {
+    if (!data || typeof data !== 'string' || data.includes('undefined')) {
       console.warn('Data inválida em formatarData:', data);
       return 'Não informado';
     }
@@ -171,28 +171,26 @@ const PedidoTable = ({
                 )}
               </td>
               {console.log('Estado do pedido:', pedido)}
-              
               <td className={tipo === 'andamento' && pedido.pausado === '1' ? 'tempo-pausado' : ''}>
-  {console.log(`Exibindo tempo para pedido ${pedido.id}: tempo = ${pedido.tempo} minutos`)}
-  {formatarTempo(pedido.tempo)}
-  {tipo === 'andamento' && (
-    <button
-      className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'}
-      onClick={() => {
-        console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === '1' ? 'retomarPedido' : 'pausarPedido'}`);
-        if (pedido.pausado === '1') {
-          props.retomarPedido(pedido.id);
-        } else {
-          props.pausarPedido(pedido.id);
-        }
-      }}
-    >
-      {console.log(`Renderizando botão para pedido ${pedido.id}: pausado = ${pedido.pausado}`)}
-      {pedido.pausado === '1' ? 'Retomar' : 'Pausar'}
-    </button>
-  )}
-</td>
-
+                {console.log(`Exibindo tempo para pedido ${pedido.id}: tempo = ${pedido.tempo} minutos`)}
+                {formatarTempo(pedido.tempo)}
+                {tipo === 'andamento' && (
+                  <button
+                    className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'}
+                    onClick={() => {
+                      console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === '1' ? 'retomarPedido' : 'pausarPedido'}`);
+                      if (pedido.pausado === '1') {
+                        retomarPedido(pedido.id);
+                      } else {
+                        pausarPedido(pedido.id);
+                      }
+                    }}
+                  >
+                    {console.log(`Renderizando botão para pedido ${pedido.id}: pausado = ${pedido.pausado}`)}
+                    {pedido.pausado === '1' ? 'Retomar' : 'Pausar'}
+                  </button>
+                )}
+              </td>
               <td>
                 <div className="btn-container">
                   <div className="btn-row">
