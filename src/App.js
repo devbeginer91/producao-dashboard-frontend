@@ -84,7 +84,7 @@ function App() {
   const lastFetchTimestamp = useRef(0);
 
   //fetchPedidos
-  //fetchPedidos
+
 const fetchPedidos = async (dados = null) => {
   const now = Date.now();
   if (now - lastFetchTimestamp.current < 5000 && !dados) {
@@ -103,11 +103,12 @@ const fetchPedidos = async (dados = null) => {
         : null;
 
       let tempoFinal = pedido.tempo || 0; // Usa o tempo do backend como base
+      console.log(`Antes de mapear - pedido ${pedido.id}: tempo original = ${pedido.tempo}, pausado = ${pedido.pausado}`);
       if (pedido.status === 'concluido') {
         tempoFinal = pedido.tempo;
       } else if (pedido.status === 'andamento') {
         if (pedido.pausado === '1') {
-          tempoFinal = pedido.tempo; // Mantém o tempo atual do backend ao pausar
+          tempoFinal = pedido.tempo; // Preserva o tempo do backend ao pausar
         } else if (pedido.dataPausada && pedido.pausado === '0') {
           const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
           tempoFinal = Math.round((pedido.tempoPausado || 0) + tempoDesdeRetomada);
@@ -140,7 +141,7 @@ const fetchPedidos = async (dados = null) => {
     isFetching.current = false;
   }
 };
-//fetchPedidos
+
   //fetchPedidos
 
   const carregarPedidos = useCallback(debounce((dados) => {
@@ -157,41 +158,41 @@ const fetchPedidos = async (dados = null) => {
   }, [carregarPedidos, isAuthenticated]);
 
   //useeffect
+useEffect(() => {
+  const intervalo = setInterval(() => {
+    setPedidos((prev) =>
+      prev.map((p) => {
+        if (p.status !== 'andamento' || p.pausado === '1') {
+          console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
+          return p; // Não atualiza o tempo se pausado
+        }
 
-  useEffect(() => {
-    const intervalo = setInterval(() => {
-      setPedidos((prev) =>
-        prev.map((p) => {
-          if (p.status !== 'andamento' || p.pausado === '1') {
-            console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
-            return p;
-          }
-  
-          const inicioValido = p.inicio && !p.inicio.includes('undefined')
-            ? p.inicio
-            : formatDateToLocalISO(new Date(), 'intervalo');
-  
-          let tempoAcumulado = p.tempoPausado || 0;
-          let dataReferencia = inicioValido;
-  
-          if (p.dataPausada && p.pausado === '0') {
-            dataReferencia = p.dataPausada;
-            console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência, tempoAcumulado = ${tempoAcumulado}`);
-          }
-  
-          const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
-          const tempoAtual = Math.round(tempoAcumulado + (tempoDesdeReferencia > 0 && tempoDesdeReferencia <= 1 ? tempoDesdeReferencia : 0));
-  
-          console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos, tempoAntes = ${p.tempo}, tempoDesdeReferencia = ${tempoDesdeReferencia}, tempoAcumulado = ${tempoAcumulado}`);
-          return {
-            ...p,
-            tempo: tempoAtual,
-          };
-        })
-      );
-    }, 60000); // Atualiza a cada 60 segundos (1 minuto)
-    return () => clearInterval(intervalo);
-  }, []);
+        const inicioValido = p.inicio && !p.inicio.includes('undefined')
+          ? p.inicio
+          : formatDateToLocalISO(new Date(), 'intervalo');
+
+        let tempoAcumulado = p.tempoPausado || 0;
+        let dataReferencia = inicioValido;
+
+        if (p.dataPausada && p.pausado === '0') {
+          dataReferencia = p.dataPausada;
+          console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência, tempoAcumulado = ${tempoAcumulado}`);
+        }
+
+        const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
+        const tempoAtual = Math.round(tempoAcumulado + (tempoDesdeReferencia > 0 && tempoDesdeReferencia <= 1 ? tempoDesdeReferencia : 0));
+
+        console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos, tempoAntes = ${p.tempo}, tempoDesdeReferencia = ${tempoDesdeReferencia}, tempoAcumulado = ${tempoAcumulado}`);
+        return {
+          ...p,
+          tempo: tempoAtual,
+        };
+      })
+    );
+  }, 60000); // Atualiza a cada 60 segundos (1 minuto)
+  return () => clearInterval(intervalo);
+}, []);
+//fim do useeffect
 
   const calcularTempo = (inicio, fim = formatDateToLocalISO(new Date(), 'calcularTempo')) => {
     const inicioDate = parseDate(inicio);
