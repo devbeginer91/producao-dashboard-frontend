@@ -170,23 +170,19 @@ const PedidoTable = ({
                   logAndRender('inicio:', pedido.inicio, formatarDataHora(pedido.inicio))
                 )}
               </td>
-              {console.log('Estado completo do pedido:', pedido)}
+              {console.log('Estado do pedido:', pedido)}
               <td className={tipo === 'andamento' && pedido.pausado === '1' ? 'tempo-pausado' : ''}>
-                {console.log(`Exibindo tempo para pedido ${pedido.id}: tempo = ${pedido.tempo || 0} minutos`)}
-                {formatarTempo(pedido.tempo || 0)}
+                {console.log(`Exibindo tempo para pedido ${pedido.id}: tempo = ${pedido.tempo} minutos`)}
+                {formatarTempo(pedido.tempo)}
                 {tipo === 'andamento' && (
                   <button
                     className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'}
                     onClick={() => {
-                      console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === '1' ? 'retomarPedido' : 'pausarPedido'}, estado atual =`, pedido);
-                      if (typeof pausarPedido === 'function' && typeof retomarPedido === 'function') {
-                        if (pedido.pausado === '1') {
-                          retomarPedido(pedido.id).catch((error) => console.error(`Erro ao retomar pedido ${pedido.id}:`, error));
-                        } else {
-                          pausarPedido(pedido.id).catch((error) => console.error(`Erro ao pausar pedido ${pedido.id}:`, error));
-                        }
+                      console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === '1' ? 'retomarPedido' : 'pausarPedido'}`);
+                      if (pedido.pausado === '1') {
+                        props.retomarPedido(pedido.id);
                       } else {
-                        console.error('pausarPedido ou retomarPedido não são funções:', { pausarPedido, retomarPedido });
+                        props.pausarPedido(pedido.id);
                       }
                     }}
                   >
