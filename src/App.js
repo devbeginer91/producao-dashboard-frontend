@@ -431,8 +431,11 @@ function App() {
                 carregarPedidos={carregarPedidos}
                 todosPedidos={[...pedidos, ...pedidosAndamento, ...pedidosConcluidos]}
                 exportarPDF={exportarPDF}
-              />
+              
 
+              
+              />
+                       
               <h2>Pedidos em Andamento</h2>
               <PedidoTable
                 pedidos={pedidos}
