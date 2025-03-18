@@ -180,9 +180,17 @@ const PedidoTable = ({
                     onClick={() => {
                       console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === '1' ? 'retomarPedido' : 'pausarPedido'}`);
                       if (pedido.pausado === '1') {
-                        props.retomarPedido(pedido.id);
+                        if (typeof props.retomarPedido === 'function') {
+                          props.retomarPedido(pedido.id);
+                        } else {
+                          console.error('retomarPedido não é uma função:', props.retomarPedido);
+                        }
                       } else {
-                        props.pausarPedido(pedido.id);
+                        if (typeof props.pausarPedido === 'function') {
+                          props.pausarPedido(pedido.id);
+                        } else {
+                          console.error('pausarPedido não é uma função:', props.pausarPedido);
+                        }
                       }
                     }}
                   >

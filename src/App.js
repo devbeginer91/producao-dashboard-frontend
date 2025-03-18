@@ -301,7 +301,6 @@ function App() {
       }
     }
   };
-
   //parseDate
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
@@ -374,7 +373,7 @@ useEffect(() => {
         }
 
         const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
-        const tempoAtual = Math.round(p.tempo + (tempoDesdeReferencia > 0 ? tempoDesdeReferencia : 0));
+        const tempoAtual = Math.round(p.tempo + (tempoDesdeReferencia > 0 && tempoDesdeReferencia <= 1 ? tempoDesdeReferencia : 0));
 
         console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos, tempoAntes = ${p.tempo}, tempoDesdeReferencia = ${tempoDesdeReferencia}`);
         return {
