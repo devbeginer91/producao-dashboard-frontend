@@ -83,13 +83,15 @@ function App() {
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
 
+  //fetchPedidos
+
   const fetchPedidos = async (dados = null) => {
     const now = Date.now();
     if (now - lastFetchTimestamp.current < 5000 && !dados) {
       console.log('Ignorando chamada repetida a fetchPedidos');
       return;
     }
-
+  
     if (isFetching.current) return;
     isFetching.current = true;
     try {
@@ -99,7 +101,7 @@ function App() {
         const dataConclusaoValida = pedido.dataConclusao
           ? formatDateToLocalISO(pedido.dataConclusao, `fetchPedidos - pedido ${pedido.id}`)
           : null;
-
+  
         let tempoFinal = pedido.tempo || 0;
         if (pedido.status === 'concluido') {
           tempoFinal = pedido.tempo;
@@ -107,15 +109,14 @@ function App() {
           if (pedido.pausado === '1') {
             tempoFinal = pedido.tempo; // Mantém o tempo congelado ao pausar
           } else if (pedido.dataPausada && pedido.pausado === '0') {
-            // Calcula o tempo desde a retomada, sem somar o período pausado
             const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
             tempoFinal = Math.round(pedido.tempo + tempoDesdeRetomada); // Continua de onde parou
           } else {
-            tempoFinal = Math.round(calcularTempo(inicioValido));
+            tempoFinal = Math.round(calcularTempo(inicioValido, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`)));
           }
         }
-        console.log(`fetchPedidos - pedido ${pedido.id}: pausado = ${pedido.pausado}, tempoFinal = ${tempoFinal}, dataPausada = ${pedido.dataPausada}, tempoPausado = ${pedido.tempoPausado}`);
-
+        console.log(`fetchPedidos - pedido ${pedido.id}: pausado = ${pedido.pausado}, tempoFinal = ${tempoFinal}, dataPausada = ${pedido.dataPausada}, tempoAntes = ${pedido.tempo}, tempoPausado = ${pedido.tempoPausado}, inicioValido = ${inicioValido}`);
+  
         return {
           ...pedido,
           inicio: inicioValido,
@@ -140,6 +141,8 @@ function App() {
     }
   };
 
+  //fetchPedidos
+
   const carregarPedidos = useCallback(debounce((dados) => {
     fetchPedidos(dados);
   }, 1000), []);
@@ -153,6 +156,8 @@ function App() {
     };
   }, [carregarPedidos, isAuthenticated]);
 
+  //useeffect
+
   useEffect(() => {
     const intervalo = setInterval(() => {
       setPedidos((prev) =>
@@ -161,21 +166,21 @@ function App() {
             console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
             return p;
           }
-
+  
           const inicioValido = p.inicio && !p.inicio.includes('undefined')
             ? p.inicio
             : formatDateToLocalISO(new Date(), 'intervalo');
-
+  
           let dataReferencia = inicioValido;
           if (p.dataPausada && p.pausado === '0') {
             dataReferencia = p.dataPausada;
             console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência`);
           }
-
+  
           const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
           const tempoAtual = Math.round(p.tempo + tempoDesdeReferencia);
-
-          console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos`);
+  
+          console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos, tempoAntes = ${p.tempo}, tempoDesdeReferencia = ${tempoDesdeReferencia}`);
           return {
             ...p,
             tempo: tempoAtual,
@@ -186,6 +191,7 @@ function App() {
     return () => clearInterval(intervalo);
   }, []);
 
+  //useeffect
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
       console.warn('Data inválida fornecida em parseDate, usando data atual:', dateStr);

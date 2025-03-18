@@ -173,11 +173,19 @@ const PedidoTable = ({
               {console.log('Estado do pedido:', pedido)}
               
               <td className={tipo === 'andamento' && pedido.pausado === '1' ? 'tempo-pausado' : ''}>
+  {console.log(`Exibindo tempo para pedido ${pedido.id}: tempo = ${pedido.tempo} minutos`)}
   {formatarTempo(pedido.tempo)}
   {tipo === 'andamento' && (
     <button
       className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'}
-      onClick={() => (pedido.pausado === '1' ? props.retomarPedido(pedido.id) : props.pausarPedido(pedido.id))}
+      onClick={() => {
+        console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === '1' ? 'retomarPedido' : 'pausarPedido'}`);
+        if (pedido.pausado === '1') {
+          props.retomarPedido(pedido.id);
+        } else {
+          props.pausarPedido(pedido.id);
+        }
+      }}
     >
       {console.log(`Renderizando botão para pedido ${pedido.id}: pausado = ${pedido.pausado}`)}
       {pedido.pausado === '1' ? 'Retomar' : 'Pausar'}
