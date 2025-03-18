@@ -174,8 +174,8 @@ function App() {
           if (p.dataPausada && !p.pausado) {
             // Após retomada, usa dataPausada como ponto de referência
             dataReferencia = p.dataPausada;
-            console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência, tempoAcumulado = ${tempoAcumulado}`);
           }
+          console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência, tempoAcumulado = ${tempoAcumulado}`);
 
           const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
           const tempoAtual = Math.round(tempoAcumulado + tempoDesdeReferencia);
