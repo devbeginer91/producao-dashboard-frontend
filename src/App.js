@@ -159,7 +159,7 @@ function App() {
     const intervalo = setInterval(() => {
       setPedidos((prev) =>
         prev.map((p) => {
-          if (p.status !== 'andamento' || p.pausado === '1') { // Ajustado para comparar como string
+          if (p.status !== 'andamento' || p.pausado === '1') {
             console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
             return p;
           }
@@ -188,7 +188,7 @@ function App() {
       );
     }, 60000); // Atualiza a cada 60 segundos (1 minuto)
     return () => clearInterval(intervalo);
-  }, []);
+  }, [pedidos]); // Adiciona dependência para pedidos
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
       console.warn('Data inválida fornecida em parseDate, usando data atual:', dateStr);
