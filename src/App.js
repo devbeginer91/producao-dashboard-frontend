@@ -82,7 +82,7 @@ function App() {
 
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
-
+///inicio da função fetch pedidos
   const fetchPedidos = async (dados = null) => {
     const now = Date.now();
     if (now - lastFetchTimestamp.current < 5000 && !dados) {
@@ -105,13 +105,13 @@ function App() {
           tempoFinal = pedido.tempo;
         } else if (pedido.status === 'andamento') {
           if (pedido.pausado === '1') {
-            tempoFinal = pedido.tempoPausado || 0;
+            tempoFinal = pedido.tempo; // Mantém o tempo atual ao pausar
           } else if (pedido.dataPausada && pedido.pausado === '0') {
-            const tempoAcumulado = pedido.tempoPausado || 0;
+            // Usa dataPausada como referência para continuar o tempo
             const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
-            tempoFinal = Math.round(tempoAcumulado + tempoDesdeRetomada);
+            tempoFinal = Math.round(pedido.tempo + tempoDesdeRetomada);
           } else {
-            tempoFinal = Math.round((pedido.tempoPausado || 0) + calcularTempo(inicioValido));
+            tempoFinal = Math.round(calcularTempo(inicioValido));
           }
         }
         console.log(`fetchPedidos - pedido ${pedido.id}: pausado = ${pedido.pausado}, tempoFinal = ${tempoFinal}, dataPausada = ${pedido.dataPausada}`);
@@ -122,7 +122,7 @@ function App() {
           dataConclusao: dataConclusaoValida,
           itens: Array.isArray(pedido.itens) ? pedido.itens : [],
           tempo: Math.round(tempoFinal),
-          pausado: pedido.pausado === '1' ? '1' : '0', // Normaliza para string
+          pausado: pedido.pausado === '1' ? '1' : '0',
         };
       });
       console.log('Atualizando estado pedidos:', pedidosAtualizados.filter((p) => p.status === 'andamento'));
@@ -139,7 +139,7 @@ function App() {
       isFetching.current = false;
     }
   };
-
+///fim da funçao fetchpedidos 
   const carregarPedidos = useCallback(debounce((dados) => {
     fetchPedidos(dados);
   }, 1000), []);
@@ -166,18 +166,16 @@ function App() {
             ? p.inicio
             : formatDateToLocalISO(new Date(), 'intervalo');
   
-          let tempoAcumulado = p.tempoPausado || 0;
           let dataReferencia = inicioValido;
-  
           if (p.dataPausada && p.pausado === '0') {
             dataReferencia = p.dataPausada;
-            console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência, tempoAcumulado = ${tempoAcumulado}`);
+            console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência`);
           }
   
           const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
-          const tempoAtual = Math.round(tempoAcumulado + tempoDesdeReferencia);
+          const tempoAtual = Math.round(p.tempo + tempoDesdeReferencia); // Continua de onde parou
   
-          console.log(`Atualizando tempo para pedido ${p.id}: tempoPausado = ${tempoAcumulado}, tempoDesdeReferencia = ${tempoDesdeReferencia}, tempoAtual = ${tempoAtual} minutos`);
+          console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos`);
           return {
             ...p,
             tempo: tempoAtual,
@@ -281,6 +279,7 @@ function App() {
   };
 
   // Função pausarPedido implementada
+
   const pausarPedido = async (id) => {
     const pedido = pedidos.find((p) => p.id === id);
     if (pedido) {
@@ -288,10 +287,10 @@ function App() {
       const dataInicioPausa = formatDateToLocalISO(new Date(), 'inicioPausa');
       const pedidoPausado = { 
         ...pedido, 
-        pausado: 1, 
+        pausado: '1', 
         dataPausada: dataPausa, 
         dataInicioPausa: dataInicioPausa,
-        tempo: pedido.tempo // Mantém o tempo atual
+        tempoPausado: pedido.tempo // Salva o tempo atual em tempoPausado
       };
       try {
         console.log('Enviando pedido atualizado para pausar:', pedidoPausado);
@@ -310,41 +309,45 @@ function App() {
       }
     }
   };
+  
+  // final da função pausarpedido
 
-  const retomarPedido = async (id) => {
-    const pedido = pedidos.find((p) => p.id === id);
-    if (pedido) {
-      const dataRetomada = formatDateToLocalISO(new Date(), 'retomarPedido');
-      // Calcula o tempo pausado desde o início da pausa até agora
-      const tempoPausadoAtual = pedido.dataPausada ? calcularTempo(pedido.dataPausada, dataRetomada) : 0;
-      const tempoPausadoAnterior = (parseFloat(pedido.tempoPausado) || 0) + tempoPausadoAtual;
-      console.log(`Retomando pedido ${id}: tempoPausadoAtual = ${tempoPausadoAtual}, tempoPausadoAnterior = ${tempoPausadoAnterior}, tempo atual antes = ${pedido.tempo}`);
-      const pedidoRetomado = { 
-        ...pedido, 
-        pausado: 0, 
-        dataPausada: null, // Limpa dataPausada ao retomar
-        dataInicioPausa: null,
-        tempoPausado: tempoPausadoAnterior, // Acumula o tempo pausado
-        tempo: pedido.tempo // Mantém o tempo acumulado, sem incluir o tempo pausado
-      };
-      try {
-        console.log('Enviando pedido atualizado para retomar:', pedidoRetomado);
-        const resposta = await api.put(`/pedidos/${id}`, pedidoRetomado);
-        setPedidos((prev) =>
-          prev.map((p) =>
-            p.id === id ? { ...resposta.data, tempo: pedido.tempo } : p
-          )
-        );
-        console.log(`Tempo após retomar para pedido ${id}: ${pedido.tempo} minutos`);
-        setMensagem('Pedido retomado com sucesso.');
-        carregarPedidos();
-      } catch (error) {
-        setMensagem('Erro ao retomar pedido: ' + (error.response ? error.response.data.message : error.message));
-        carregarPedidos();
-      }
+ // Função retomarPedido inicio
+
+ const retomarPedido = async (id) => {
+  const pedido = pedidos.find((p) => p.id === id);
+  if (pedido) {
+    const dataRetomada = formatDateToLocalISO(new Date(), 'retomarPedido');
+    const tempoPausadoAtual = pedido.dataPausada ? calcularTempo(pedido.dataPausada, dataRetomada) : 0;
+    const tempoPausadoAnterior = (parseFloat(pedido.tempoPausado) || 0) + tempoPausadoAtual;
+    console.log(`Retomando pedido ${id}: tempoPausadoAtual = ${tempoPausadoAtual}, tempoPausadoAnterior = ${tempoPausadoAnterior}, tempo atual antes = ${pedido.tempo}`);
+    const pedidoRetomado = { 
+      ...pedido, 
+      pausado: '0', 
+      dataPausada: dataRetomada, // Usa a data de retomada como nova referência
+      dataInicioPausa: null,
+      tempoPausado: tempoPausadoAnterior, // Acumula o tempo pausado
+      tempo: pedido.tempo // Mantém o tempo acumulado, sem somar o tempo pausado
+    };
+    try {
+      console.log('Enviando pedido atualizado para retomar:', pedidoRetomado);
+      const resposta = await api.put(`/pedidos/${id}`, pedidoRetomado);
+      setPedidos((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...resposta.data, tempo: pedido.tempo } : p
+        )
+      );
+      console.log(`Tempo após retomar para pedido ${id}: ${pedido.tempo} minutos`);
+      setMensagem('Pedido retomado com sucesso.');
+      carregarPedidos();
+    } catch (error) {
+      setMensagem('Erro ao retomar pedido: ' + (error.response ? error.response.data.message : error.message));
+      carregarPedidos();
     }
-  };
+  }
+};
 
+ // final da função retomarPedido 
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
