@@ -105,9 +105,9 @@ function App() {
         if (pedido.status === 'concluido') {
           tempoFinal = pedido.tempo; // Usa o tempo armazenado para pedidos concluídos
         } else if (pedido.status === 'andamento') {
-          if (pedido.pausado) {
+          if (pedido.pausado === '1') {
             tempoFinal = pedido.tempoPausado || 0; // Mantém o tempoPausado ao pausar
-          } else if (pedido.dataPausada && !pedido.pausado) {
+          } else if (pedido.dataPausada && pedido.pausado === '0') {
             // Após retomada, usa dataPausada como ponto de referência
             const tempoAcumulado = pedido.tempoPausado || 0;
             const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
@@ -254,9 +254,9 @@ function App() {
     const pedido = [...pedidos, ...pedidosAndamento, ...pedidosConcluidos].find((p) => p.id === id);
     if (pedido) {
       const novoInicio = formatDateToLocalISO(new Date(), 'moverParaAndamento');
-      const pedidoAtualizado = { 
-        ...pedido, 
-        status: 'andamento', 
+      const pedidoAtualizado = {
+        ...pedido,
+        status: 'andamento',
         inicio: novoInicio,
         tempo: 0,
         tempoPausado: 0,
@@ -282,6 +282,7 @@ function App() {
     }
   };
 
+  // Função pausarPedido implementada
   const pausarPedido = async (id) => {
     const pedido = pedidos.find((p) => p.id === id);
     if (pedido) {
@@ -292,7 +293,7 @@ function App() {
         pausado: 1, 
         dataPausada: dataPausa, 
         dataInicioPausa: dataInicioPausa,
-        tempo: pedido.tempo // Salva o tempo atual
+        tempo: pedido.tempo // Mantém o tempo atual
       };
       try {
         console.log('Enviando pedido atualizado para pausar:', pedidoPausado);
