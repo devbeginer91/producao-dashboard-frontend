@@ -155,10 +155,7 @@ const PedidoTable = ({
               <td>{logAndRender('empresa:', pedido.empresa)}</td>
               <td>{logAndRender('numeroOS:', pedido.numeroOS)}</td>
               <td>{logAndRender('dataEntrada:', pedido.dataEntrada, formatarData(pedido.dataEntrada))}</td>
-              <td>
-                {logAndRender('previsaoEntrega:', pedido.previsaoEntrega, formatarData(pedido.previsaoEntrega))}
-                {isPastDue(pedido.previsaoEntrega) && <span className="atrasado-icon">⚠️</span>}
-              </td>
+              <td>{logAndRender('previsaoEntrega:', pedido.previsaoEntrega, formatarData(pedido.previsaoEntrega))}{isPastDue(pedido.previsaoEntrega) && <span className="atrasado-icon">⚠️</span>}</td>
               <td>{logAndRender('responsavel:', pedido.responsavel)}</td>
               <td className="data-hora">
                 {tipo === 'concluido' ? (
@@ -219,13 +216,14 @@ const PedidoTable = ({
                     <tbody>
                       {pedido.itens && pedido.itens.length > 0 ? (
                         pedido.itens.map((item, idx) => {
-                          const qtdPedido = parseInt(item.quantidadePedido, 10) || 0;
-                          const qtdEntregue = parseInt(item.quantidadeEntregue, 10) || 0;
+                          const codigoDesenho = item.codigoDesenho || item.codigodesenho || 'Não informado';
+                          const qtdPedido = parseInt(item.quantidadePedido || item.quantidadepedido, 10) || 0;
+                          const qtdEntregue = parseInt(item.quantidadeEntregue || item.quantidadeentregue, 10) || 0;
                           const saldo = qtdPedido - qtdEntregue;
                           console.log('Item:', item, 'qtdPedido:', qtdPedido, 'qtdEntregue:', qtdEntregue, 'Saldo:', saldo);
                           return (
                             <tr key={idx}>
-                              <td>{item.codigoDesenho || 'Não informado'}</td>
+                              <td>{codigoDesenho}</td>
                               <td>{qtdPedido}</td>
                               <td>{qtdEntregue}</td>
                               <td>{isNaN(saldo) ? '0' : saldo}</td>
