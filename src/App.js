@@ -102,12 +102,12 @@ const fetchPedidos = async (dados = null) => {
         : null;
 
       let tempoFinal = pedido.tempo || 0; // Usa o tempo do backend como base
-      console.log(`Antes de mapear - pedido ${pedido.id}: tempo original = ${pedido.tempo}, pausado = ${pedido.pausado}`);
+      console.log(`Antes de mapear - pedido ${pedido.id}: tempo original = ${pedido.tempo}, pausado = ${pedido.pausado}, tempoPausado = ${pedido.tempoPausado}`);
       if (pedido.status === 'concluido') {
         tempoFinal = pedido.tempo;
       } else if (pedido.status === 'andamento') {
         if (pedido.pausado === '1') {
-          tempoFinal = pedido.tempo; // Preserva o tempo do backend ao pausar
+          tempoFinal = pedido.tempoPausado || pedido.tempo; // Preserva tempoPausado ou tempo original ao pausar
         } else if (pedido.dataPausada && pedido.pausado === '0') {
           const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
           tempoFinal = Math.round((pedido.tempoPausado || 0) + tempoDesdeRetomada);
@@ -127,7 +127,7 @@ const fetchPedidos = async (dados = null) => {
       };
     });
     console.log('Atualizando estado pedidos:', pedidosAtualizados.filter((p) => p.status === 'andamento'));
-    // Forçar re-renderização ao atualizar o estado
+    // Forçar re-renderização com nova referência
     setPedidos((prev) => [...pedidosAtualizados.filter((p) => p.status === 'andamento')]);
     setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo'));
     setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
@@ -156,14 +156,14 @@ const fetchPedidos = async (dados = null) => {
     };
   }, [carregarPedidos, isAuthenticated]);
 
-  //useeffect
+ //useeffect
 useEffect(() => {
   const intervalo = setInterval(() => {
     setPedidos((prev) => {
       const novosPedidos = prev.map((p) => {
         if (p.status !== 'andamento' || p.pausado === '1') {
           console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
-          return { ...p }; // Retorna uma nova referência para forçar re-renderização
+          return { ...p, tempo: p.tempo }; // Preserva o tempo e força re-renderização
         }
 
         const inicioValido = p.inicio && !p.inicio.includes('undefined')
@@ -187,7 +187,7 @@ useEffect(() => {
           tempo: tempoAtual,
         };
       });
-      return [...novosPedidos]; // Forçar nova referência para re-renderização
+      return [...novosPedidos]; // Força re-renderização com nova referência
     });
   }, 60000); // Atualiza a cada 60 segundos (1 minuto)
   return () => clearInterval(intervalo);
@@ -318,7 +318,7 @@ useEffect(() => {
     const pedido = pedidos.find((p) => p.id === id);
     if (pedido) {
       const dataRetomada = formatDateToLocalISO(new Date(), 'retomarPedido');
-      const tempoPausadoAnterior = pedido.tempoPausado || 0;
+      const tempoPausadoAnterior = pedido.tempoPausado || pedido.tempo || 0; // Usa tempoPausado ou tempo atual
       console.log(`Retomando pedido ${id}: tempoPausado = ${tempoPausadoAnterior}, tempo atual antes = ${pedido.tempo}`);
       const pedidoRetomado = {
         ...pedido,
@@ -343,40 +343,7 @@ useEffect(() => {
       }
     }
   };
-//useeffect
-useEffect(() => {
-  const intervalo = setInterval(() => {
-    setPedidos((prev) =>
-      prev.map((p) => {
-        if (p.status !== 'andamento' || p.pausado === '1') {
-          console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
-          return p;
-        }
 
-        const inicioValido = p.inicio && !p.inicio.includes('undefined')
-          ? p.inicio
-          : formatDateToLocalISO(new Date(), 'intervalo');
-
-        let dataReferencia = inicioValido;
-        if (p.dataPausada && p.pausado === '0') {
-          dataReferencia = p.dataPausada;
-          console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência`);
-        }
-
-        const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
-        const tempoAtual = Math.round(p.tempo + (tempoDesdeReferencia > 0 && tempoDesdeReferencia <= 1 ? tempoDesdeReferencia : 0));
-
-        console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos, tempoAntes = ${p.tempo}, tempoDesdeReferencia = ${tempoDesdeReferencia}`);
-        return {
-          ...p,
-          tempo: tempoAtual,
-        };
-      })
-    );
-  }, 60000); // Atualiza a cada 60 segundos (1 minuto)
-  return () => clearInterval(intervalo);
-}, []);
-//fim do useeffect
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
