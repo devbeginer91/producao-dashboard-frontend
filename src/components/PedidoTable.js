@@ -171,16 +171,27 @@ const PedidoTable = ({
                 )}
               </td>
               {console.log('Estado do pedido:', pedido)}
-              <td className={tipo === 'andamento' && pedido.pausado ? 'tempo-pausado' : ''}>
+              <td className={tipo === 'andamento' && pedido.pausado === 1 ? 'tempo-pausado' : ''}>
                 {console.log(`Exibindo tempo para pedido ${pedido.id}: tempo = ${pedido.tempo} minutos`)}
                 {formatarTempo(pedido.tempo)}
                 {tipo === 'andamento' && (
                   <button
-                    className={pedido.pausado ? 'btn-retomar' : 'btn-pausar'}
-                    onClick={() => pedido.pausado ? retomarPedido(pedido.id) : pausarPedido(pedido.id)}
+                    className={pedido.pausado === 1 ? 'btn-retomar' : 'btn-pausar'}
+                    onClick={() => {
+                      console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === 1 ? 'retomarPedido' : 'pausarPedido'}`);
+                      if (typeof pausarPedido === 'function' && typeof retomarPedido === 'function') {
+                        if (pedido.pausado === 1) {
+                          retomarPedido(pedido.id);
+                        } else {
+                          pausarPedido(pedido.id);
+                        }
+                      } else {
+                        console.error('pausarPedido ou retomarPedido não são funções:', { pausarPedido, retomarPedido });
+                      }
+                    }}
                   >
                     {console.log(`Renderizando botão para pedido ${pedido.id}: pausado = ${pedido.pausado}`)}
-                    {pedido.pausado ? 'Retomar' : 'Pausar'}
+                    {pedido.pausado === 1 ? 'Retomar' : 'Pausar'}
                   </button>
                 )}
               </td>
