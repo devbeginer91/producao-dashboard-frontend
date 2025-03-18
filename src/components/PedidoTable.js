@@ -155,7 +155,10 @@ const PedidoTable = ({
               <td>{logAndRender('empresa:', pedido.empresa)}</td>
               <td>{logAndRender('numeroOS:', pedido.numeroOS)}</td>
               <td>{logAndRender('dataEntrada:', pedido.dataEntrada, formatarData(pedido.dataEntrada))}</td>
-              <td>{logAndRender('previsaoEntrega:', pedido.previsaoEntrega, formatarData(pedido.previsaoEntrega))}{isPastDue(pedido.previsaoEntrega) && <span className="atrasado-icon">⚠️</span>}</td>
+              <td>
+                {logAndRender('previsaoEntrega:', pedido.previsaoEntrega, formatarData(pedido.previsaoEntrega))}
+                {isPastDue(pedido.previsaoEntrega) && <span className="atrasado-icon">⚠️</span>}
+              </td>
               <td>{logAndRender('responsavel:', pedido.responsavel)}</td>
               <td className="data-hora">
                 {tipo === 'concluido' ? (
