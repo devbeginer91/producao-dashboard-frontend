@@ -83,6 +83,7 @@ function App() {
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
 ///inicio da função fetch pedidos
+
 const fetchPedidos = async (dados = null) => {
   const now = Date.now();
   if (now - lastFetchTimestamp.current < 5000 && !dados) {
@@ -100,14 +101,14 @@ const fetchPedidos = async (dados = null) => {
         ? formatDateToLocalISO(pedido.dataConclusao, `fetchPedidos - pedido ${pedido.id}`)
         : null;
 
-      let tempoFinal = pedido.tempo || 0; // Usa o tempo atual como base
+      let tempoFinal = pedido.tempo || 0;
       if (pedido.status === 'concluido') {
         tempoFinal = pedido.tempo;
       } else if (pedido.status === 'andamento') {
         if (pedido.pausado === '1') {
           tempoFinal = pedido.tempo; // Mantém o tempo congelado ao pausar
         } else if (pedido.dataPausada && pedido.pausado === '0') {
-          // Usa dataPausada como ponto de retomada, sem somar o tempo pausado
+          // Calcula o tempo desde a retomada, sem somar o período pausado
           const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
           tempoFinal = Math.round(pedido.tempo + tempoDesdeRetomada); // Continua de onde parou
         } else {
@@ -139,6 +140,7 @@ const fetchPedidos = async (dados = null) => {
     isFetching.current = false;
   }
 };
+
 ///fim da funçao fetchpedidos 
   const carregarPedidos = useCallback(debounce((dados) => {
     fetchPedidos(dados);
@@ -152,6 +154,8 @@ const fetchPedidos = async (dados = null) => {
       carregarPedidos.cancel();
     };
   }, [carregarPedidos, isAuthenticated]);
+
+  //inicio useeffect
 
   useEffect(() => {
     const intervalo = setInterval(() => {
@@ -173,7 +177,7 @@ const fetchPedidos = async (dados = null) => {
           }
   
           const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
-          const tempoAtual = Math.round(p.tempo + tempoDesdeReferencia); // Continua de onde parou
+          const tempoAtual = Math.round(p.tempo + tempoDesdeReferencia);
   
           console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos`);
           return {
@@ -184,8 +188,9 @@ const fetchPedidos = async (dados = null) => {
       );
     }, 60000); // Atualiza a cada 60 segundos (1 minuto)
     return () => clearInterval(intervalo);
-  }, []); 
-  
+  }, []);
+
+  //fim useeffect
   
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
@@ -314,38 +319,39 @@ const fetchPedidos = async (dados = null) => {
 
  // Função retomarPedido inicio
 
- const retomarPedido = async (id) => {
-  const pedido = pedidos.find((p) => p.id === id);
-  if (pedido) {
-    const dataRetomada = formatDateToLocalISO(new Date(), 'retomarPedido');
-    const tempoPausadoAtual = pedido.dataPausada ? calcularTempo(pedido.dataPausada, dataRetomada) : 0;
-    const tempoPausadoAnterior = (parseFloat(pedido.tempoPausado) || 0) + tempoPausadoAtual;
-    console.log(`Retomando pedido ${id}: tempoPausadoAtual = ${tempoPausadoAtual}, tempoPausadoAnterior = ${tempoPausadoAnterior}, tempo atual antes = ${pedido.tempo}`);
-    const pedidoRetomado = { 
-      ...pedido, 
-      pausado: '0', 
-      dataPausada: dataRetomada, // Define a data de retomada como nova referência
-      dataInicioPausa: null,
-      tempoPausado: tempoPausadoAnterior, // Acumula o tempo pausado
-      tempo: pedido.tempo // Mantém o tempo atual, sem somar o pausado
-    };
-    try {
-      console.log('Enviando pedido atualizado para retomar:', pedidoRetomado);
-      const resposta = await api.put(`/pedidos/${id}`, pedidoRetomado);
-      setPedidos((prev) =>
-        prev.map((p) =>
-          p.id === id ? { ...resposta.data, tempo: pedido.tempo } : p
-        )
-      );
-      console.log(`Tempo após retomar para pedido ${id}: ${pedido.tempo} minutos`);
-      setMensagem('Pedido retomado com sucesso.');
-      carregarPedidos();
-    } catch (error) {
-      setMensagem('Erro ao retomar pedido: ' + (error.response ? error.response.data.message : error.message));
-      carregarPedidos();
-    }
-  }
-};
+ useEffect(() => {
+  const intervalo = setInterval(() => {
+    setPedidos((prev) =>
+      prev.map((p) => {
+        if (p.status !== 'andamento' || p.pausado === '1') {
+          console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
+          return p;
+        }
+
+        const inicioValido = p.inicio && !p.inicio.includes('undefined')
+          ? p.inicio
+          : formatDateToLocalISO(new Date(), 'intervalo');
+
+        let dataReferencia = inicioValido;
+        if (p.dataPausada && p.pausado === '0') {
+          dataReferencia = p.dataPausada;
+          console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência`);
+        }
+
+        const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
+        const tempoAtual = Math.round(p.tempo + tempoDesdeReferencia);
+
+        console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos`);
+        return {
+          ...p,
+          tempo: tempoAtual,
+        };
+      })
+    );
+  }, 60000); // Atualiza a cada 60 segundos (1 minuto)
+  return () => clearInterval(intervalo);
+}, []);
+
  // final da função retomarPedido 
   const handleLogout = () => {
     setIsAuthenticated(false);
