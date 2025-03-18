@@ -207,6 +207,7 @@ function App() {
   const calcularTempo = (inicio, fim = formatDateToLocalISO(new Date(), 'calcularTempo')) => {
     const inicioDate = parseDate(inicio);
     const fimDate = parseDate(fim);
+    console.log(`calcularTempo - inicio: ${inicio}, fim: ${fim}, diffMs: ${fimDate - inicioDate}, inicioDate: ${inicioDate}, fimDate: ${fimDate}`);
     if (isNaN(inicioDate) || isNaN(fimDate)) {
       console.error('Data inválida em calcularTempo:', { inicio, fim });
       return 0;
@@ -288,25 +289,26 @@ function App() {
     if (pedido) {
       const dataPausa = formatDateToLocalISO(new Date(), 'pausarPedido');
       const dataInicioPausa = formatDateToLocalISO(new Date(), 'inicioPausa');
-      const pedidoPausado = { 
-        ...pedido, 
-        pausado: '1', 
-        dataPausada: dataPausa, 
+      const pedidoPausado = {
+        ...pedido,
+        pausado: '1',
+        dataPausada: dataPausa,
         dataInicioPausa: dataInicioPausa,
-        tempoPausado: pedido.tempo // Salva o tempo atual em tempoPausado
+        tempoPausado: pedido.tempo, // Salva o tempo atual ao pausar
       };
       try {
         console.log('Enviando pedido atualizado para pausar:', pedidoPausado);
         const resposta = await api.put(`/pedidos/${id}`, pedidoPausado);
         setPedidos((prev) =>
           prev.map((p) =>
-            p.id === id ? { ...resposta.data, tempo: pedido.tempo } : p
+            p.id === id ? { ...resposta.data, tempo: pedido.tempo } : p // Mantém o tempo atual
           )
         );
         console.log('Pedido pausado:', resposta.data);
         setMensagem('Pedido pausado com sucesso.');
         carregarPedidos();
       } catch (error) {
+        console.error('Erro ao pausar pedido:', error);
         setMensagem('Erro ao pausar pedido: ' + error.message);
         carregarPedidos();
       }
@@ -321,13 +323,13 @@ function App() {
       const tempoPausadoAtual = pedido.dataPausada ? calcularTempo(pedido.dataPausada, dataRetomada) : 0;
       const tempoPausadoAnterior = (parseFloat(pedido.tempoPausado) || 0) + tempoPausadoAtual;
       console.log(`Retomando pedido ${id}: tempoPausadoAtual = ${tempoPausadoAtual}, tempoPausadoAnterior = ${tempoPausadoAnterior}, tempo atual antes = ${pedido.tempo}`);
-      const pedidoRetomado = { 
-        ...pedido, 
-        pausado: '0', 
-        dataPausada: dataRetomada, // Define a data de retomada como nova referência
+      const pedidoRetomado = {
+        ...pedido,
+        pausado: '0',
+        dataPausada: dataRetomada,
         dataInicioPausa: null,
         tempoPausado: tempoPausadoAnterior,
-        tempo: pedido.tempo // Mantém o tempo atual
+        tempo: pedido.tempo, // Mantém o tempo atual, sem somar o pausado
       };
       try {
         console.log('Enviando pedido atualizado para retomar:', pedidoRetomado);
@@ -341,45 +343,48 @@ function App() {
         setMensagem('Pedido retomado com sucesso.');
         carregarPedidos();
       } catch (error) {
+        console.error('Erro ao retomar pedido:', error);
         setMensagem('Erro ao retomar pedido: ' + (error.response ? error.response.data.message : error.message));
         carregarPedidos();
       }
     }
   };
+//useeffect
+useEffect(() => {
+  const intervalo = setInterval(() => {
+    setPedidos((prev) =>
+      prev.map((p) => {
+        if (p.status !== 'andamento' || p.pausado === '1') {
+          console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
+          return p;
+        }
 
-  useEffect(() => {
-    const intervalo = setInterval(() => {
-      setPedidos((prev) =>
-        prev.map((p) => {
-          if (p.status !== 'andamento' || p.pausado === '1') {
-            console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
-            return p;
-          }
+        const inicioValido = p.inicio && !p.inicio.includes('undefined')
+          ? p.inicio
+          : formatDateToLocalISO(new Date(), 'intervalo');
 
-          const inicioValido = p.inicio && !p.inicio.includes('undefined')
-            ? p.inicio
-            : formatDateToLocalISO(new Date(), 'intervalo');
+        let dataReferencia = inicioValido;
+        if (p.dataPausada && p.pausado === '0') {
+          dataReferencia = p.dataPausada;
+          console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência`);
+        }
 
-          let dataReferencia = inicioValido;
-          if (p.dataPausada && p.pausado === '0') {
-            dataReferencia = p.dataPausada;
-            console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência`);
-          }
+        const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
+        const tempoAtual = Math.round(p.tempo + tempoDesdeReferencia);
 
-          const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
-          const tempoAtual = Math.round(p.tempo + tempoDesdeReferencia);
+        console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos, tempoAntes = ${p.tempo}, tempoDesdeReferencia = ${tempoDesdeReferencia}`);
+        return {
+          ...p,
+          tempo: tempoAtual,
+        };
+      })
+    );
+  }, 60000); // Atualiza a cada 60 segundos (1 minuto)
+  return () => clearInterval(intervalo);
+}, []);
 
-          console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos`);
-          return {
-            ...p,
-            tempo: tempoAtual,
-          };
-        })
-      );
-    }, 60000); // Atualiza a cada 60 segundos (1 minuto)
-    return () => clearInterval(intervalo);
-  }, []);
 
+//fim do useeffect
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
