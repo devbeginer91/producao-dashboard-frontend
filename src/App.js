@@ -190,19 +190,6 @@ function App() {
     return () => clearInterval(intervalo);
   }, []);
 
-  //useeffect
-  const parseDate = (dateStr) => {
-    if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
-      console.warn('Data inválida fornecida em parseDate, usando data atual:', dateStr);
-      return new Date();
-    }
-    const parsedDate = new Date(dateStr);
-    if (isNaN(parsedDate)) {
-      console.warn('Data inválida em parseDate, usando data atual:', dateStr);
-      return new Date();
-    }
-    return parsedDate;
-  };
   const calcularTempo = (inicio, fim = formatDateToLocalISO(new Date(), 'calcularTempo')) => {
     const inicioDate = parseDate(inicio);
     const fimDate = parseDate(fim);
@@ -316,7 +303,6 @@ function App() {
   };
   
   // Adicionando a função retomarPedido
-  
   const retomarPedido = async (id) => {
     const pedido = pedidos.find((p) => p.id === id);
     if (pedido) {
@@ -350,7 +336,7 @@ function App() {
       }
     }
   };
-
+  
 //useeffect
 useEffect(() => {
   const intervalo = setInterval(() => {
