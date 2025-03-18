@@ -84,7 +84,6 @@ function App() {
   const lastFetchTimestamp = useRef(0);
 
   //fetchPedidos
-
   const fetchPedidos = async (dados = null) => {
     const now = Date.now();
     if (now - lastFetchTimestamp.current < 5000 && !dados) {
@@ -112,7 +111,8 @@ function App() {
             const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
             tempoFinal = Math.round(pedido.tempo); // Não soma o tempo pausado
           } else {
-            tempoFinal = Math.round(calcularTempo(inicioValido, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`)));
+            const tempoDecorrido = calcularTempo(inicioValido, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
+            tempoFinal = Math.round(tempoDecorrido > 0 ? tempoDecorrido : 0);
           }
         }
         console.log(`fetchPedidos - pedido ${pedido.id}: pausado = ${pedido.pausado}, tempoFinal = ${tempoFinal}, dataPausada = ${pedido.dataPausada}, tempoAntes = ${pedido.tempo}, tempoPausado = ${pedido.tempoPausado}, inicioValido = ${inicioValido}`);
@@ -140,6 +140,7 @@ function App() {
       isFetching.current = false;
     }
   };
+  
   //fetchPedidos
 
   const carregarPedidos = useCallback(debounce((dados) => {
@@ -203,7 +204,6 @@ function App() {
     }
     return parsedDate;
   };
-
   const calcularTempo = (inicio, fim = formatDateToLocalISO(new Date(), 'calcularTempo')) => {
     const inicioDate = parseDate(inicio);
     const fimDate = parseDate(fim);
@@ -215,6 +215,7 @@ function App() {
     const diffMs = fimDate - inicioDate;
     return diffMs < 0 ? 0 : diffMs / (1000 * 60); // Retorna em minutos
   };
+  
 
   const exportarPDF = () => {
     const doc = new jsPDF();
@@ -352,7 +353,6 @@ function App() {
   };
 
 //useeffect
-
 useEffect(() => {
   const intervalo = setInterval(() => {
     setPedidos((prev) =>
@@ -385,6 +385,7 @@ useEffect(() => {
   }, 60000); // Atualiza a cada 60 segundos (1 minuto)
   return () => clearInterval(intervalo);
 }, []);
+
 //fim do useeffect
   const handleLogout = () => {
     setIsAuthenticated(false);
