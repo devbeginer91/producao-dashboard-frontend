@@ -140,7 +140,6 @@ function App() {
       isFetching.current = false;
     }
   };
-  
   //fetchPedidos
 
   const carregarPedidos = useCallback(debounce((dados) => {
@@ -285,7 +284,6 @@ function App() {
   };
 
   // Função pausarPedido implementada
-  
   const pausarPedido = async (id) => {
     const pedido = pedidos.find((p) => p.id === id);
     if (pedido) {
@@ -316,6 +314,7 @@ function App() {
       }
     }
   };
+  
   // Adicionando a função retomarPedido
   
   const retomarPedido = async (id) => {
@@ -385,7 +384,6 @@ useEffect(() => {
   }, 60000); // Atualiza a cada 60 segundos (1 minuto)
   return () => clearInterval(intervalo);
 }, []);
-
 //fim do useeffect
   const handleLogout = () => {
     setIsAuthenticated(false);
