@@ -159,28 +159,27 @@ function App() {
     const intervalo = setInterval(() => {
       setPedidos((prev) =>
         prev.map((p) => {
-          if (p.status !== 'andamento' || p.pausado) {
-            console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos`);
-            return p; // Não atualiza o tempo se o pedido não estiver em andamento ou estiver pausado
+          if (p.status !== 'andamento' || p.pausado === '1') { // Ajustado para comparar como string
+            console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
+            return p;
           }
-
+  
           const inicioValido = p.inicio && !p.inicio.includes('undefined')
             ? p.inicio
             : formatDateToLocalISO(new Date(), 'intervalo');
-
+  
           let tempoAcumulado = p.tempoPausado || 0;
           let dataReferencia = inicioValido;
-
-          if (p.dataPausada && !p.pausado) {
-            // Após retomada, usa dataPausada como ponto de referência
+  
+          if (p.dataPausada && p.pausado === '0') {
             dataReferencia = p.dataPausada;
+            console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência, tempoAcumulado = ${tempoAcumulado}`);
           }
-          console.log(`Pedido ${p.id} retomado, usando dataPausada (${dataReferencia}) como referência, tempoAcumulado = ${tempoAcumulado}`);
-
+  
           const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
           const tempoAtual = Math.round(tempoAcumulado + tempoDesdeReferencia);
-
-          console.log(`Atualizando tempo para pedido ${p.id}: tempoPausado = ${tempoAcumulado}, tempoDesdeReferencia = ${tempoDesdeReferencia}, tempoAtual = ${tempoAtual} minutos (antes de setar)`);
+  
+          console.log(`Atualizando tempo para pedido ${p.id}: tempoPausado = ${tempoAcumulado}, tempoDesdeReferencia = ${tempoDesdeReferencia}, tempoAtual = ${tempoAtual} minutos`);
           return {
             ...p,
             tempo: tempoAtual,
@@ -190,7 +189,6 @@ function App() {
     }, 60000); // Atualiza a cada 60 segundos (1 minuto)
     return () => clearInterval(intervalo);
   }, []);
-
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
       console.warn('Data inválida fornecida em parseDate, usando data atual:', dateStr);
