@@ -84,61 +84,63 @@ function App() {
   const lastFetchTimestamp = useRef(0);
 
   //fetchPedidos
-  const fetchPedidos = async (dados = null) => {
-    const now = Date.now();
-    if (now - lastFetchTimestamp.current < 5000 && !dados) {
-      console.log('Ignorando chamada repetida a fetchPedidos');
-      return;
-    }
-  
-    if (isFetching.current) return;
-    isFetching.current = true;
-    try {
-      const response = dados ? { data: dados } : await api.get('/pedidos');
-      const pedidosAtualizados = response.data.map((pedido) => {
-        const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
-        const dataConclusaoValida = pedido.dataConclusao
-          ? formatDateToLocalISO(pedido.dataConclusao, `fetchPedidos - pedido ${pedido.id}`)
-          : null;
-  
-        let tempoFinal = pedido.tempoPausado || 0; // Base inicial no tempoPausado
-        if (pedido.status === 'concluido') {
-          tempoFinal = pedido.tempo;
-        } else if (pedido.status === 'andamento') {
-          if (pedido.pausado === '1') {
-            tempoFinal = pedido.tempoPausado || 0; // Mantém o tempoPausado ao pausar
-          } else if (pedido.dataPausada && pedido.pausado === '0') {
-            const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
-            tempoFinal = Math.round((pedido.tempoPausado || 0) + tempoDesdeRetomada);
-          } else {
-            tempoFinal = Math.round(calcularTempo(inicioValido, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`)));
-          }
+  //fetchPedidos
+const fetchPedidos = async (dados = null) => {
+  const now = Date.now();
+  if (now - lastFetchTimestamp.current < 5000 && !dados) {
+    console.log('Ignorando chamada repetida a fetchPedidos');
+    return;
+  }
+
+  if (isFetching.current) return;
+  isFetching.current = true;
+  try {
+    const response = dados ? { data: dados } : await api.get('/pedidos');
+    const pedidosAtualizados = response.data.map((pedido) => {
+      const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
+      const dataConclusaoValida = pedido.dataConclusao
+        ? formatDateToLocalISO(pedido.dataConclusao, `fetchPedidos - pedido ${pedido.id}`)
+        : null;
+
+      let tempoFinal = pedido.tempo || 0; // Usa o tempo do backend como base
+      if (pedido.status === 'concluido') {
+        tempoFinal = pedido.tempo;
+      } else if (pedido.status === 'andamento') {
+        if (pedido.pausado === '1') {
+          tempoFinal = pedido.tempo; // Mantém o tempo atual do backend ao pausar
+        } else if (pedido.dataPausada && pedido.pausado === '0') {
+          const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
+          tempoFinal = Math.round((pedido.tempoPausado || 0) + tempoDesdeRetomada);
+        } else {
+          tempoFinal = Math.round((pedido.tempoPausado || 0) + calcularTempo(inicioValido, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`)));
         }
-        console.log(`fetchPedidos - pedido ${pedido.id}: pausado = ${pedido.pausado}, tempoFinal = ${tempoFinal}, dataPausada = ${pedido.dataPausada}, tempoPausado = ${pedido.tempoPausado}, tempo = ${pedido.tempo}, inicioValido = ${inicioValido}`);
-  
-        return {
-          ...pedido,
-          inicio: inicioValido,
-          dataConclusao: dataConclusaoValida,
-          itens: Array.isArray(pedido.itens) ? pedido.itens : [],
-          tempo: Math.round(tempoFinal),
-          pausado: pedido.pausado, // Respeita o valor retornado pelo backend
-        };
-      });
-      console.log('Atualizando estado pedidos:', pedidosAtualizados.filter((p) => p.status === 'andamento'));
-      setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento'));
-      setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo'));
-      setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
-      setIsLoading(false);
-      lastFetchTimestamp.current = now;
-    } catch (error) {
-      console.error('Erro ao carregar pedidos:', error);
-      setMensagem('Erro ao carregar pedidos: ' + error.message);
-      setIsLoading(false);
-    } finally {
-      isFetching.current = false;
-    }
-  };
+      }
+      console.log(`fetchPedidos - pedido ${pedido.id}: pausado = ${pedido.pausado}, tempoFinal = ${tempoFinal}, dataPausada = ${pedido.dataPausada}, tempoPausado = ${pedido.tempoPausado}, tempo = ${pedido.tempo}, inicioValido = ${inicioValido}`);
+
+      return {
+        ...pedido,
+        inicio: inicioValido,
+        dataConclusao: dataConclusaoValida,
+        itens: Array.isArray(pedido.itens) ? pedido.itens : [],
+        tempo: Math.round(tempoFinal),
+        pausado: pedido.pausado, // Respeita o valor retornado pelo backend
+      };
+    });
+    console.log('Atualizando estado pedidos:', pedidosAtualizados.filter((p) => p.status === 'andamento'));
+    setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento'));
+    setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo'));
+    setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
+    setIsLoading(false);
+    lastFetchTimestamp.current = now;
+  } catch (error) {
+    console.error('Erro ao carregar pedidos:', error);
+    setMensagem('Erro ao carregar pedidos: ' + error.message);
+    setIsLoading(false);
+  } finally {
+    isFetching.current = false;
+  }
+};
+//fetchPedidos
   //fetchPedidos
 
   const carregarPedidos = useCallback(debounce((dados) => {
