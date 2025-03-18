@@ -171,31 +171,16 @@ const PedidoTable = ({
                 )}
               </td>
               {console.log('Estado do pedido:', pedido)}
-              <td className={tipo === 'andamento' && pedido.pausado === '1' ? 'tempo-pausado' : ''}>
+              <td className={tipo === 'andamento' && pedido.pausado ? 'tempo-pausado' : ''}>
                 {console.log(`Exibindo tempo para pedido ${pedido.id}: tempo = ${pedido.tempo} minutos`)}
                 {formatarTempo(pedido.tempo)}
                 {tipo === 'andamento' && (
                   <button
-                    className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'}
-                    onClick={() => {
-                      console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === '1' ? 'retomarPedido' : 'pausarPedido'}`);
-                      if (pedido.pausado === '1') {
-                        if (typeof props.retomarPedido === 'function') {
-                          props.retomarPedido(pedido.id);
-                        } else {
-                          console.error('retomarPedido não é uma função:', props.retomarPedido);
-                        }
-                      } else {
-                        if (typeof props.pausarPedido === 'function') {
-                          props.pausarPedido(pedido.id);
-                        } else {
-                          console.error('pausarPedido não é uma função:', props.pausarPedido);
-                        }
-                      }
-                    }}
+                    className={pedido.pausado ? 'btn-retomar' : 'btn-pausar'}
+                    onClick={() => pedido.pausado ? retomarPedido(pedido.id) : pausarPedido(pedido.id)}
                   >
                     {console.log(`Renderizando botão para pedido ${pedido.id}: pausado = ${pedido.pausado}`)}
-                    {pedido.pausado === '1' ? 'Retomar' : 'Pausar'}
+                    {pedido.pausado ? 'Retomar' : 'Pausar'}
                   </button>
                 )}
               </td>
