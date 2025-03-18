@@ -284,6 +284,7 @@ function App() {
   };
 
   // Função pausarPedido implementada
+  
   const pausarPedido = async (id) => {
     const pedido = pedidos.find((p) => p.id === id);
     if (pedido) {
@@ -314,7 +315,6 @@ function App() {
       }
     }
   };
-
   // Adicionando a função retomarPedido
   
   const retomarPedido = async (id) => {
@@ -330,7 +330,7 @@ function App() {
         dataPausada: dataRetomada,
         dataInicioPausa: null,
         tempoPausado: tempoPausadoAnterior,
-        tempo: pedido.tempo, // Mantém o tempo atual, sem somar o pausado
+        tempo: pedido.tempo, // Mantém o tempo atual
       };
       try {
         console.log('Enviando pedido atualizado para retomar:', pedidoRetomado);
@@ -385,7 +385,6 @@ useEffect(() => {
   }, 60000); // Atualiza a cada 60 segundos (1 minuto)
   return () => clearInterval(intervalo);
 }, []);
-
 //fim do useeffect
   const handleLogout = () => {
     setIsAuthenticated(false);
