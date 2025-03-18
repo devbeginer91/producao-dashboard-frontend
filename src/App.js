@@ -89,7 +89,7 @@ function App() {
       console.log('Ignorando chamada repetida a fetchPedidos');
       return;
     }
-
+  
     if (isFetching.current) return;
     isFetching.current = true;
     try {
@@ -99,35 +99,33 @@ function App() {
         const dataConclusaoValida = pedido.dataConclusao
           ? formatDateToLocalISO(pedido.dataConclusao, `fetchPedidos - pedido ${pedido.id}`)
           : null;
-
-        // Preservar o tempo fixado ao pausar ou retomar
-        let tempoFinal = pedido.tempoPausado || 0; // Inicializa com tempoPausado
+  
+        let tempoFinal = pedido.tempoPausado || 0;
         if (pedido.status === 'concluido') {
-          tempoFinal = pedido.tempo; // Usa o tempo armazenado para pedidos concluídos
+          tempoFinal = pedido.tempo;
         } else if (pedido.status === 'andamento') {
           if (pedido.pausado === '1') {
-            tempoFinal = pedido.tempoPausado || 0; // Mantém o tempoPausado ao pausar
+            tempoFinal = pedido.tempoPausado || 0;
           } else if (pedido.dataPausada && pedido.pausado === '0') {
-            // Após retomada, usa dataPausada como ponto de referência
             const tempoAcumulado = pedido.tempoPausado || 0;
             const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
             tempoFinal = Math.round(tempoAcumulado + tempoDesdeRetomada);
           } else {
-            // Sem pausa, calcula desde o início
             tempoFinal = Math.round((pedido.tempoPausado || 0) + calcularTempo(inicioValido));
           }
         }
-
-        console.log(`fetchPedidos - pedido ${pedido.id}: tempoFinal = ${tempoFinal}, pausado = ${pedido.pausado}, tempoPausado = ${pedido.tempoPausado}, tempo = ${pedido.tempo}, dataPausada = ${pedido.dataPausada}, dataInicioPausa = ${pedido.dataInicioPausa}`);
-
+        console.log(`fetchPedidos - pedido ${pedido.id}: pausado = ${pedido.pausado}, tempoFinal = ${tempoFinal}, dataPausada = ${pedido.dataPausada}`);
+  
         return {
           ...pedido,
           inicio: inicioValido,
           dataConclusao: dataConclusaoValida,
           itens: Array.isArray(pedido.itens) ? pedido.itens : [],
-          tempo: Math.round(tempoFinal), // Garantir que tempo seja em minutos inteiros
+          tempo: Math.round(tempoFinal),
+          pausado: pedido.pausado === '1' ? '1' : '0', // Normaliza para string
         };
       });
+      console.log('Atualizando estado pedidos:', pedidosAtualizados.filter((p) => p.status === 'andamento'));
       setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento'));
       setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo'));
       setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
@@ -188,7 +186,9 @@ function App() {
       );
     }, 60000); // Atualiza a cada 60 segundos (1 minuto)
     return () => clearInterval(intervalo);
-  }, [pedidos]); // Adiciona dependência para pedidos
+  }, []); 
+  
+  
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
       console.warn('Data inválida fornecida em parseDate, usando data atual:', dateStr);
