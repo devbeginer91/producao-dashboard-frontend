@@ -171,16 +171,16 @@ const PedidoTable = ({
                 )}
               </td>
               {console.log('Estado do pedido:', pedido)}
-              <td className={tipo === 'andamento' && pedido.pausado === 1 ? 'tempo-pausado' : ''}>
-                {console.log(`Exibindo tempo para pedido ${pedido.id}: tempo = ${pedido.tempo} minutos`)}
-                {formatarTempo(pedido.tempo)}
+              <td className={tipo === 'andamento' && pedido.pausado === '1' ? 'tempo-pausado' : ''}>
+                {console.log(`Exibindo tempo para pedido ${pedido.id}: tempo = ${pedido.tempo || 0} minutos`)}
+                {formatarTempo(pedido.tempo || 0)}
                 {tipo === 'andamento' && (
                   <button
-                    className={pedido.pausado === 1 ? 'btn-retomar' : 'btn-pausar'}
+                    className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'}
                     onClick={() => {
-                      console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === 1 ? 'retomarPedido' : 'pausarPedido'}`);
+                      console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === '1' ? 'retomarPedido' : 'pausarPedido'}`);
                       if (typeof pausarPedido === 'function' && typeof retomarPedido === 'function') {
-                        if (pedido.pausado === 1) {
+                        if (pedido.pausado === '1') {
                           retomarPedido(pedido.id);
                         } else {
                           pausarPedido(pedido.id);
@@ -191,7 +191,7 @@ const PedidoTable = ({
                     }}
                   >
                     {console.log(`Renderizando botão para pedido ${pedido.id}: pausado = ${pedido.pausado}`)}
-                    {pedido.pausado === 1 ? 'Retomar' : 'Pausar'}
+                    {pedido.pausado === '1' ? 'Retomar' : 'Pausar'}
                   </button>
                 )}
               </td>
