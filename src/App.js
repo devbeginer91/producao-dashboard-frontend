@@ -82,8 +82,7 @@ function App() {
 
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
-
- //fetchPedidos
+//fetchPedidos
 const fetchPedidos = async (dados = null) => {
   const now = Date.now();
   if (now - lastFetchTimestamp.current < 5000 && !dados) {
@@ -107,7 +106,7 @@ const fetchPedidos = async (dados = null) => {
         tempoFinal = pedido.tempo;
       } else if (pedido.status === 'andamento') {
         if (pedido.pausado === '1') {
-          tempoFinal = pedido.tempoPausado || pedido.tempo; // Preserva tempoPausado ou tempo original ao pausar
+          tempoFinal = pedido.tempoPausado !== undefined ? pedido.tempoPausado : pedido.tempo; // Usa tempoPausado ou tempo original
         } else if (pedido.dataPausada && pedido.pausado === '0') {
           const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
           tempoFinal = Math.round((pedido.tempoPausado || 0) + tempoDesdeRetomada);
@@ -123,7 +122,7 @@ const fetchPedidos = async (dados = null) => {
         dataConclusao: dataConclusaoValida,
         itens: Array.isArray(pedido.itens) ? pedido.itens : [],
         tempo: Math.round(tempoFinal),
-        pausado: pedido.pausado, // Respeita o valor retornado pelo backend
+        pausado: pedido.pausado,
       };
     });
     console.log('Atualizando estado pedidos:', pedidosAtualizados.filter((p) => p.status === 'andamento'));
@@ -275,25 +274,25 @@ useEffect(() => {
   };
 
   // Função pausarPedido implementada
-  const pausarPedido = async (id) => {
-    const pedido = pedidos.find((p) => p.id === id);
-    if (pedido) {
-      const tempoAtual = pedido.tempo; // Salva o tempo atual como tempoPausado
-      const dataPausada = formatDateToLocalISO(new Date(), 'pausarPedido');
-      const dataInicioPausa = formatDateToLocalISO(new Date(), 'inicioPausa');
-      const pedidoPausado = { ...pedido, pausado: 1, tempoPausado: tempoAtual, dataPausada, dataInicioPausa, tempo: tempoAtual };
-      try {
-        console.log('Pausando pedido:', pedidoPausado);
-        await api.put(`/pedidos/${id}`, pedidoPausado);
-        setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoPausado : p)));
-        setMensagem('Pedido pausado com sucesso.');
-        carregarPedidos();
-      } catch (error) {
-        setMensagem('Erro ao pausar pedido: ' + error.message);
-        carregarPedidos();
-      }
+const pausarPedido = async (id) => {
+  const pedido = pedidos.find((p) => p.id === id);
+  if (pedido) {
+    const tempoAtual = pedido.tempo; // Salva o tempo atual como tempoPausado
+    const dataPausada = formatDateToLocalISO(new Date(), 'pausarPedido');
+    const dataInicioPausa = formatDateToLocalISO(new Date(), 'inicioPausa');
+    const pedidoPausado = { ...pedido, pausado: 1, tempoPausado: tempoAtual, dataPausada, dataInicioPausa, tempo: tempoAtual };
+    try {
+      console.log('Pausando pedido:', pedidoPausado);
+      await api.put(`/pedidos/${id}`, pedidoPausado);
+      setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoPausado : p))); // Atualiza imediatamente
+      setMensagem('Pedido pausado com sucesso.');
+      carregarPedidos(); // Recarrega para sincronizar com o backend
+    } catch (error) {
+      setMensagem('Erro ao pausar pedido: ' + error.message);
+      carregarPedidos();
     }
-  };
+  }
+};
   
   
   //parseDate
@@ -343,7 +342,6 @@ useEffect(() => {
       }
     }
   };
-
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
