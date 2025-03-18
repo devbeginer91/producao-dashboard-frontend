@@ -110,7 +110,7 @@ function App() {
             tempoFinal = pedido.tempo; // Mantém o tempo congelado ao pausar
           } else if (pedido.dataPausada && pedido.pausado === '0') {
             const tempoDesdeRetomada = calcularTempo(pedido.dataPausada, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
-            tempoFinal = Math.round(pedido.tempo + tempoDesdeRetomada); // Continua de onde parou
+            tempoFinal = Math.round(pedido.tempo); // Não soma o tempo pausado
           } else {
             tempoFinal = Math.round(calcularTempo(inicioValido, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`)));
           }
@@ -123,7 +123,7 @@ function App() {
           dataConclusao: dataConclusaoValida,
           itens: Array.isArray(pedido.itens) ? pedido.itens : [],
           tempo: Math.round(tempoFinal),
-          pausado: pedido.pausado === '1' ? '1' : '0',
+          pausado: pedido.pausado, // Respeita o valor retornado pelo backend
         };
       });
       console.log('Atualizando estado pedidos:', pedidosAtualizados.filter((p) => p.status === 'andamento'));
@@ -207,7 +207,7 @@ function App() {
   const calcularTempo = (inicio, fim = formatDateToLocalISO(new Date(), 'calcularTempo')) => {
     const inicioDate = parseDate(inicio);
     const fimDate = parseDate(fim);
-    console.log(`calcularTempo - inicio: ${inicio}, fim: ${fim}, diffMs: ${fimDate - inicioDate}, inicioDate: ${inicioDate}, fimDate: ${fimDate}`);
+    console.log(`calcularTempo - inicio: ${inicio}, fim: ${fim}, diffMs: ${fimDate - inicioDate}, inicioDate: ${inicioDate.toISOString()}, fimDate: ${fimDate.toISOString()}`);
     if (isNaN(inicioDate) || isNaN(fimDate)) {
       console.error('Data inválida em calcularTempo:', { inicio, fim });
       return 0;
@@ -301,7 +301,7 @@ function App() {
         const resposta = await api.put(`/pedidos/${id}`, pedidoPausado);
         setPedidos((prev) =>
           prev.map((p) =>
-            p.id === id ? { ...resposta.data, tempo: pedido.tempo } : p // Mantém o tempo atual
+            p.id === id ? { ...resposta.data, tempo: pedido.tempo } : p
           )
         );
         console.log('Pedido pausado:', resposta.data);
@@ -316,6 +316,7 @@ function App() {
   };
 
   // Adicionando a função retomarPedido
+  
   const retomarPedido = async (id) => {
     const pedido = pedidos.find((p) => p.id === id);
     if (pedido) {
@@ -349,7 +350,9 @@ function App() {
       }
     }
   };
+
 //useeffect
+
 useEffect(() => {
   const intervalo = setInterval(() => {
     setPedidos((prev) =>
@@ -382,7 +385,6 @@ useEffect(() => {
   }, 60000); // Atualiza a cada 60 segundos (1 minuto)
   return () => clearInterval(intervalo);
 }, []);
-
 
 //fim do useeffect
   const handleLogout = () => {

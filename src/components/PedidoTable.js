@@ -180,9 +180,9 @@ const PedidoTable = ({
       onClick={() => {
         console.log(`Clicado botão para pedido ${pedido.id}: pausado = ${pedido.pausado}, chamando ${pedido.pausado === '1' ? 'retomarPedido' : 'pausarPedido'}`);
         if (pedido.pausado === '1') {
-          pausarPedido(pedido.id); // Corrigido: usar a função desestruturada
+          props.retomarPedido(pedido.id); // Usar props
         } else {
-          retomarPedido(pedido.id); // Corrigido: usar a função desestruturada
+          props.pausarPedido(pedido.id); // Usar props
         }
       }}
     >
