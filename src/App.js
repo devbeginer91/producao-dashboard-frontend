@@ -307,7 +307,11 @@ function App() {
       const dataRetomada = formatDateToLocalISO(new Date(), 'retomarPedido');
       const tempoPausadoAnterior = pedido.tempoPausado || 0;
       console.log(`Retomando pedido ${id}: tempoPausado = ${tempoPausadoAnterior}, tempo atual antes = ${pedido.tempo}`);
-      const pedidoRetomado = { ...pedido, pausado: 0, dataPausada: dataRetomada, dataInicioPausa: null, tempo: tempoPausadoAnterior };
+      const pedidoRetomado = { ...pedido, 
+        pausado: 0, 
+        dataPausada: dataRetomada, 
+        dataInicioPausa: null,
+        tempo: tempoPausadoAnterior };
       try {
         const resposta = await api.put(`/pedidos/${id}`, pedidoRetomado);
         setPedidos((prev) =>
