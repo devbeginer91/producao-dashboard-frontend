@@ -374,7 +374,7 @@ useEffect(() => {
         }
 
         const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
-        const tempoAtual = Math.round(p.tempo + tempoDesdeReferencia);
+        const tempoAtual = Math.round(p.tempo + (tempoDesdeReferencia > 0 ? tempoDesdeReferencia : 0));
 
         console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual} minutos, tempoAntes = ${p.tempo}, tempoDesdeReferencia = ${tempoDesdeReferencia}`);
         return {
