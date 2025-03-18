@@ -83,8 +83,7 @@ function App() {
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
 
-  //fetchPedidos
-
+ //fetchPedidos
 const fetchPedidos = async (dados = null) => {
   const now = Date.now();
   if (now - lastFetchTimestamp.current < 5000 && !dados) {
@@ -128,7 +127,8 @@ const fetchPedidos = async (dados = null) => {
       };
     });
     console.log('Atualizando estado pedidos:', pedidosAtualizados.filter((p) => p.status === 'andamento'));
-    setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento'));
+    // Forçar re-renderização ao atualizar o estado
+    setPedidos((prev) => [...pedidosAtualizados.filter((p) => p.status === 'andamento')]);
     setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo'));
     setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
     setIsLoading(false);
@@ -141,8 +141,7 @@ const fetchPedidos = async (dados = null) => {
     isFetching.current = false;
   }
 };
-
-  //fetchPedidos
+//fetchPedidos
 
   const carregarPedidos = useCallback(debounce((dados) => {
     fetchPedidos(dados);
@@ -160,11 +159,11 @@ const fetchPedidos = async (dados = null) => {
   //useeffect
 useEffect(() => {
   const intervalo = setInterval(() => {
-    setPedidos((prev) =>
-      prev.map((p) => {
+    setPedidos((prev) => {
+      const novosPedidos = prev.map((p) => {
         if (p.status !== 'andamento' || p.pausado === '1') {
           console.log(`Pedido ${p.id} não está em andamento ou está pausado, mantendo tempo: ${p.tempo} minutos, pausado: ${p.pausado}, dataPausada: ${p.dataPausada}`);
-          return p; // Não atualiza o tempo se pausado
+          return { ...p }; // Retorna uma nova referência para forçar re-renderização
         }
 
         const inicioValido = p.inicio && !p.inicio.includes('undefined')
@@ -187,8 +186,9 @@ useEffect(() => {
           ...p,
           tempo: tempoAtual,
         };
-      })
-    );
+      });
+      return [...novosPedidos]; // Forçar nova referência para re-renderização
+    });
   }, 60000); // Atualiza a cada 60 segundos (1 minuto)
   return () => clearInterval(intervalo);
 }, []);
