@@ -17,7 +17,7 @@ const PedidoTable = ({
   moverParaAndamento,
   pausarPedido,
   retomarPedido,
-  formatarTempo, // Recebendo a função como prop
+  formatarTempo,
 }) => {
   const [expandedRows, setExpandedRows] = useState([]);
 
@@ -226,10 +226,10 @@ const PedidoTable = ({
                           console.log('Item:', item, 'qtdPedido:', qtdPedido, 'qtdEntregue:', qtdEntregue, 'Saldo:', saldo);
                           return (
                             <tr key={idx}>
-                              <td>{codigoDesenho}</td>
-                              <td>{qtdPedido}</td>
-                              <td>{qtdEntregue}</td>
-                              <td>{isNaN(saldo) ? '0' : saldo}</td>
+                              <td>{logAndRender('codigoDesenho:', codigoDesenho)}</td>
+                              <td>{logAndRender('qtdPedido:', qtdPedido)}</td>
+                              <td>{logAndRender('qtdEntregue:', qtdEntregue)}</td>
+                              <td>{logAndRender('saldo:', saldo)}</td>
                             </tr>
                           );
                         })
