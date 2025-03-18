@@ -413,6 +413,7 @@ const fetchPedidos = async (dados = null) => {
 
               <h2>Pedidos em Andamento</h2>
               // Pedidos em Andamento
+              // Pedidos em Andamento
 <PedidoTable
   pedidos={pedidos}
   tipo="andamento"
@@ -430,8 +431,8 @@ const fetchPedidos = async (dados = null) => {
   busca={busca}
   carregarPedidos={carregarPedidos}
   moverParaAndamento={moverParaAndamento}
-  pausarPedido={pausarPedido} // Adiciona pausarPedido
-  retomarPedido={retomarPedido} // Adiciona retomarPedido
+  pausarPedido={pausarPedido} // Certifique-se de que está aqui
+  retomarPedido={retomarPedido} // Certifique-se de que está aqui
   formatarTempo={formatarTempo}
 />
 
@@ -454,8 +455,8 @@ const fetchPedidos = async (dados = null) => {
   carregarPedidos={carregarPedidos}
   moverParaAndamento={moverParaAndamento}
   formatarTempo={formatarTempo}
-  pausarPedido={pausarPedido} // Adiciona pausarPedido
-  retomarPedido={retomarPedido} // Adiciona retomarPedido
+  pausarPedido={pausarPedido} // Certifique-se de que está aqui
+  retomarPedido={retomarPedido} // Certifique-se de que está aqui
 />
 
 // Pedidos Concluídos
@@ -476,8 +477,8 @@ const fetchPedidos = async (dados = null) => {
   busca={busca}
   carregarPedidos={carregarPedidos}
   formatarTempo={formatarTempo}
-  pausarPedido={pausarPedido} // Adiciona pausarPedido
-  retomarPedido={retomarPedido} // Adiciona retomarPedido
+  pausarPedido={pausarPedido} // Certifique-se de que está aqui
+  retomarPedido={retomarPedido} // Certifique-se de que está aqui
 />
               {mostrarModal && (
                 <ModalObservacao
