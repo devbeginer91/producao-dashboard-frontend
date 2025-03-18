@@ -301,6 +301,22 @@ function App() {
       }
     }
   };
+
+  //parseDate
+  const parseDate = (dateStr) => {
+    if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
+      console.warn('Data inválida fornecida em parseDate, usando data atual:', dateStr);
+      return new Date();
+    }
+    const parsedDate = new Date(dateStr);
+    if (isNaN(parsedDate)) {
+      console.warn('Data inválida em parseDate, usando data atual:', dateStr);
+      return new Date();
+    }
+    return parsedDate;
+  };
+  //parsedate
+
   
   // Adicionando a função retomarPedido
   const retomarPedido = async (id) => {
