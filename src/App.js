@@ -11,6 +11,7 @@ import ModalPesoVolume from './components/ModalPesoVolume';
 import Busca from './components/Busca';
 import Login from './components/Login';
 import api from './api';
+import { formatarDataHora } from './utils'; // Importando do utils.js
 
 // Função para formatar datas no formato YYYY-MM-DD HH:MM:SS com fuso horário America/Sao_Paulo (UTC-3)
 export const formatDateToLocalISO = (date, context = 'unknown') => {
@@ -109,49 +110,50 @@ function App() {
   };
 
   // fetchPedidos
-const fetchPedidos = async (dados = null) => {
-  const now = Date.now();
-  if (now - lastFetchTimestamp.current < 5000 && !dados) return;
+  const fetchPedidos = async (dados = null) => {
+    const now = Date.now();
+    if (now - lastFetchTimestamp.current < 5000 && !dados) return;
 
-  if (isFetching.current) return;
-  isFetching.current = true;
-  try {
-    const response = dados ? { data: dados } : await api.get('/pedidos');
-    const pedidosAtualizados = response.data.map((pedido) => {
-      const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
-      const dataConclusaoValida = pedido.dataConclusao ? formatDateToLocalISO(pedido.dataConclusao) : null;
-      const tempoPausado = Number(pedido.tempoPausado) || 0;
-      let tempoFinal = tempoPausado;
-      if (pedido.status === 'concluido') {
-        tempoFinal = Number(pedido.tempo) || 0;
-      } else if (pedido.status === 'andamento' && pedido.pausado !== '1') {
-        const dataReferencia = pedido.dataPausada || pedido.inicio;
-        const tempoDecorrido = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
-        tempoFinal = tempoPausado + tempoDecorrido;
-      }
-      console.log(`fetchPedidos - pedido ${pedido.id}: tempoFinal = ${tempoFinal}, tempoPausado = ${tempoPausado}, pausado = ${pedido.pausado}`);
-      return {
-        ...pedido,
-        inicio: inicioValido,
-        dataConclusao: dataConclusaoValida,
-        tempo: tempoFinal,
-        tempoPausado: tempoPausado,
-        pausado: pedido.pausado,
-        itens: Array.isArray(pedido.itens) ? pedido.itens : [],
-      };
-    });
-    setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento'));
-    setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo'));
-    setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
-    setIsLoading(false);
-    lastFetchTimestamp.current = now;
-  } catch (error) {
-    console.error('Erro ao carregar pedidos:', error);
-    setMensagem('Erro ao carregar pedidos: ' + error.message);
-  } finally {
-    isFetching.current = false;
-  }
-};
+    if (isFetching.current) return;
+    isFetching.current = true;
+    try {
+      const response = dados ? { data: dados } : await api.get('/pedidos');
+      const pedidosAtualizados = response.data.map((pedido) => {
+        const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
+        const dataConclusaoValida = pedido.dataConclusao ? formatDateToLocalISO(pedido.dataConclusao) : null;
+        const tempoPausado = Number(pedido.tempoPausado) || 0;
+        let tempoFinal = tempoPausado;
+        if (pedido.status === 'concluido') {
+          tempoFinal = Number(pedido.tempo) || 0;
+        } else if (pedido.status === 'andamento' && pedido.pausado !== '1') {
+          const dataReferencia = pedido.dataPausada || pedido.inicio;
+          const tempoDecorrido = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
+          tempoFinal = tempoPausado + tempoDecorrido;
+        }
+        console.log(`fetchPedidos - pedido ${pedido.id}: tempoFinal = ${tempoFinal}, tempoPausado = ${tempoPausado}, pausado = ${pedido.pausado}`);
+        return {
+          ...pedido,
+          inicio: inicioValido,
+          dataConclusao: dataConclusaoValida,
+          tempo: tempoFinal,
+          tempoPausado: tempoPausado,
+          pausado: pedido.pausado,
+          itens: Array.isArray(pedido.itens) ? pedido.itens : [],
+        };
+      });
+      const sortByPrevisaoEntrega = (a, b) => new Date(b.previsaoEntrega) - new Date(a.previsaoEntrega); // Ordenação por previsão de entrega (mais recente primeiro)
+      setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento').sort(sortByPrevisaoEntrega));
+      setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo').sort(sortByPrevisaoEntrega));
+      setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
+      setIsLoading(false);
+      lastFetchTimestamp.current = now;
+    } catch (error) {
+      console.error('Erro ao carregar pedidos:', error);
+      setMensagem('Erro ao carregar pedidos: ' + error.message);
+    } finally {
+      isFetching.current = false;
+    }
+  };
 
   const carregarPedidos = useCallback(debounce((dados) => {
     fetchPedidos(dados);
@@ -166,30 +168,28 @@ const fetchPedidos = async (dados = null) => {
     };
   }, [carregarPedidos, isAuthenticated]);
 
- // useEffect
-useEffect(() => {
-  const intervalo = setInterval(() => {
-    setPedidos((prev) => {
-      const novosPedidos = prev.map((p) => {
-        if (p.status !== 'andamento' || p.pausado === '1') {
-          return { ...p, tempo: Number(p.tempoPausado) || p.tempo || 0 };
-        }
-        const dataReferencia = p.dataPausada || p.inicio;
-        const tempoAcumulado = Number(p.tempoPausado) || 0;
-        const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
-        const tempoAtual = Math.round(tempoAcumulado + tempoDesdeReferencia);
-        console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual}, tempoPausado = ${tempoAcumulado}, tempoDesdeReferencia = ${tempoDesdeReferencia}`);
-        return { ...p, tempo: tempoAtual };
+  // useEffect
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      setPedidos((prev) => {
+        const novosPedidos = prev.map((p) => {
+          if (p.status !== 'andamento' || p.pausado === '1') {
+            return { ...p, tempo: Number(p.tempoPausado) || p.tempo || 0 };
+          }
+          const dataReferencia = p.dataPausada || p.inicio;
+          const tempoAcumulado = Number(p.tempoPausado) || 0;
+          const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
+          const tempoAtual = Math.round(tempoAcumulado + tempoDesdeReferencia);
+          console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual}, tempoPausado = ${tempoAcumulado}, tempoDesdeReferencia = ${tempoDesdeReferencia}`);
+          return { ...p, tempo: tempoAtual };
+        });
+        return [...novosPedidos];
       });
-      return [...novosPedidos];
-    });
-  }, 60000);
-  return () => clearInterval(intervalo);
-}, []);
+    }, 60000);
+    return () => clearInterval(intervalo);
+  }, []);
 
-  const formatarDataHora = (data) => {
-    return data ? parseDate(data).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : 'Não informado';
-  };
+  // Removido formatarDataHora local e usando o importado do utils.js
 
   const exportarPDF = () => {
     const doc = new jsPDF();
@@ -254,64 +254,65 @@ useEffect(() => {
     }
   };
 
- // pausarPedido
-const pausarPedido = async (id) => {
-  const pedido = pedidos.find((p) => p.id === id);
-  if (!pedido) {
-    setMensagem('Erro: Pedido não encontrado.');
-    return;
-  }
-  const dataPausada = formatDateToLocalISO(new Date(), 'pausarPedido');
-  const dataInicioPausa = formatDateToLocalISO(new Date(), 'inicioPausa');
-  const tempoAtual = pedido.tempo || calcularTempo(pedido.inicio, dataPausada); // Usa o tempo atual do estado
-  const pedidoPausado = {
-    ...pedido,
-    pausado: '1',
-    tempoPausado: tempoAtual,
-    dataPausada,
-    dataInicioPausa,
-    tempo: tempoAtual,
+  // pausarPedido
+  const pausarPedido = async (id) => {
+    const pedido = pedidos.find((p) => p.id === id);
+    if (!pedido) {
+      setMensagem('Erro: Pedido não encontrado.');
+      return;
+    }
+    const dataPausada = formatDateToLocalISO(new Date(), 'pausarPedido');
+    const dataInicioPausa = formatDateToLocalISO(new Date(), 'inicioPausa');
+    const tempoAtual = pedido.tempo || calcularTempo(pedido.inicio, dataPausada); // Usa o tempo atual do estado
+    const pedidoPausado = {
+      ...pedido,
+      pausado: '1',
+      tempoPausado: tempoAtual,
+      dataPausada,
+      dataInicioPausa,
+      tempo: tempoAtual,
+    };
+    try {
+      console.log('Pausando pedido:', pedidoPausado);
+      await api.put(`/pedidos/${id}`, pedidoPausado);
+      setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoPausado : p)));
+      setMensagem('Pedido pausado com sucesso.');
+      carregarPedidos();
+    } catch (error) {
+      console.error('Erro ao pausar pedido:', error);
+      setMensagem('Erro ao pausar pedido: ' + (error.response?.data.message || error.message));
+    }
   };
-  try {
-    console.log('Pausando pedido:', pedidoPausado);
-    await api.put(`/pedidos/${id}`, pedidoPausado);
-    setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoPausado : p)));
-    setMensagem('Pedido pausado com sucesso.');
-    carregarPedidos();
-  } catch (error) {
-    console.error('Erro ao pausar pedido:', error);
-    setMensagem('Erro ao pausar pedido: ' + (error.response?.data.message || error.message));
-  }
-};
 
-// retomarPedido
-const retomarPedido = async (id) => {
-  const pedido = pedidos.find((p) => p.id === id);
-  if (!pedido) {
-    setMensagem('Erro: Pedido não encontrado.');
-    return;
-  }
-  const dataRetomada = formatDateToLocalISO(new Date(), 'retomarPedido');
-  const tempoPausadoAnterior = Number(pedido.tempoPausado) || pedido.tempo || 0;
-  const pedidoRetomado = {
-    ...pedido,
-    pausado: '0',
-    dataPausada: dataRetomada,
-    dataInicioPausa: null,
-    tempoPausado: tempoPausadoAnterior,
-    tempo: tempoPausadoAnterior,
+  // retomarPedido
+  const retomarPedido = async (id) => {
+    const pedido = pedidos.find((p) => p.id === id);
+    if (!pedido) {
+      setMensagem('Erro: Pedido não encontrado.');
+      return;
+    }
+    const dataRetomada = formatDateToLocalISO(new Date(), 'retomarPedido');
+    const tempoPausadoAnterior = Number(pedido.tempoPausado) || pedido.tempo || 0;
+    const pedidoRetomado = {
+      ...pedido,
+      pausado: '0',
+      dataPausada: dataRetomada,
+      dataInicioPausa: null,
+      tempoPausado: tempoPausadoAnterior,
+      tempo: tempoPausadoAnterior,
+    };
+    try {
+      console.log('Enviando pedido atualizado para retomar:', pedidoRetomado);
+      await api.put(`/pedidos/${id}`, pedidoRetomado);
+      setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoRetomado : p)));
+      setMensagem('Pedido retomado com sucesso.');
+      carregarPedidos();
+    } catch (error) {
+      console.error('Erro ao retomar pedido:', error);
+      setMensagem('Erro ao retomar pedido: ' + (error.response?.data.message || error.message));
+    }
   };
-  try {
-    console.log('Enviando pedido atualizado para retomar:', pedidoRetomado);
-    await api.put(`/pedidos/${id}`, pedidoRetomado);
-    setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoRetomado : p)));
-    setMensagem('Pedido retomado com sucesso.');
-    carregarPedidos();
-  } catch (error) {
-    console.error('Erro ao retomar pedido:', error);
-    setMensagem('Erro ao retomar pedido: ' + (error.response?.data.message || error.message));
-  }
-};
+
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
@@ -378,9 +379,6 @@ const retomarPedido = async (id) => {
                 setPedidosAndamento={setPedidosAndamento}
                 setPedidosConcluidos={setPedidosConcluidos}
                 setMensagem={setMensagem}
-                setPedidoParaEditar={setPedidoParaEditar}
-                setNovoPedido={setNovoPedido}
-                setMostrarFormulario={setMostrarFormulario}
                 setMostrarModal={setMostrarModal}
                 setPedidoSelecionado={setPedidoSelecionado}
                 setMostrarModalPesoVolume={setMostrarModalPesoVolume}

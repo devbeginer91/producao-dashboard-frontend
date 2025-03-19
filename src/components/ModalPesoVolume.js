@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api'; // Importando a instância centralizada api
+import api from '../api';
+import { formatarDataHora } from '../utils'; // Importando do utils.js
 
 const ModalPesoVolume = ({
   pedidoParaConcluir,
@@ -17,6 +18,7 @@ const ModalPesoVolume = ({
   const [quantidadesParaAdicionar, setQuantidadesParaAdicionar] = useState(
     pedidoParaConcluir?.itens.map(() => '') || []
   );
+  const [historicoEntregas, setHistoricoEntregas] = useState([]);
   const [pedidoCompleto, setPedidoCompleto] = useState(false);
 
   const formatDateToLocalISO = (date, context = 'unknown') => {
@@ -38,6 +40,11 @@ const ModalPesoVolume = ({
   };
 
   useEffect(() => {
+    if (pedidoParaConcluir?.id) {
+      api.get(`/historico-entregas/${pedidoParaConcluir.id}`)
+        .then(response => setHistoricoEntregas(response.data))
+        .catch(error => console.error('Erro ao carregar histórico:', error));
+    }
     if (pedidoParaConcluir?.itemParaEditar) {
       const completo = verificarPedidoCompleto(quantidadesParaAdicionar);
       setPedidoCompleto(completo);
@@ -49,17 +56,22 @@ const ModalPesoVolume = ({
 
     const novasQuantidadesEntregues = pedidoParaConcluir.itens.map((item, index) => {
       const quantidadeAdicionadaInput = quantidadesParaAdicionar[index];
-      const quantidadeAdicionada = quantidadeAdicionadaInput === ''
-        ? (item.quantidadePedido || 0) - (item.quantidadeEntregue || 0)
-        : parseInt(quantidadeAdicionadaInput, 10) || 0;
+      const quantidadeAdicionada = quantidadeAdicionadaInput === '' ? 0 : parseInt(quantidadeAdicionadaInput, 10) || 0; // Considera vazio como 0
       return (item.quantidadeEntregue || 0) + quantidadeAdicionada;
     });
+
+    const mudouAlgo = novasQuantidadesEntregues.some((qtd, index) => qtd !== (pedidoParaConcluir.itens[index].quantidadeEntregue || 0));
+    if (!mudouAlgo) {
+      setMostrarModalPesoVolume(false);
+      setPedidoParaConcluir(null);
+      return; // Ignora a ação se nada mudou
+    }
 
     const algumaQuantidadePreenchida = quantidadesParaAdicionar.some(q => q !== '');
     const pedidoEstaCompleto = pedidoParaConcluir?.itemParaEditar ? verificarPedidoCompleto(quantidadesParaAdicionar) : true;
 
     if ((pedidoEstaCompleto || algumaQuantidadePreenchida) && (!peso || !volume)) {
-      alert('Por favor, preencha os campos de peso e volume para prosseguir.');
+      alert('Por favor, preencha os campos de peso e volume antes de prosseguir.');
       return;
     }
 
@@ -85,9 +97,7 @@ const ModalPesoVolume = ({
 
         console.log('Enviando pedido concluído:', pedidoConcluido);
 
-        // Substituí axios.put por api.put e removi localhost:5000
         const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoConcluido);
-        // Substituí axios.post por api.post e removi localhost:5000
         await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         setPedidos((prev) => prev.filter((p) => p.id !== pedidoConcluido.id));
         setPedidosConcluidos((prev) => [...prev, resposta.data]);
@@ -103,9 +113,7 @@ const ModalPesoVolume = ({
 
         console.log('Enviando pedido atualizado:', pedidoAtualizado);
 
-        // Substituí axios.put por api.put e removi localhost:5000
         const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoAtualizado);
-        // Substituí axios.post por api.post e removi localhost:5000
         await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         setPedidos((prev) => prev.map((p) => (p.id === pedidoAtualizado.id ? resposta.data : p)));
         setMensagem('Quantidades entregues atualizadas e e-mail enviado!');
@@ -166,6 +174,32 @@ const ModalPesoVolume = ({
               </div>
             ) : (
               <p>Sem itens para exibir.</p>
+            )}
+          </div>
+
+          <div>
+            <h3>Histórico de Edições</h3>
+            {historicoEntregas.length > 0 ? (
+              <table className="tabela-historico">
+                <thead>
+                  <tr>
+                    <th>Item ID</th>
+                    <th>Quantidade Entregue</th>
+                    <th>Data da Edição</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historicoEntregas.map((entry) => (
+                    <tr key={entry.id}>
+                      <td>{entry.item_id}</td>
+                      <td>{entry.quantidadeEntregue}</td>
+                      <td>{formatarDataHora(entry.dataEdicao)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>Nenhuma edição registrada.</p>
             )}
           </div>
 

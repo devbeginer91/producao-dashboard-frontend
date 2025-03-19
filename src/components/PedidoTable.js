@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from '../api';
+import { formatarDataHora } from '../utils'; // Importando do utils.js
 
 const PedidoTable = ({
   pedidos,
@@ -12,6 +13,9 @@ const PedidoTable = ({
   setPedidoSelecionado,
   setMostrarModalPesoVolume,
   setPedidoParaConcluir,
+  setPedidoParaEditar,
+  setNovoPedido,
+  setMostrarFormulario,
   busca,
   carregarPedidos,
   moverParaAndamento,
@@ -42,12 +46,7 @@ const PedidoTable = ({
     return parsedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
-  const formatarDataHora = (data) => {
-    if (!data || typeof data !== 'string' || data.includes('undefined')) {
-      return 'Não informado';
-    }
-    return new Date(data).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-  };
+  // Removido formatarDataHora local e usando o importado do utils.js
 
   const logAndRender = (label, value, fallback = 'Não informado') => {
     console.log(label, value);
@@ -163,8 +162,8 @@ const PedidoTable = ({
               <td className="data-hora">
                 {tipo === 'concluido' ? (
                   <>
-                    {logAndRender('inicio:', pedido.inicio, formatarDataHora(pedido.inicio)) || 'Não informado'}<br />
-                    {logAndRender('dataConclusao:', pedido.dataConclusao, formatarDataHora(pedido.dataConclusao)) || 'Não concluído'}
+                    {logAndRender('inicio:', pedido.inicio, formatarDataHora(pedido.inicio))}<br />
+                    {logAndRender('dataConclusao:', pedido.dataConclusao, formatarDataHora(pedido.dataConclusao))}
                   </>
                 ) : (
                   logAndRender('inicio:', pedido.inicio, formatarDataHora(pedido.inicio))
@@ -212,6 +211,13 @@ const PedidoTable = ({
                     )}
                     {tipo === 'andamento' && (
                       <button className="btn-editar" onClick={() => editarQuantidadeEntregue(pedido.id)}>Editar</button>
+                    )}
+                    {tipo === 'novo' && (
+                      <button className="btn-editar" onClick={() => {
+                        setPedidoParaEditar(pedido);
+                        setNovoPedido({ ...pedido, itens: pedido.itens || [{ codigoDesenho: '', quantidadePedido: '' }] });
+                        setMostrarFormulario(true);
+                      }}>Editar</button>
                     )}
                     <button className="btn-excluir" onClick={() => excluirPedido(pedido.id)}>Excluir</button>
                   </div>
