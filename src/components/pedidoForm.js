@@ -1,6 +1,7 @@
 import React from 'react';
-import api from '../api'; // Importando a instância centralizada api
-import { formatDateToLocalISO } from '../App'; // Importando a função de App.js
+import api from '../api';
+import { formatDateToLocalISO } from '../App'; // Mantido como prop
+import { formatarDataHora } from '../utils'; // Importando do utils.js
 
 const PedidoForm = ({
   novoPedido,
@@ -16,7 +17,7 @@ const PedidoForm = ({
   setMostrarModalPesoVolume,
   setPedidoParaConcluir,
   moverParaAndamento,
-  formatDateToLocalISO, // Recebendo a função como prop
+  formatDateToLocalISO, // Recebendo como prop
 }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,8 +40,8 @@ const PedidoForm = ({
     const pedidoParaEnviar = {
       ...novoPedido,
       inicio: inicioValido,
-      tempo: novoPedido.status === 'novo' ? 0 : novoPedido.tempo,
-      status: novoPedido.status,
+      tempo: novoPedido.status === 'novo' ? 0 : novoPedido.tempo || 0,
+      status: novoPedido.status, // Permite qualquer status
       itens: novoPedido.itens.map(item => ({
         codigoDesenho: item.codigoDesenho,
         quantidadePedido: parseInt(item.quantidadePedido, 10) || 0,
@@ -53,28 +54,42 @@ const PedidoForm = ({
     try {
       let resposta;
       if (pedidoParaEditar) {
-        if (novoPedido.status === 'andamento') {
+        if (novoPedido.status === 'andamento' && pedidoParaEditar.status !== 'andamento') {
           setPedidoParaConcluir(pedidoParaEnviar);
           setMostrarModalPesoVolume(true);
-          setMensagem('Preencha peso e volume para salvar a edição.');
+          setMensagem('Preencha peso e volume para mover para "Em Andamento".');
+          resetForm();
+          return;
+        } else if (novoPedido.status === 'concluido' && pedidoParaEditar.status !== 'concluido') {
+          setPedidoParaConcluir(pedidoParaEnviar);
+          setMostrarModalPesoVolume(true);
+          setMensagem('Preencha peso e volume para concluir o pedido.');
           resetForm();
           return;
         }
-        // Substituí axios.put por api.put e removi localhost:5000
         resposta = await api.put(`/pedidos/${pedidoParaEditar.id}`, pedidoParaEnviar);
-        // Substituí axios.post por api.post e removi localhost:5000
         await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         atualizarListas(resposta.data);
         setMensagem('Pedido atualizado e e-mail enviado!');
       } else {
-        // Substituí axios.post por api.post e removi localhost:5000
         resposta = await api.post('/pedidos', pedidoParaEnviar);
-        // Substituí axios.post por api.post e removi localhost:5000
         await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
-        setPedidosAndamento((prev) => [...prev, resposta.data]);
-        setMensagem('Pedido adicionado e e-mail enviado!');
+        if (resposta.data.status === 'novo') {
+          setPedidosAndamento((prev) => [...prev, resposta.data]);
+          setMensagem('Pedido adicionado como "Novo" e e-mail enviado!');
+        } else if (resposta.data.status === 'andamento') {
+          setPedidos((prev) => [...prev, resposta.data]);
+          setMostrarModalPesoVolume(true);
+          setPedidoParaConcluir(resposta.data);
+          setMensagem('Preencha peso e volume para "Em Andamento".');
+        } else if (resposta.data.status === 'concluido') {
+          setPedidosConcluidos((prev) => [...prev, resposta.data]);
+          setMostrarModalPesoVolume(true);
+          setPedidoParaConcluir(resposta.data);
+          setMensagem('Preencha peso e volume para concluir.');
+        }
       }
-      resetForm(); // Garante que o formulário seja limpo após o envio
+      resetForm();
     } catch (error) {
       setMensagem('Erro ao processar pedido: ' + (error.response?.data.message || error.message));
       await carregarPedidos();
@@ -111,7 +126,7 @@ const PedidoForm = ({
       peso: null,
       volume: null,
       dataConclusao: null,
-      pausado: 0,
+      pausado: '0', // Alterado de 0 para '0' para consistência com o backend
       tempoPausado: 0,
       dataPausada: null,
       itens: [{ codigoDesenho: '', quantidadePedido: '' }],
