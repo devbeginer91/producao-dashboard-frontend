@@ -139,7 +139,7 @@ const ModalPesoVolume = ({
 
   return (
     <div className="modal">
-      <div className="modal-content">
+      <div className="modal-content" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
         <h2>{pedidoParaConcluir?.itemParaEditar ? 'Quantidade a Entregar' : 'Concluir Pedido'}</h2>
         <form onSubmit={handleSubmit}>
           <div>

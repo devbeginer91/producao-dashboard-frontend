@@ -185,9 +185,9 @@ const PedidoTable = ({
             <tr className={isPastDue(pedido.previsaoEntrega) ? 'atrasado' : ''}>
               <td>{logAndRender('empresa:', pedido.empresa)}</td>
               <td>{logAndRender('numeroOS:', pedido.numeroOS)}</td>
-              <td>{logAndRender('dataEntrada:', pedido.dataEntrada, formatarData(pedido.dataEntrada))}</td>
+              <td>{formatarData(pedido.dataEntrada)}</td>
               <td>
-                {logAndRender('previsaoEntrega:', pedido.previsaoEntrega, formatarData(pedido.previsaoEntrega))}
+                {formatarData(pedido.previsaoEntrega)}
                 {isPastDue(pedido.previsaoEntrega) && <span className="atrasado-icon">⚠️</span>}
               </td>
               <td>{logAndRender('responsavel:', pedido.responsavel)}</td>
