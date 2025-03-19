@@ -266,9 +266,7 @@ const pausarPedido = async (id) => {
   }
   const dataPausada = formatDateToLocalISO(new Date(), 'pausarPedido');
   const dataInicioPausa = formatDateToLocalISO(new Date(), 'inicioPausa');
-  const tempoAtual = pedido.dataPausada
-    ? Math.round((Number(pedido.tempoPausado) || 0) + calcularTempo(pedido.dataPausada, dataPausada))
-    : Math.round(calcularTempo(pedido.inicio, dataPausada));
+  const tempoAtual = pedido.tempo || calcularTempo(pedido.inicio, dataPausada); // Usa o tempo atual do estado
   const pedidoPausado = {
     ...pedido,
     pausado: '1',
@@ -284,10 +282,12 @@ const pausarPedido = async (id) => {
     setMensagem('Pedido pausado com sucesso.');
     carregarPedidos();
   } catch (error) {
+    console.error('Erro ao pausar pedido:', error);
     setMensagem('Erro ao pausar pedido: ' + (error.response?.data.message || error.message));
   }
 };
- // retomarPedido
+
+// retomarPedido
 const retomarPedido = async (id) => {
   const pedido = pedidos.find((p) => p.id === id);
   if (!pedido) {
@@ -311,6 +311,7 @@ const retomarPedido = async (id) => {
     setMensagem('Pedido retomado com sucesso.');
     carregarPedidos();
   } catch (error) {
+    console.error('Erro ao retomar pedido:', error);
     setMensagem('Erro ao retomar pedido: ' + (error.response?.data.message || error.message));
   }
 };
