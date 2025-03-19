@@ -120,27 +120,24 @@ const fetchPedidos = async (dados = null) => {
     const pedidosAtualizados = response.data.map((pedido) => {
       const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
       const dataConclusaoValida = pedido.dataConclusao ? formatDateToLocalISO(pedido.dataConclusao) : null;
-
-      let tempoFinal = pedido.tempo || 0;
+      const tempoPausado = Number(pedido.tempoPausado) || 0;
+      let tempoFinal = tempoPausado;
       if (pedido.status === 'concluido') {
-        tempoFinal = pedido.tempo;
-      } else if (pedido.status === 'andamento') {
-        const tempoBase = Number(pedido.tempoPausado) || 0; // Converte para número
-        if (pedido.pausado === '1') {
-          tempoFinal = tempoBase; // Mantém o tempo pausado
-        } else {
-          const dataReferencia = pedido.dataPausada || pedido.inicio;
-          tempoFinal = Math.round(tempoBase + calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`)));
-        }
+        tempoFinal = Number(pedido.tempo) || 0;
+      } else if (pedido.status === 'andamento' && pedido.pausado !== '1') {
+        const dataReferencia = pedido.dataPausada || pedido.inicio;
+        const tempoDecorrido = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
+        tempoFinal = tempoPausado + tempoDecorrido;
       }
-      console.log(`fetchPedidos - pedido ${pedido.id}: tempoFinal = ${tempoFinal}, tempoPausado = ${pedido.tempoPausado}, pausado = ${pedido.pausado}`);
+      console.log(`fetchPedidos - pedido ${pedido.id}: tempoFinal = ${tempoFinal}, tempoPausado = ${tempoPausado}, pausado = ${pedido.pausado}`);
       return {
         ...pedido,
         inicio: inicioValido,
         dataConclusao: dataConclusaoValida,
-        itens: Array.isArray(pedido.itens) ? pedido.itens : [],
         tempo: tempoFinal,
+        tempoPausado: tempoPausado,
         pausado: pedido.pausado,
+        itens: Array.isArray(pedido.itens) ? pedido.itens : [],
       };
     });
     setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento'));
@@ -315,7 +312,6 @@ const retomarPedido = async (id) => {
     setMensagem('Erro ao retomar pedido: ' + (error.response?.data.message || error.message));
   }
 };
-
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
