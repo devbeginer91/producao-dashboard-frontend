@@ -56,7 +56,7 @@ const ModalPesoVolume = ({
 
     const novasQuantidadesEntregues = pedidoParaConcluir.itens.map((item, index) => {
       const quantidadeAdicionadaInput = quantidadesParaAdicionar[index];
-      const quantidadeAdicionada = quantidadeAdicionadaInput === '' ? 0 : parseInt(quantidadeAdicionadaInput, 10) || 0; // Considera vazio como 0
+      const quantidadeAdicionada = quantidadeAdicionadaInput === '' ? 0 : parseInt(quantidadeAdicionadaInput, 10) || 0;
       return (item.quantidadeEntregue || 0) + quantidadeAdicionada;
     });
 
@@ -64,7 +64,7 @@ const ModalPesoVolume = ({
     if (!mudouAlgo) {
       setMostrarModalPesoVolume(false);
       setPedidoParaConcluir(null);
-      return; // Ignora a ação se nada mudou
+      return;
     }
 
     const algumaQuantidadePreenchida = quantidadesParaAdicionar.some(q => q !== '');
@@ -92,7 +92,7 @@ const ModalPesoVolume = ({
           peso: parseFloat(peso),
           volume: parseFloat(volume),
           dataConclusao,
-          tempo: pedidoParaConcluir.tempo, // Preserva o tempo de "Em Andamento"
+          tempo: pedidoParaConcluir.tempo,
         };
 
         console.log('Enviando pedido concluído:', pedidoConcluido);
@@ -181,7 +181,7 @@ const ModalPesoVolume = ({
                             </thead>
                             <tbody>
                               {historicoEntregas
-                                .filter(entry => entry.item_id === item.id) // Filtra por item específico
+                                .filter(entry => entry.item_id === item.id)
                                 .map((entry, idx) => (
                                   <tr key={entry.id}>
                                     <td>{idx + 1}</td>

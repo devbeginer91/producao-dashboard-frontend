@@ -160,11 +160,11 @@ const PedidoTable = ({
               <td className="data-hora">
                 {tipo === 'concluido' ? (
                   <>
-                    {logAndRender('inicio:', pedido.inicio, formatarDataHora(pedido.inicio))}<br />
-                    {logAndRender('dataConclusao:', pedido.dataConclusao, formatarDataHora(pedido.dataConclusao))}
+                    {formatarDataHora(pedido.inicio)}<br />
+                    {formatarDataHora(pedido.dataConclusao) || 'Não concluído'}
                   </>
                 ) : (
-                  logAndRender('inicio:', pedido.inicio, formatarDataHora(pedido.inicio))
+                  formatarDataHora(pedido.inicio)
                 )}
               </td>
               {console.log('Estado do pedido:', pedido)}

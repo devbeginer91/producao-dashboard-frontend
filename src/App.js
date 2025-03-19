@@ -141,7 +141,11 @@ function App() {
           itens: Array.isArray(pedido.itens) ? pedido.itens : [],
         };
       });
-      const sortByPrevisaoEntrega = (a, b) => new Date(b.previsaoEntrega) - new Date(a.previsaoEntrega); // Ordenação por previsão de entrega (mais recente primeiro)
+      const sortByPrevisaoEntrega = (a, b) => {
+        const dateA = new Date(a.previsaoEntrega);
+        const dateB = new Date(b.previsaoEntrega);
+        return isNaN(dateB) - isNaN(dateA) || dateB - dateA; // Mais recente primeiro, lida com datas inválidas
+      };
       setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento').sort(sortByPrevisaoEntrega));
       setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo').sort(sortByPrevisaoEntrega));
       setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
@@ -168,7 +172,6 @@ function App() {
     };
   }, [carregarPedidos, isAuthenticated]);
 
-  // useEffect
   useEffect(() => {
     const intervalo = setInterval(() => {
       setPedidos((prev) => {
@@ -252,7 +255,6 @@ function App() {
     }
   };
 
-  // pausarPedido
   const pausarPedido = async (id) => {
     const pedido = pedidos.find((p) => p.id === id);
     if (!pedido) {
@@ -261,7 +263,7 @@ function App() {
     }
     const dataPausada = formatDateToLocalISO(new Date(), 'pausarPedido');
     const dataInicioPausa = formatDateToLocalISO(new Date(), 'inicioPausa');
-    const tempoAtual = pedido.tempo || calcularTempo(pedido.inicio, dataPausada); // Usa o tempo atual do estado
+    const tempoAtual = pedido.tempo || calcularTempo(pedido.inicio, dataPausada);
     const pedidoPausado = {
       ...pedido,
       pausado: '1',
@@ -282,7 +284,6 @@ function App() {
     }
   };
 
-  // retomarPedido
   const retomarPedido = async (id) => {
     const pedido = pedidos.find((p) => p.id === id);
     if (!pedido) {
