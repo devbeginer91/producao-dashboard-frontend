@@ -39,17 +39,26 @@ const ModalPesoVolume = ({
     });
   };
 
-  useEffect(() => {
+  const fetchHistorico = async () => {
     if (pedidoParaConcluir?.id) {
-      api.get(`/historico-entregas/${pedidoParaConcluir.id}`)
-        .then(response => setHistoricoEntregas(response.data))
-        .catch(error => console.error('Erro ao carregar histórico:', error));
+      try {
+        const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
+        console.log('Histórico retornado:', response.data);
+        setHistoricoEntregas(response.data);
+      } catch (error) {
+        console.error('Erro ao carregar histórico:', error);
+        setMensagem('Erro ao carregar histórico: ' + (error.response?.data.message || error.message));
+      }
     }
+  };
+
+  useEffect(() => {
+    fetchHistorico();
     if (pedidoParaConcluir?.itemParaEditar) {
       const completo = verificarPedidoCompleto(quantidadesParaAdicionar);
       setPedidoCompleto(completo);
     }
-  }, [quantidadesParaAdicionar, pedidoParaConcluir]);
+  }, [pedidoParaConcluir, quantidadesParaAdicionar]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,6 +132,7 @@ const ModalPesoVolume = ({
       setVolume('');
       setMostrarModalPesoVolume(false);
       setPedidoParaConcluir(null);
+      await fetchHistorico(); // Recarrega o histórico após a atualização
     } catch (error) {
       setMensagem('Erro ao processar: ' + (error.response?.data.message || error.message));
       await carregarPedidos();
