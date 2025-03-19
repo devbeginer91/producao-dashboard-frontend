@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import api from '../api';
-import { formatarDataHora } from '../utils'; // Importando do utils.js
+import { formatarDataHora } from '../utils';
 
 const PedidoTable = ({
   pedidos,
@@ -24,6 +24,7 @@ const PedidoTable = ({
   formatarTempo,
 }) => {
   const [expandedRows, setExpandedRows] = useState([]);
+  const [sortOrder, setSortOrder] = useState('desc'); // 'desc' para mais recente, 'asc' para mais antigo
 
   const formatDateToLocalISO = (date) => {
     const d = date ? new Date(date) : new Date();
@@ -122,6 +123,21 @@ const PedidoTable = ({
     );
   };
 
+  const sortPedidosByPrevisao = () => {
+    const sortedPedidos = [...pedidos];
+    sortedPedidos.sort((a, b) => {
+      const dateA = new Date(a.previsaoEntrega);
+      const dateB = new Date(b.previsaoEntrega);
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+    if (tipo === 'andamento') {
+      setPedidos(sortedPedidos);
+    } else if (tipo === 'novo') {
+      setPedidosAndamento(sortedPedidos);
+    }
+    setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+  };
+
   const headers = {
     andamento: ['Empresa', 'Nº OS', 'Data Entrada', 'Previsão\nEntrega', 'Responsável', 'Início', 'Tempo', 'Ações'],
     novo: ['Empresa', 'Nº OS', 'Data Entrada', 'Previsão\nEntrega', 'Responsável', 'Início', 'Tempo', 'Ações'],
@@ -139,9 +155,27 @@ const PedidoTable = ({
       <thead>
         <tr>
           {headers[tipo].map((header, index) => (
-            <th key={index}>{header.split('\n').map((line, i) => (
-              <React.Fragment key={i}>{line}<br /></React.Fragment>
-            ))}</th>
+            <th key={index}>
+              {header.split('\n').map((line, i) => (
+                <React.Fragment key={i}>
+                  {line === 'Previsão' ? (
+                    <>
+                      {line}
+                      <button
+                        className="btn-sort"
+                        onClick={sortPedidosByPrevisao}
+                        style={{ marginLeft: '5px', fontSize: '12px' }}
+                      >
+                        {sortOrder === 'desc' ? '↓' : '↑'}
+                      </button>
+                    </>
+                  ) : (
+                    line
+                  )}
+                  <br />
+                </React.Fragment>
+              ))}
+            </th>
           ))}
         </tr>
       </thead>

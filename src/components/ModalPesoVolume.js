@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { formatarDataHora } from '../utils'; // Importando do utils.js
+import { formatarDataHora } from '../utils';
 
 const ModalPesoVolume = ({
   pedidoParaConcluir,
@@ -168,39 +168,38 @@ const ModalPesoVolume = ({
                           disabled={quantidadeRestante <= 0}
                         />
                       </div>
-                      <div>
-                        <h4>Histórico de Edições</h4>
-                        {historicoEntregas.length > 0 ? (
-                          <table className="tabela-historico">
-                            <thead>
-                              <tr>
-                                <th>Edição</th>
-                                <th>Quantidade</th>
-                                <th>Data</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {historicoEntregas
-                                .filter(entry => entry.item_id === item.id)
-                                .map((entry, idx) => (
-                                  <tr key={entry.id}>
-                                    <td>{idx + 1}</td>
-                                    <td>{entry.quantidadeEntregue}</td>
-                                    <td>{formatarDataHora(entry.dataEdicao)}</td>
-                                  </tr>
-                                ))}
-                            </tbody>
-                          </table>
-                        ) : (
-                          <p>Nenhuma edição registrada para este item.</p>
-                        )}
-                      </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
               <p>Sem itens para exibir.</p>
+            )}
+          </div>
+
+          <div>
+            <h3>Histórico de Edições</h3>
+            {historicoEntregas.length > 0 ? (
+              <table className="tabela-historico">
+                <thead>
+                  <tr>
+                    <th>Edição</th>
+                    <th>Quantidade</th>
+                    <th>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historicoEntregas.map((entry, idx) => (
+                    <tr key={entry.id}>
+                      <td>{idx + 1}</td>
+                      <td>{entry.quantidadeEntregue}</td>
+                      <td>{formatarDataHora(entry.dataEdicao)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>Nenhuma edição registrada.</p>
             )}
           </div>
 
