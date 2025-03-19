@@ -46,8 +46,6 @@ const PedidoTable = ({
     return parsedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
-  // Removido formatarDataHora local e usando o importado do utils.js
-
   const logAndRender = (label, value, fallback = 'Não informado') => {
     console.log(label, value);
     return value || fallback;

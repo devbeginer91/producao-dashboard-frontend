@@ -189,8 +189,6 @@ function App() {
     return () => clearInterval(intervalo);
   }, []);
 
-  // Removido formatarDataHora local e usando o importado do utils.js
-
   const exportarPDF = () => {
     const doc = new jsPDF();
     const headersAndamento = ['Empresa', 'Nº OS', 'Data Entrada', 'Previsão', 'Responsável', 'Início', 'Tempo'];
