@@ -40,27 +40,31 @@ const ModalPesoVolume = ({
   };
 
   const fetchHistorico = async () => {
-    if (pedidoParaConcluir?.id) {
-      try {
-        console.log(`Buscando histórico para pedido ${pedidoParaConcluir.id}`);
-        const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
-        console.log('Resposta da API /historico-entregas:', response.data);
-        setHistoricoEntregas(response.data || []);
-        if (!response.data || response.data.length === 0) {
-          console.log(`Nenhum histórico retornado para pedido ${pedidoParaConcluir.id}`);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar histórico:', error);
-        setMensagem('Erro ao carregar histórico: ' + (error.response?.data.message || error.message));
-        setHistoricoEntregas([]);
-      }
-    } else {
+    if (!pedidoParaConcluir?.id) {
       console.log('Nenhum pedido selecionado para buscar histórico');
+      setHistoricoEntregas([]);
+      return;
+    }
+
+    try {
+      console.log(`Buscando histórico para pedido ${pedidoParaConcluir.id}`);
+      const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
+      console.log('Resposta da API /historico-entregas:', response.data);
+      const historico = Array.isArray(response.data) ? response.data : [];
+      setHistoricoEntregas(historico);
+      console.log('Estado historicoEntregas atualizado:', historico);
+      if (historico.length === 0) {
+        console.log(`Nenhum histórico retornado para pedido ${pedidoParaConcluir.id}`);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+      setMensagem('Erro ao carregar histórico: ' + (error.response?.data.message || error.message));
       setHistoricoEntregas([]);
     }
   };
 
   useEffect(() => {
+    console.log('useEffect disparado com pedidoParaConcluir:', pedidoParaConcluir);
     fetchHistorico();
     if (pedidoParaConcluir?.itemParaEditar) {
       const completo = verificarPedidoCompleto(quantidadesParaAdicionar);
