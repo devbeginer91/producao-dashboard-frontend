@@ -51,6 +51,8 @@ const ModalPesoVolume = ({
       const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
       console.log('Resposta da API /historico-entregas:', response.data);
       const historico = Array.isArray(response.data) ? response.data : [];
+      // Ordenar por dataedicao para garantir que as edições apareçam na ordem correta
+      historico.sort((a, b) => new Date(a.dataedicao) - new Date(b.dataedicao));
       setHistoricoEntregas(historico);
       console.log('Estado historicoEntregas atualizado:', historico);
       if (historico.length === 0) {
