@@ -90,6 +90,7 @@ function App() {
 
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
+  const pollingIntervalRef = useRef(null);
 
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
@@ -223,7 +224,7 @@ function App() {
     };
   }, []);
 
-  // Novo polling para atualizar a lista de pedidos a cada 1 minuto
+  // Novo polling para atualizar a lista de pedidos a cada 10 segundos (para testes)
   useEffect(() => {
     console.log('Iniciando polling para lista de pedidos - isAuthenticated:', isAuthenticated);
     if (!isAuthenticated) {
@@ -235,14 +236,18 @@ function App() {
     console.log('Forçando chamada inicial do fetchPedidos...');
     fetchPedidos(null, true);
 
-    const intervaloFetch = setInterval(() => {
+    // Usar um intervalo menor (10 segundos) para testes
+    pollingIntervalRef.current = setInterval(() => {
       console.log('Atualizando lista de pedidos automaticamente...');
       fetchPedidos(null, true); // Passar isPolling como true para ignorar o limite de 5 segundos
-    }, 60000); // 60 segundos
+    }, 10000); // 10 segundos para testes (depois podemos voltar para 60000)
 
     return () => {
       console.log('Limpando polling para lista de pedidos');
-      clearInterval(intervaloFetch);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
     };
   }, [isAuthenticated]);
 
