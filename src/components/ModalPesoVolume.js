@@ -44,14 +44,19 @@ const ModalPesoVolume = ({
       try {
         console.log(`Buscando histórico para pedido ${pedidoParaConcluir.id}`);
         const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
-        console.log('Histórico retornado:', response.data);
-        setHistoricoEntregas(response.data);
+        console.log('Resposta da API /historico-entregas:', response.data);
+        setHistoricoEntregas(response.data || []);
+        if (!response.data || response.data.length === 0) {
+          console.log(`Nenhum histórico retornado para pedido ${pedidoParaConcluir.id}`);
+        }
       } catch (error) {
         console.error('Erro ao carregar histórico:', error);
         setMensagem('Erro ao carregar histórico: ' + (error.response?.data.message || error.message));
+        setHistoricoEntregas([]);
       }
     } else {
       console.log('Nenhum pedido selecionado para buscar histórico');
+      setHistoricoEntregas([]);
     }
   };
 
@@ -204,9 +209,9 @@ const ModalPesoVolume = ({
                 <tbody>
                   {historicoEntregas.map((entry) => (
                     <tr key={entry.id}>
-                      <td>{entry.codigoDesenho}</td>
-                      <td>{entry.quantidadeEntregue}</td>
-                      <td>{formatarDataHora(entry.dataEdicao)}</td>
+                      <td>{entry.codigoDesenho || 'Desconhecido'}</td>
+                      <td>{entry.quantidadeEntregue || 'N/A'}</td>
+                      <td>{entry.dataEdicao ? formatarDataHora(entry.dataEdicao) : 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>
