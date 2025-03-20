@@ -161,33 +161,75 @@ const PedidoForm = ({
     <form onSubmit={handleSubmit} className="formulario">
       <div>
         <label htmlFor="empresa">Empresa *</label>
-        <input type="text" id="empresa" value={novoPedido.empresa} onChange={(e) => setNovoPedido({ ...novoPedido, empresa: e.target.value })} required />
+        <input
+          type="text"
+          id="empresa"
+          value={novoPedido.empresa}
+          onChange={(e) => setNovoPedido({ ...novoPedido, empresa: e.target.value })}
+          required
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
+        />
       </div>
       <div>
         <label htmlFor="numeroOS">Número da OS *</label>
-        <input type="text" id="numeroOS" value={novoPedido.numeroOS} onChange={(e) => setNovoPedido({ ...novoPedido, numeroOS: e.target.value })} required />
+        <input
+          type="text"
+          id="numeroOS"
+          value={novoPedido.numeroOS}
+          onChange={(e) => setNovoPedido({ ...novoPedido, numeroOS: e.target.value })}
+          required
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
+        />
       </div>
       <div>
         <label htmlFor="dataEntrada">Data de Entrada *</label>
-        <input type="date" id="dataEntrada" value={novoPedido.dataEntrada} onChange={(e) => setNovoPedido({ ...novoPedido, dataEntrada: e.target.value })} required />
+        <input
+          type="date"
+          id="dataEntrada"
+          value={novoPedido.dataEntrada}
+          onChange={(e) => setNovoPedido({ ...novoPedido, dataEntrada: e.target.value })}
+          required
+        />
       </div>
       <div>
         <label htmlFor="previsaoEntrega">Previsão de Entrega *</label>
-        <input type="date" id="previsaoEntrega" value={novoPedido.previsaoEntrega} onChange={(e) => setNovoPedido({ ...novoPedido, previsaoEntrega: e.target.value })} required />
+        <input
+          type="date"
+          id="previsaoEntrega"
+          value={novoPedido.previsaoEntrega}
+          onChange={(e) => setNovoPedido({ ...novoPedido, previsaoEntrega: e.target.value })}
+          required
+        />
       </div>
       <div>
         <label htmlFor="responsavel">Responsável</label>
-        <input type="text" id="responsavel" value={novoPedido.responsavel} onChange={(e) => setNovoPedido({ ...novoPedido, responsavel: e.target.value })} />
+        <input
+          type="text"
+          id="responsavel"
+          value={novoPedido.responsavel}
+          onChange={(e) => setNovoPedido({ ...novoPedido, responsavel: e.target.value })}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
+        />
       </div>
       <div>
         <label htmlFor="status">Status</label>
-        <select id="status" value={novoPedido.status} onChange={(e) => {
-          const novoStatus = e.target.value;
-          setNovoPedido({ ...novoPedido, status: novoStatus });
-          if (pedidoParaEditar && moverParaAndamento && novoStatus === 'andamento') {
-            moverParaAndamento(pedidoParaEditar.id);
-          }
-        }}>
+        <select
+          id="status"
+          value={novoPedido.status}
+          onChange={(e) => {
+            const novoStatus = e.target.value;
+            setNovoPedido({ ...novoPedido, status: novoStatus });
+            if (pedidoParaEditar && moverParaAndamento && novoStatus === 'andamento') {
+              moverParaAndamento(pedidoParaEditar.id);
+            }
+          }}
+        >
           <option value="novo">Novo</option>
           <option value="andamento">Em Andamento</option>
           <option value="concluido">Concluído</option>
@@ -205,6 +247,9 @@ const PedidoForm = ({
               value={item.codigoDesenho}
               onChange={(e) => atualizarItem(index, 'codigoDesenho', e.target.value)}
               required
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
           </div>
           <div>
