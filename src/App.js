@@ -132,6 +132,7 @@ function App() {
     try {
       console.log('Executando fetchPedidos:', { isPolling, dados });
       const response = dados ? { data: dados } : await api.get('/pedidos');
+      console.log('Resposta do backend (GET /pedidos):', response.data);
       const pedidosAtualizados = response.data.map((pedido) => {
         const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
         const dataConclusaoValida = pedido.dataConclusao ? formatDateToLocalISO(pedido.dataConclusao) : null;
@@ -165,7 +166,11 @@ function App() {
       setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
       setIsLoading(false);
       lastFetchTimestamp.current = now;
-      console.log('fetchPedidos concluído com sucesso');
+      console.log('fetchPedidos concluído com sucesso. Novos estados:', {
+        pedidos: pedidosAtualizados.filter((p) => p.status === 'andamento').length,
+        pedidosAndamento: pedidosAtualizados.filter((p) => p.status === 'novo').length,
+        pedidosConcluidos: pedidosAtualizados.filter((p) => p.status === 'concluido').length,
+      });
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error);
       setMensagem('Erro ao carregar pedidos: ' + error.message);
@@ -181,9 +186,13 @@ function App() {
   useEffect(() => {
     console.log('useEffect inicial - isAuthenticated:', isAuthenticated);
     if (isAuthenticated) {
+      console.log('Carregando pedidos iniciais...');
       carregarPedidos();
+    } else {
+      console.log('Usuário não autenticado, pulando carregamento inicial de pedidos');
     }
     return () => {
+      console.log('Limpando useEffect inicial');
       carregarPedidos.cancel();
     };
   }, [carregarPedidos, isAuthenticated]);
@@ -192,6 +201,7 @@ function App() {
   useEffect(() => {
     console.log('Iniciando polling para tempos dos pedidos em andamento');
     const intervalo = setInterval(() => {
+      console.log('Atualizando tempos dos pedidos em andamento...');
       setPedidos((prev) => {
         const novosPedidos = prev.map((p) => {
           if (p.status !== 'andamento' || p.pausado === '1') {
@@ -220,6 +230,10 @@ function App() {
       console.log('Polling não iniciado: usuário não autenticado');
       return;
     }
+
+    // Forçar uma chamada inicial para confirmar que o fetchPedidos funciona
+    console.log('Forçando chamada inicial do fetchPedidos...');
+    fetchPedidos(null, true);
 
     const intervaloFetch = setInterval(() => {
       console.log('Atualizando lista de pedidos automaticamente...');
