@@ -2,19 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <!-- Favicon para o navegador -->
+    <link rel="icon" type="image/x-icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="Controle de Produção - DCA Chicotes Elétricos"
     />
+    <!-- Apple Touch Icon para iPhone -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple.png" />
+    <!-- Manifest para Android -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <!-- Ajustado o Content-Security-Policy para produção no Render -->
     <meta
+      http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://producao-dashboard-backend.onrender.com ws://producao-dashboard-frontend.onrender.com;"
-    >
+    />
     <base href="/">
     <title>CONTROLE DE PRODUÇÃO</title>
   </head>
