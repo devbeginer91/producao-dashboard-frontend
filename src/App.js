@@ -178,6 +178,7 @@ function App() {
     };
   }, [carregarPedidos, isAuthenticated]);
 
+  // Polling para atualizar os tempos dos pedidos em andamento a cada 1 minuto
   useEffect(() => {
     const intervalo = setInterval(() => {
       setPedidos((prev) => {
@@ -194,9 +195,21 @@ function App() {
         });
         return [...novosPedidos];
       });
-    }, 60000);
+    }, 60000); // 60 segundos
     return () => clearInterval(intervalo);
   }, []);
+
+  // Novo polling para atualizar a lista de pedidos a cada 1 minuto
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const intervaloFetch = setInterval(() => {
+      console.log('Atualizando lista de pedidos automaticamente...');
+      fetchPedidos();
+    }, 60000); // 60 segundos
+
+    return () => clearInterval(intervaloFetch);
+  }, [isAuthenticated]);
 
   const exportarPDF = () => {
     const doc = new jsPDF();
