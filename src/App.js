@@ -90,6 +90,7 @@ function App() {
 
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
+  const wsRef = useRef(null); // Referência para o WebSocket
 
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
@@ -115,6 +116,88 @@ function App() {
     const diffMs = fimDate - inicioDate;
     return diffMs < 0 ? 0 : diffMs / (1000 * 60);
   };
+
+  // Configuração do WebSocket
+  const setupWebSocket = () => {
+    const wsUrl = process.env.NODE_ENV === 'production'
+      ? 'wss://producao-dashboard-backend.onrender.com:8080'
+      : 'ws://localhost:8080';
+
+    wsRef.current = new WebSocket(wsUrl);
+
+    wsRef.current.onopen = () => {
+      console.log('Conexão WebSocket estabelecida');
+    };
+
+    wsRef.current.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      console.log('Mensagem recebida via WebSocket:', message);
+
+      switch (message.type) {
+        case 'NOVO_PEDIDO':
+          const novoPedido = message.pedido;
+          if (novoPedido.status === 'novo') {
+            setPedidosAndamento((prev) => [...prev, novoPedido]);
+          } else if (novoPedido.status === 'andamento') {
+            setPedidos((prev) => [...prev, novoPedido]);
+          } else if (novoPedido.status === 'concluido') {
+            setPedidosConcluidos((prev) => [...prev, novoPedido]);
+          }
+          break;
+
+        case 'PEDIDO_ATUALIZADO':
+          const pedidoAtualizado = message.pedido;
+          if (pedidoAtualizado.status === 'novo') {
+            setPedidosAndamento((prev) => prev.map(p => p.id === pedidoAtualizado.id ? pedidoAtualizado : p));
+            setPedidos((prev) => prev.filter(p => p.id !== pedidoAtualizado.id));
+            setPedidosConcluidos((prev) => prev.filter(p => p.id !== pedidoAtualizado.id));
+          } else if (pedidoAtualizado.status === 'andamento') {
+            setPedidos((prev) => prev.map(p => p.id === pedidoAtualizado.id ? pedidoAtualizado : p));
+            setPedidosAndamento((prev) => prev.filter(p => p.id !== pedidoAtualizado.id));
+            setPedidosConcluidos((prev) => prev.filter(p => p.id !== pedidoAtualizado.id));
+          } else if (pedidoAtualizado.status === 'concluido') {
+            setPedidosConcluidos((prev) => prev.map(p => p.id === pedidoAtualizado.id ? pedidoAtualizado : p));
+            setPedidos((prev) => prev.filter(p => p.id !== pedidoAtualizado.id));
+            setPedidosAndamento((prev) => prev.filter(p => p.id !== pedidoAtualizado.id));
+          }
+          break;
+
+        case 'PEDIDO_EXCLUIDO':
+          const pedidoId = message.pedidoId;
+          setPedidos((prev) => prev.filter(p => p.id !== pedidoId));
+          setPedidosAndamento((prev) => prev.filter(p => p.id !== pedidoId));
+          setPedidosConcluidos((prev) => prev.filter(p => p.id !== pedidoId));
+          break;
+
+        case 'NOVA_OBSERVACAO':
+          // Opcional: Atualizar o pedido com a nova observação, se necessário
+          break;
+
+        default:
+          console.log('Mensagem WebSocket desconhecida:', message);
+      }
+    };
+
+    wsRef.current.onclose = () => {
+      console.log('Conexão WebSocket fechada. Tentando reconectar...');
+      setTimeout(setupWebSocket, 5000); // Tenta reconectar após 5 segundos
+    };
+
+    wsRef.current.onerror = (error) => {
+      console.error('Erro no WebSocket:', error);
+    };
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      setupWebSocket();
+    }
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [isAuthenticated]);
 
   const fetchPedidos = async (dados = null) => {
     const now = Date.now();
