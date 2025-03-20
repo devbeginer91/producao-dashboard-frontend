@@ -13,6 +13,7 @@ import Login from './components/Login';
 import api from './api';
 import { formatarDataHora } from './utils';
 
+// Função para formatar datas no formato YYYY-MM-DD HH:MM:SS com fuso horário America/Sao_Paulo (UTC-3)
 export const formatDateToLocalISO = (date, context = 'unknown') => {
   const d = date ? new Date(date) : new Date();
   if (isNaN(d.getTime()) || (typeof date === 'string' && date.includes('undefined'))) {
@@ -24,6 +25,14 @@ export const formatDateToLocalISO = (date, context = 'unknown') => {
   return isoString;
 };
 
+// Função para formatar data de YYYY-MM-DD para DD/MM/YYYY sem ajuste de fuso
+const formatarDataSimples = (data) => {
+  if (!data || typeof data !== 'string') return 'Não informado';
+  const [ano, mes, dia] = data.split('-');
+  return `${dia}/${mes}/${ano}`;
+};
+
+// Função para formatar o tempo
 const formatarTempo = (tempo) => {
   if (isNaN(tempo) || tempo < 0) return '0 minutos';
   const minutosTotais = Math.round(tempo);
@@ -38,7 +47,9 @@ const formatarTempo = (tempo) => {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('isAuthenticated') === 'true');
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    localStorage.getItem('isAuthenticated') === 'true'
+  );
   const [pedidos, setPedidos] = useState([]);
   const [pedidosAndamento, setPedidosAndamento] = useState([]);
   const [pedidosConcluidos, setPedidosConcluidos] = useState([]);
@@ -197,19 +208,15 @@ function App() {
       doc.text(title, 14, 20);
       autoTable(doc, {
         head: [headers],
-        body: data.map((p) => {
-          const dataEntrada = new Date(p.dataEntrada);
-          const previsaoEntrega = new Date(p.previsaoEntrega);
-          return [
-            p.empresa,
-            p.numeroOS,
-            dataEntrada.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-            previsaoEntrega.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-            p.responsavel,
-            p.status === 'concluido' ? `${formatarDataHora(p.inicio)}\n${formatarDataHora(p.dataConclusao) || 'Não concluído'}` : formatarDataHora(p.inicio),
-            formatarTempo(p.tempo),
-          ];
-        }),
+        body: data.map((p) => [
+          p.empresa,
+          p.numeroOS,
+          formatarDataSimples(p.dataEntrada),
+          formatarDataSimples(p.previsaoEntrega),
+          p.responsavel,
+          p.status === 'concluido' ? `${formatarDataHora(p.inicio)}\n${formatarDataHora(p.dataConclusao) || 'Não concluído'}` : formatarDataHora(p.inicio),
+          formatarTempo(p.tempo),
+        ]),
         startY: 30,
       });
     };
