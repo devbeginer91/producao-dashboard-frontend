@@ -17,12 +17,9 @@ import { formatarDataHora } from './utils';
 export const formatDateToLocalISO = (date, context = 'unknown') => {
   const d = date ? new Date(date) : new Date();
   if (isNaN(d.getTime()) || (typeof date === 'string' && date.includes('undefined'))) {
-    console.warn(`[formatDateToLocalISO - ${context}] Data inválida detectada, usando data atual:`, date);
     return new Date().toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).slice(0, 19);
   }
-  const isoString = d.toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).slice(0, 19);
-  console.log(`[formatDateToLocalISO - ${context}] Data capturada: ${d.toString()}, Data formatada: ${isoString}`);
-  return isoString;
+  return d.toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).slice(0, 19);
 };
 
 // Função para formatar data de YYYY-MM-DD para DD/MM/YYYY sem ajuste de fuso
@@ -55,7 +52,6 @@ function App() {
   const [pedidosConcluidos, setPedidosConcluidos] = useState([]);
   const [novoPedido, setNovoPedido] = useState(() => {
     const inicioInicial = formatDateToLocalISO(new Date(), 'novoPedido init');
-    console.log('Inicializando novoPedido com inicio:', inicioInicial);
     return {
       empresa: '',
       numeroOS: '',
@@ -94,12 +90,10 @@ function App() {
 
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
-      console.warn('Data inválida fornecida em parseDate, usando data atual:', dateStr);
       return new Date();
     }
     const parsedDate = new Date(dateStr);
     if (isNaN(parsedDate)) {
-      console.warn('Data inválida em parseDate, usando data atual:', dateStr);
       return new Date();
     }
     return parsedDate;
@@ -108,9 +102,7 @@ function App() {
   const calcularTempo = (inicio, fim = formatDateToLocalISO(new Date(), 'calcularTempo')) => {
     const inicioDate = parseDate(inicio);
     const fimDate = parseDate(fim);
-    console.log(`calcularTempo - inicio: ${inicio}, fim: ${fim}, diffMs: ${fimDate - inicioDate}, inicioDate: ${inicioDate.toISOString()}, fimDate: ${fimDate.toISOString()}`);
     if (isNaN(inicioDate) || isNaN(fimDate)) {
-      console.error('Data inválida em calcularTempo:', { inicio, fim });
       return 0;
     }
     const diffMs = fimDate - inicioDate;
@@ -119,21 +111,16 @@ function App() {
 
   const fetchPedidos = async (dados = null, isPolling = false) => {
     const now = Date.now();
-    // Permitir chamadas de polling mesmo que o intervalo de 5 segundos não tenha passado
     if (!isPolling && now - lastFetchTimestamp.current < 5000 && !dados) {
-      console.log('fetchPedidos bloqueado: menos de 5 segundos desde a última chamada');
       return;
     }
 
     if (isFetching.current) {
-      console.log('fetchPedidos bloqueado: outra requisição em andamento');
       return;
     }
     isFetching.current = true;
     try {
-      console.log('Executando fetchPedidos:', { isPolling, dados });
       const response = dados ? { data: dados } : await api.get('/pedidos');
-      console.log('Resposta do backend (GET /pedidos):', response.data);
       const pedidosAtualizados = response.data.map((pedido) => {
         const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
         const dataConclusaoValida = pedido.dataConclusao ? formatDateToLocalISO(pedido.dataConclusao) : null;
@@ -146,7 +133,6 @@ function App() {
           const tempoDecorrido = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
           tempoFinal = tempoPausado + tempoDecorrido;
         }
-        console.log(`fetchPedidos - pedido ${pedido.id}: tempoFinal = ${tempoFinal}, tempoPausado = ${tempoPausado}, pausado = ${pedido.pausado}`);
         return {
           ...pedido,
           inicio: inicioValido,
@@ -167,13 +153,7 @@ function App() {
       setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
       setIsLoading(false);
       lastFetchTimestamp.current = now;
-      console.log('fetchPedidos concluído com sucesso. Novos estados:', {
-        pedidos: pedidosAtualizados.filter((p) => p.status === 'andamento').length,
-        pedidosAndamento: pedidosAtualizados.filter((p) => p.status === 'novo').length,
-        pedidosConcluidos: pedidosAtualizados.filter((p) => p.status === 'concluido').length,
-      });
     } catch (error) {
-      console.error('Erro ao carregar pedidos:', error);
       setMensagem('Erro ao carregar pedidos: ' + error.message);
     } finally {
       isFetching.current = false;
@@ -185,24 +165,17 @@ function App() {
   }, 1000), []);
 
   useEffect(() => {
-    console.log('useEffect inicial - isAuthenticated:', isAuthenticated);
     if (isAuthenticated) {
-      console.log('Carregando pedidos iniciais...');
       carregarPedidos();
-    } else {
-      console.log('Usuário não autenticado, pulando carregamento inicial de pedidos');
     }
     return () => {
-      console.log('Limpando useEffect inicial');
       carregarPedidos.cancel();
     };
   }, [carregarPedidos, isAuthenticated]);
 
   // Polling para atualizar os tempos dos pedidos em andamento a cada 1 minuto
   useEffect(() => {
-    console.log('Iniciando polling para tempos dos pedidos em andamento');
     const intervalo = setInterval(() => {
-      console.log('Atualizando tempos dos pedidos em andamento...');
       setPedidos((prev) => {
         const novosPedidos = prev.map((p) => {
           if (p.status !== 'andamento' || p.pausado === '1') {
@@ -212,38 +185,25 @@ function App() {
           const tempoAcumulado = Number(p.tempoPausado) || 0;
           const tempoDesdeReferencia = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), 'intervalo atual'));
           const tempoAtual = Math.round(tempoAcumulado + tempoDesdeReferencia);
-          console.log(`Atualizando tempo para pedido ${p.id}: tempoAtual = ${tempoAtual}, tempoPausado = ${tempoAcumulado}, tempoDesdeReferencia = ${tempoDesdeReferencia}`);
           return { ...p, tempo: tempoAtual };
         });
         return [...novosPedidos];
       });
     }, 60000); // 60 segundos
-    return () => {
-      console.log('Limpando polling para tempos dos pedidos em andamento');
-      clearInterval(intervalo);
-    };
+    return () => clearInterval(intervalo);
   }, []);
 
-  // Novo polling para atualizar a lista de pedidos a cada 10 segundos (para testes)
+  // Polling para atualizar a lista de pedidos a cada 1 minuto
   useEffect(() => {
-    console.log('Iniciando polling para lista de pedidos - isAuthenticated:', isAuthenticated);
-    if (!isAuthenticated) {
-      console.log('Polling não iniciado: usuário não autenticado');
-      return;
-    }
+    if (!isAuthenticated) return;
 
-    // Forçar uma chamada inicial para confirmar que o fetchPedidos funciona
-    console.log('Forçando chamada inicial do fetchPedidos...');
-    fetchPedidos(null, true);
+    fetchPedidos(null, true); // Chamada inicial
 
-    // Usar um intervalo menor (10 segundos) para testes
     pollingIntervalRef.current = setInterval(() => {
-      console.log('Atualizando lista de pedidos automaticamente...');
-      fetchPedidos(null, true); // Passar isPolling como true para ignorar o limite de 5 segundos
-    }, 10000); // 10 segundos para testes (depois podemos voltar para 60000)
+      fetchPedidos(null, true);
+    }, 60000); // 60 segundos
 
     return () => {
-      console.log('Limpando polling para lista de pedidos');
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
@@ -297,14 +257,12 @@ function App() {
         pausado: '0'
       };
       try {
-        console.log('Enviando pedido atualizado para andamento:', pedidoAtualizado);
         const resposta = await api.put(`/pedidos/${id}`, pedidoAtualizado);
         await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
         const pedidoMovido = { ...resposta.data, tempo: 0 };
         setPedidosAndamento((prev) => prev.filter((p) => p.id !== id));
         setPedidos((prev) => [...prev.filter((p) => p.id !== id), pedidoMovido]);
         setPedidosConcluidos((prev) => prev.filter((p) => p.id !== id));
-        console.log('Pedido movido para andamento:', pedidoMovido);
         setMensagem('Pedido movido para "Em Andamento" e e-mail enviado.');
         carregarPedidos();
       } catch (error) {
@@ -332,13 +290,11 @@ function App() {
       tempo: tempoAtual,
     };
     try {
-      console.log('Pausando pedido:', pedidoPausado);
       await api.put(`/pedidos/${id}`, pedidoPausado);
       setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoPausado : p)));
       setMensagem('Pedido pausado com sucesso.');
       carregarPedidos();
     } catch (error) {
-      console.error('Erro ao pausar pedido:', error);
       setMensagem('Erro ao pausar pedido: ' + (error.response?.data.message || error.message));
     }
   };
@@ -360,13 +316,11 @@ function App() {
       tempo: tempoPausadoAnterior,
     };
     try {
-      console.log('Enviando pedido atualizado para retomar:', pedidoRetomado);
       await api.put(`/pedidos/${id}`, pedidoRetomado);
       setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoRetomado : p)));
       setMensagem('Pedido retomado com sucesso.');
       carregarPedidos();
     } catch (error) {
-      console.error('Erro ao retomar pedido:', error);
       setMensagem('Erro ao retomar pedido: ' + (error.response?.data.message || error.message));
     }
   };
