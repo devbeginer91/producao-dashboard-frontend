@@ -116,13 +116,21 @@ function App() {
     return diffMs < 0 ? 0 : diffMs / (1000 * 60);
   };
 
-  const fetchPedidos = async (dados = null) => {
+  const fetchPedidos = async (dados = null, isPolling = false) => {
     const now = Date.now();
-    if (now - lastFetchTimestamp.current < 5000 && !dados) return;
+    // Permitir chamadas de polling mesmo que o intervalo de 5 segundos não tenha passado
+    if (!isPolling && now - lastFetchTimestamp.current < 5000 && !dados) {
+      console.log('fetchPedidos bloqueado: menos de 5 segundos desde a última chamada');
+      return;
+    }
 
-    if (isFetching.current) return;
+    if (isFetching.current) {
+      console.log('fetchPedidos bloqueado: outra requisição em andamento');
+      return;
+    }
     isFetching.current = true;
     try {
+      console.log('Executando fetchPedidos:', { isPolling, dados });
       const response = dados ? { data: dados } : await api.get('/pedidos');
       const pedidosAtualizados = response.data.map((pedido) => {
         const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
@@ -157,6 +165,7 @@ function App() {
       setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
       setIsLoading(false);
       lastFetchTimestamp.current = now;
+      console.log('fetchPedidos concluído com sucesso');
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error);
       setMensagem('Erro ao carregar pedidos: ' + error.message);
@@ -170,6 +179,7 @@ function App() {
   }, 1000), []);
 
   useEffect(() => {
+    console.log('useEffect inicial - isAuthenticated:', isAuthenticated);
     if (isAuthenticated) {
       carregarPedidos();
     }
@@ -180,6 +190,7 @@ function App() {
 
   // Polling para atualizar os tempos dos pedidos em andamento a cada 1 minuto
   useEffect(() => {
+    console.log('Iniciando polling para tempos dos pedidos em andamento');
     const intervalo = setInterval(() => {
       setPedidos((prev) => {
         const novosPedidos = prev.map((p) => {
@@ -196,19 +207,29 @@ function App() {
         return [...novosPedidos];
       });
     }, 60000); // 60 segundos
-    return () => clearInterval(intervalo);
+    return () => {
+      console.log('Limpando polling para tempos dos pedidos em andamento');
+      clearInterval(intervalo);
+    };
   }, []);
 
   // Novo polling para atualizar a lista de pedidos a cada 1 minuto
   useEffect(() => {
-    if (!isAuthenticated) return;
+    console.log('Iniciando polling para lista de pedidos - isAuthenticated:', isAuthenticated);
+    if (!isAuthenticated) {
+      console.log('Polling não iniciado: usuário não autenticado');
+      return;
+    }
 
     const intervaloFetch = setInterval(() => {
       console.log('Atualizando lista de pedidos automaticamente...');
-      fetchPedidos();
+      fetchPedidos(null, true); // Passar isPolling como true para ignorar o limite de 5 segundos
     }, 60000); // 60 segundos
 
-    return () => clearInterval(intervaloFetch);
+    return () => {
+      console.log('Limpando polling para lista de pedidos');
+      clearInterval(intervaloFetch);
+    };
   }, [isAuthenticated]);
 
   const exportarPDF = () => {
