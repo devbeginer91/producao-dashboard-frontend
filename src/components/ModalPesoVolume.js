@@ -206,7 +206,7 @@ const ModalPesoVolume = ({
                 <thead>
                   <tr>
                     <th>Item</th>
-                    <th>Quantidade</th>
+                    <th>Qtd Adicionada</th>
                     <th>Data</th>
                   </tr>
                 </thead>

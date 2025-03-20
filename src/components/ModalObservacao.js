@@ -90,7 +90,7 @@ const ModalObservacao = ({
                   {historicoObservacoes.map((entry) => (
                     <tr key={entry.id}>
                       <td>{entry.observacao || 'N/A'}</td>
-                      <td>{entry.dataEdicao ? formatarDataHora(entry.dataEdicao) : 'N/A'}</td>
+                      <td>{entry.dataedicao ? formatarDataHora(entry.dataedicao) : 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>
