@@ -213,9 +213,9 @@ const ModalPesoVolume = ({
                 <tbody>
                   {historicoEntregas.map((entry) => (
                     <tr key={entry.id}>
-                      <td>{entry.codigoDesenho || 'Desconhecido'}</td>
-                      <td>{entry.quantidadeEntregue || 'N/A'}</td>
-                      <td>{entry.dataEdicao ? formatarDataHora(entry.dataEdicao) : 'N/A'}</td>
+                      <td>{entry.codigodesenho || 'Desconhecido'}</td>
+                      <td>{entry.quantidadeentregue || 'N/A'}</td>
+                      <td>{entry.dataedicao ? formatarDataHora(entry.dataedicao) : 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>
