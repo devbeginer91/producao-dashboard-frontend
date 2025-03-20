@@ -42,6 +42,7 @@ const ModalPesoVolume = ({
   const fetchHistorico = async () => {
     if (pedidoParaConcluir?.id) {
       try {
+        console.log(`Buscando histórico para pedido ${pedidoParaConcluir.id}`);
         const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
         console.log('Histórico retornado:', response.data);
         setHistoricoEntregas(response.data);
@@ -49,6 +50,8 @@ const ModalPesoVolume = ({
         console.error('Erro ao carregar histórico:', error);
         setMensagem('Erro ao carregar histórico: ' + (error.response?.data.message || error.message));
       }
+    } else {
+      console.log('Nenhum pedido selecionado para buscar histórico');
     }
   };
 
@@ -58,7 +61,7 @@ const ModalPesoVolume = ({
       const completo = verificarPedidoCompleto(quantidadesParaAdicionar);
       setPedidoCompleto(completo);
     }
-  }, [pedidoParaConcluir, quantidadesParaAdicionar]);
+  }, [pedidoParaConcluir]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,7 +135,7 @@ const ModalPesoVolume = ({
       setVolume('');
       setMostrarModalPesoVolume(false);
       setPedidoParaConcluir(null);
-      await fetchHistorico(); // Recarrega o histórico após a atualização
+      await fetchHistorico();
     } catch (error) {
       setMensagem('Erro ao processar: ' + (error.response?.data.message || error.message));
       await carregarPedidos();
@@ -193,15 +196,15 @@ const ModalPesoVolume = ({
               <table className="tabela-historico">
                 <thead>
                   <tr>
-                    <th>Edição</th>
+                    <th>Item</th>
                     <th>Quantidade</th>
                     <th>Data</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {historicoEntregas.map((entry, idx) => (
+                  {historicoEntregas.map((entry) => (
                     <tr key={entry.id}>
-                      <td>{idx + 1}</td>
+                      <td>{entry.codigoDesenho}</td>
                       <td>{entry.quantidadeEntregue}</td>
                       <td>{formatarDataHora(entry.dataEdicao)}</td>
                     </tr>
