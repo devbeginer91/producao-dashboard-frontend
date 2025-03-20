@@ -11,9 +11,8 @@ import ModalPesoVolume from './components/ModalPesoVolume';
 import Busca from './components/Busca';
 import Login from './components/Login';
 import api from './api';
-import { formatarDataHora } from './utils'; // Importando do utils.js
+import { formatarDataHora } from './utils';
 
-// Função para formatar datas no formato YYYY-MM-DD HH:MM:SS com fuso horário America/Sao_Paulo (UTC-3)
 export const formatDateToLocalISO = (date, context = 'unknown') => {
   const d = date ? new Date(date) : new Date();
   if (isNaN(d.getTime()) || (typeof date === 'string' && date.includes('undefined'))) {
@@ -25,10 +24,9 @@ export const formatDateToLocalISO = (date, context = 'unknown') => {
   return isoString;
 };
 
-// Função para formatar o tempo
 const formatarTempo = (tempo) => {
   if (isNaN(tempo) || tempo < 0) return '0 minutos';
-  const minutosTotais = Math.round(tempo); // Tempo já está em minutos
+  const minutosTotais = Math.round(tempo);
   const horas = Math.floor(minutosTotais / 60);
   const minutosRestantes = minutosTotais % 60;
 
@@ -40,9 +38,7 @@ const formatarTempo = (tempo) => {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    localStorage.getItem('isAuthenticated') === 'true'
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('isAuthenticated') === 'true');
   const [pedidos, setPedidos] = useState([]);
   const [pedidosAndamento, setPedidosAndamento] = useState([]);
   const [pedidosConcluidos, setPedidosConcluidos] = useState([]);
@@ -57,14 +53,14 @@ function App() {
       responsavel: '',
       status: 'novo',
       inicio: inicioInicial,
-      tempo: 0, // Tempo em minutos
+      tempo: 0,
       peso: null,
       volume: null,
       dataConclusao: null,
       pausado: '0',
-      tempoPausado: 0, // Tempo pausado em minutos
+      tempoPausado: 0,
       dataPausada: null,
-      dataInicioPausa: null, // Novo campo para armazenar o início do período pausado
+      dataInicioPausa: null,
       itens: [{ codigoDesenho: '', quantidadePedido: '' }],
     };
   });
@@ -106,10 +102,9 @@ function App() {
       return 0;
     }
     const diffMs = fimDate - inicioDate;
-    return diffMs < 0 ? 0 : diffMs / (1000 * 60); // Retorna em minutos
+    return diffMs < 0 ? 0 : diffMs / (1000 * 60);
   };
 
-  // fetchPedidos
   const fetchPedidos = async (dados = null) => {
     const now = Date.now();
     if (now - lastFetchTimestamp.current < 5000 && !dados) return;
@@ -144,7 +139,7 @@ function App() {
       const sortByPrevisaoEntrega = (a, b) => {
         const dateA = new Date(a.previsaoEntrega);
         const dateB = new Date(b.previsaoEntrega);
-        return isNaN(dateB) - isNaN(dateA) || dateB - dateA; // Mais recente primeiro, lida com datas inválidas
+        return isNaN(dateB) - isNaN(dateA) || dateB - dateA;
       };
       setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento').sort(sortByPrevisaoEntrega));
       setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo').sort(sortByPrevisaoEntrega));
@@ -202,15 +197,19 @@ function App() {
       doc.text(title, 14, 20);
       autoTable(doc, {
         head: [headers],
-        body: data.map((p) => [
-          p.empresa,
-          p.numeroOS,
-          p.dataEntrada ? new Date(p.dataEntrada).toLocaleDateString('pt-BR') : 'Não informado',
-          p.previsaoEntrega ? new Date(p.previsaoEntrega).toLocaleDateString('pt-BR') : 'Não informado',
-          p.responsavel,
-          p.status === 'concluido' ? `${formatarDataHora(p.inicio)}\n${formatarDataHora(p.dataConclusao) || 'Não concluído'}` : formatarDataHora(p.inicio),
-          formatarTempo(p.tempo),
-        ]),
+        body: data.map((p) => {
+          const dataEntrada = new Date(p.dataEntrada);
+          const previsaoEntrega = new Date(p.previsaoEntrega);
+          return [
+            p.empresa,
+            p.numeroOS,
+            dataEntrada.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+            previsaoEntrega.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+            p.responsavel,
+            p.status === 'concluido' ? `${formatarDataHora(p.inicio)}\n${formatarDataHora(p.dataConclusao) || 'Não concluído'}` : formatarDataHora(p.inicio),
+            formatarTempo(p.tempo),
+          ];
+        }),
         startY: 30,
       });
     };
