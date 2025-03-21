@@ -1,0 +1,115 @@
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .itens-list {
+    margin-bottom: 20px;
+  }
+  
+  .item-row {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .item-info {
+    margin-bottom: 10px;
+  }
+  
+  .item-info span {
+    display: block;
+  }
+  
+  .quantidade-entregue label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  .quantidade-entregue input {
+    width: 100%;
+    padding: 5px;
+  }
+  
+  .historico-entregas {
+    margin-bottom: 20px;
+  }
+  
+  .tabela-historico {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .tabela-historico th,
+  .tabela-historico td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .tabela-historico th {
+    background-color: #f2f2f2;
+  }
+  
+  .tabela-historico button {
+    margin-right: 5px;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  
+  .tabela-historico button:hover {
+    background: #0056b3;
+  }
+  
+  .editar-entrega {
+    margin-bottom: 20px;
+  }
+  
+  .editar-entrega input {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 5px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  input[type="number"] {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .modal-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  button {
+    padding: 10px 20px;
+    cursor: pointer;
+    margin-right: 10px;
+  }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatarDataHora } from '../utils';
+import './ModalPesoVolume.css';
 
 const ModalPesoVolume = ({
   pedidoParaConcluir,
@@ -20,6 +21,8 @@ const ModalPesoVolume = ({
   );
   const [historicoEntregas, setHistoricoEntregas] = useState([]);
   const [pedidoCompleto, setPedidoCompleto] = useState(false);
+  const [editandoEntrega, setEditandoEntrega] = useState(null);
+  const [novaQuantidadeEntregue, setNovaQuantidadeEntregue] = useState('');
 
   const formatDateToLocalISO = (date, context = 'unknown') => {
     const d = date ? new Date(date) : new Date();
@@ -51,8 +54,8 @@ const ModalPesoVolume = ({
       const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
       console.log('Resposta da API /historico-entregas:', response.data);
       const historico = Array.isArray(response.data) ? response.data : [];
-      // Ordenar por dataedicao para garantir que as edições apareçam na ordem correta
-      historico.sort((a, b) => new Date(a.dataedicao) - new Date(b.dataedicao));
+      // Ordenar por dataEdicao para garantir que as edições apareçam na ordem correta
+      historico.sort((a, b) => new Date(a.dataEdicao) - new Date(b.dataEdicao));
       setHistoricoEntregas(historico);
       console.log('Estado historicoEntregas atualizado:', historico);
       if (historico.length === 0) {
@@ -161,6 +164,46 @@ const ModalPesoVolume = ({
     setQuantidadesParaAdicionar(novasQuantidades);
   };
 
+  const handleEditarEntrega = (entrega) => {
+    setEditandoEntrega(entrega);
+    setNovaQuantidadeEntregue(entrega.quantidadeEntregue.toString());
+  };
+
+  const handleSalvarEntrega = async () => {
+    if (!novaQuantidadeEntregue || isNaN(novaQuantidadeEntregue) || novaQuantidadeEntregue < 0) {
+      setMensagem('Quantidade entregue deve ser um número não negativo.');
+      return;
+    }
+
+    try {
+      const response = await api.put(`/historico-entregas/${editandoEntrega.id}`, {
+        quantidadeEntregue: parseInt(novaQuantidadeEntregue)
+      });
+      if (!response.data) throw new Error('Erro ao editar entrega');
+      const updatedEntrega = response.data;
+      setHistoricoEntregas(prev => 
+        prev.map(ent => (ent.id === updatedEntrega.id ? updatedEntrega : ent))
+      );
+      setMensagem('Entrega editada com sucesso.');
+      setEditandoEntrega(null);
+      setNovaQuantidadeEntregue('');
+    } catch (error) {
+      setMensagem('Erro ao editar entrega: ' + (error.response?.data.message || error.message));
+    }
+  };
+
+  const handleExcluirEntrega = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta entrada de entrega?')) return;
+
+    try {
+      await api.delete(`/historico-entregas/${id}`);
+      setHistoricoEntregas(prev => prev.filter(ent => ent.id !== id));
+      setMensagem('Entrada de entrega excluída com sucesso.');
+    } catch (error) {
+      setMensagem('Erro ao excluir entrega: ' + (error.response?.data.message || error.message));
+    }
+  };
+
   return (
     <div className="modal">
       <div className="modal-content" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
@@ -201,8 +244,8 @@ const ModalPesoVolume = ({
             )}
           </div>
 
-          <div>
-            <h3>Histórico de Edições</h3>
+          <div className="historico-entregas">
+            <h3>Histórico de Entregas</h3>
             {historicoEntregas.length > 0 ? (
               <table className="tabela-historico">
                 <thead>
@@ -210,6 +253,7 @@ const ModalPesoVolume = ({
                     <th>Item</th>
                     <th>Qtd Adicionada</th>
                     <th>Data</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -218,54 +262,78 @@ const ModalPesoVolume = ({
                       <td>{entry.codigodesenho || 'Desconhecido'}</td>
                       <td>{entry.quantidadeentregue || 'N/A'}</td>
                       <td>{entry.dataedicao ? formatarDataHora(entry.dataedicao) : 'N/A'}</td>
+                      <td>
+                        <button type="button" onClick={() => handleEditarEntrega(entry)}>Editar</button>
+                        <button type="button" onClick={() => handleExcluirEntrega(entry.id)}>Excluir</button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <p>Nenhuma edição registrada.</p>
+              <p>Nenhuma entrega registrada.</p>
             )}
           </div>
 
-          <div>
-            <label htmlFor="peso">Peso (kg) {pedidoCompleto || !pedidoParaConcluir?.itemParaEditar ? '*' : ''}</label>
-            <input
-              type="number"
-              id="peso"
-              value={peso}
-              onChange={(e) => setPeso(e.target.value)}
-              min="0"
-              step="0.01"
-              required={pedidoCompleto || !pedidoParaConcluir?.itemParaEditar}
-            />
-          </div>
-          <div>
-            <label htmlFor="volume">Volume (m³) {pedidoCompleto || !pedidoParaConcluir?.itemParaEditar ? '*' : ''}</label>
-            <input
-              type="number"
-              id="volume"
-              value={volume}
-              onChange={(e) => setVolume(e.target.value)}
-              min="0"
-              step="0.01"
-              required={pedidoCompleto || !pedidoParaConcluir?.itemParaEditar}
-            />
-          </div>
-
-          <div className="modal-buttons">
-            <button type="submit">Concluir</button>
-            <button
-              type="button"
-              onClick={() => {
-                setPeso('');
-                setVolume('');
-                setMostrarModalPesoVolume(false);
-                setPedidoParaConcluir(null);
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
+          {editandoEntrega ? (
+            <div className="editar-entrega">
+              <h3>Editar Quantidade Entregue</h3>
+              <input
+                type="number"
+                value={novaQuantidadeEntregue}
+                onChange={(e) => setNovaQuantidadeEntregue(e.target.value)}
+                placeholder="Nova quantidade entregue"
+                min="0"
+              />
+              <button type="button" onClick={handleSalvarEntrega}>Salvar</button>
+              <button type="button" onClick={() => { setEditandoEntrega(null); setNovaQuantidadeEntregue(''); }}>
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label htmlFor="peso">Peso (kg) {pedidoCompleto || !pedidoParaConcluir?.itemParaEditar ? '*' : ''}</label>
+                <input
+                  type="number"
+                  id="peso"
+                  value={peso}
+                  onChange={(e) => setPeso(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  required={pedidoCompleto || !pedidoParaConcluir?.itemParaEditar}
+                />
+              </div>
+              <div>
+                <label htmlFor="volume">Volume (m³) {pedidoCompleto || !pedidoParaConcluir?.itemParaEditar ? '*' : ''}</label>
+                <input
+                  type="number"
+                  id="volume"
+                  value={volume}
+                  onChange={(e) => setVolume(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  required={pedidoCompleto || !pedidoParaConcluir?.itemParaEditar}
+                />
+              </div>
+              <div className="modal-buttons">
+                <button type="submit">Concluir</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPeso('');
+                    setVolume('');
+                    setMostrarModalPesoVolume(false);
+                    setPedidoParaConcluir(null);
+                    setEditandoEntrega(null);
+                    setNovaQuantidadeEntregue('');
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </>
+          )}
         </form>
       </div>
     </div>

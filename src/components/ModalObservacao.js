@@ -1,117 +1,124 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api';
-import { formatarDataHora } from '../utils';
+import './ModalObservacao.css';
 
-const ModalObservacao = ({
-  pedidoSelecionado,
-  observacao,
-  setObservacao,
-  setMostrarModal,
-  setMensagem,
-}) => {
+const ModalObservacao = ({ pedidoSelecionado, observacao, setObservacao, setMostrarModal, setMensagem }) => {
   const [historicoObservacoes, setHistoricoObservacoes] = useState([]);
+  const [editandoObservacao, setEditandoObservacao] = useState(null);
+  const [novaObservacao, setNovaObservacao] = useState(observacao || '');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!observacao.trim()) {
-      setMensagem('Digite uma observação antes de enviar.');
-      return;
-    }
-
-    try {
-      const resposta = await api.post('/enviar-email', {
-        pedido: pedidoSelecionado,
-        observacao,
-      });
-      setMensagem('E-mail com observação enviado com sucesso!');
-      setObservacao('');
-      setMostrarModal(false);
-      fetchHistorico(); // Atualiza o histórico após enviar
-    } catch (error) {
-      setMensagem('Erro ao enviar observação: ' + (error.response?.data.message || error.message));
-    }
-  };
-
-  const fetchHistorico = async () => {
-    if (!pedidoSelecionado?.id) {
-      console.log('Nenhum pedido selecionado para buscar histórico de observações');
-      setHistoricoObservacoes([]);
-      return;
-    }
-
-    try {
-      console.log(`Buscando histórico de observações para pedido ${pedidoSelecionado.id}`);
-      const response = await api.get(`/historico-observacoes/${pedidoSelecionado.id}`);
-      console.log('Resposta da API /historico-observacoes:', response.data);
-      const historico = Array.isArray(response.data) ? response.data : [];
-      setHistoricoObservacoes(historico);
-      console.log('Estado historicoObservacoes atualizado:', historico);
-      if (historico.length === 0) {
-        console.log(`Nenhum histórico de observações retornado para pedido ${pedidoSelecionado.id}`);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar histórico de observações:', error);
-      setMensagem('Erro ao carregar histórico de observações: ' + (error.response?.data.message || error.message));
-      setHistoricoObservacoes([]);
-    }
-  };
-
+  // Carregar o histórico de observações ao abrir o modal
   useEffect(() => {
-    console.log('useEffect disparado com pedidoSelecionado:', pedidoSelecionado);
+    const fetchHistorico = async () => {
+      try {
+        const observacoesResponse = await fetch(`/historico-observacoes/${pedidoSelecionado.id}`);
+        const observacoesData = await observacoesResponse.json();
+        setHistoricoObservacoes(observacoesData);
+      } catch (error) {
+        console.error('Erro ao carregar histórico de observações:', error);
+        setMensagem('Erro ao carregar histórico de observações: ' + error.message);
+      }
+    };
     fetchHistorico();
-  }, [pedidoSelecionado]);
+  }, [pedidoSelecionado, setMensagem]);
+
+  const handleSalvarObservacao = async () => {
+    if (!novaObservacao.trim()) {
+      setMensagem('A observação não pode estar vazia.');
+      return;
+    }
+
+    try {
+      if (editandoObservacao) {
+        const response = await fetch(`/historico-observacoes/${editandoObservacao.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ observacao: novaObservacao })
+        });
+        if (!response.ok) throw new Error('Erro ao editar observação');
+        const updatedObservacao = await response.json();
+        setHistoricoObservacoes(prev => 
+          prev.map(obs => (obs.id === updatedObservacao.id ? updatedObservacao : obs))
+        );
+        setMensagem('Observação editada com sucesso.');
+        setEditandoObservacao(null);
+      } else {
+        const response = await fetch('/enviar-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pedido: pedidoSelecionado, observacao: novaObservacao })
+        });
+        if (!response.ok) throw new Error('Erro ao enviar observação');
+        const data = await response.json();
+        setMensagem(data.message);
+        const historicoResponse = await fetch(`/historico-observacoes/${pedidoSelecionado.id}`);
+        const updatedHistorico = await historicoResponse.json();
+        setHistoricoObservacoes(updatedHistorico);
+      }
+      setNovaObservacao('');
+    } catch (error) {
+      setMensagem('Erro: ' + error.message);
+    }
+  };
+
+  const handleEditarObservacao = (obs) => {
+    setEditandoObservacao(obs);
+    setNovaObservacao(obs.observacao);
+  };
+
+  const handleExcluirObservacao = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta observação?')) return;
+
+    try {
+      const response = await fetch(`/historico-observacoes/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Erro ao excluir observação');
+      setHistoricoObservacoes(prev => prev.filter(obs => obs.id !== id));
+      setMensagem('Observação excluída com sucesso.');
+    } catch (error) {
+      setMensagem('Erro ao excluir observação: ' + error.message);
+    }
+  };
 
   return (
-    <div className="modal">
+    <div className="modal-overlay">
       <div className="modal-content">
-        <h2>Adicionar Observação</h2>
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="observacao">Observação</label>
-            <textarea
-              id="observacao"
-              value={observacao}
-              onChange={(e) => setObservacao(e.target.value)}
-              rows="4"
-              placeholder="Digite sua observação aqui"
-            />
-          </div>
-          <div>
-            <h3>Histórico de Observações</h3>
-            {historicoObservacoes.length > 0 ? (
-              <table className="tabela-historico">
-                <thead>
-                  <tr>
-                    <th>Edição</th>
-                    <th>Data</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historicoObservacoes.map((entry) => (
-                    <tr key={entry.id}>
-                      <td>{entry.observacao || 'N/A'}</td>
-                      <td>{entry.dataedicao ? formatarDataHora(entry.dataedicao) : 'N/A'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>Nenhuma observação registrada.</p>
-            )}
-          </div>
-          <div className="modal-buttons">
-            <button type="submit">Enviar</button>
-            <button
-              type="button"
-              onClick={() => {
-                setObservacao('');
-                setMostrarModal(false);
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
+        <h2>Observações do Pedido {pedidoSelecionado.numeroOS}</h2>
+
+        <div className="historico-observacoes">
+          <h3>Histórico de Observações</h3>
+          {historicoObservacoes.length > 0 ? (
+            <ul>
+              {historicoObservacoes.map(obs => (
+                <li key={obs.id}>
+                  <p><strong>{new Date(obs.dataEdicao).toLocaleString('pt-BR')}:</strong> {obs.observacao}</p>
+                  <button onClick={() => handleEditarObservacao(obs)}>Editar</button>
+                  <button onClick={() => handleExcluirObservacao(obs.id)}>Excluir</button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Nenhuma observação registrada.</p>
+          )}
+        </div>
+
+        <div className="nova-observacao">
+          <h3>{editandoObservacao ? 'Editar Observação' : 'Adicionar Observação'}</h3>
+          <textarea
+            value={novaObservacao}
+            onChange={(e) => setNovaObservacao(e.target.value)}
+            placeholder="Digite sua observação aqui..."
+            rows="4"
+            cols="50"
+          />
+          <button onClick={handleSalvarObservacao}>
+            {editandoObservacao ? 'Salvar Edição' : 'Adicionar Observação'}
+          </button>
+        </div>
+
+        <button onClick={() => { setMostrarModal(false); setEditandoObservacao(null); setNovaObservacao(''); }}>
+          Fechar
+        </button>
       </div>
     </div>
   );
