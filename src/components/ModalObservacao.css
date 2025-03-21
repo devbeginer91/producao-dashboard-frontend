@@ -8,6 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000; /* Adicionado para garantir que o modal fique sobreposto */
 }
 
 .modal-content {
