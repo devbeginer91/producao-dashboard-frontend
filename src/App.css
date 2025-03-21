@@ -77,26 +77,55 @@ h1 {
   border-radius: 6px;
 }
 
-/* Botão Adicionar Pedido Novo */
-.btn-adicionar-pedido {
-  padding: 8px 16px;
-  font-size: 14px;
-  border-radius: 4px;
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
+/* Botão Adicionar Pedido Novo, Pausar Todos e Retomar Todos */
+.btn-adicionar-pedido,
+.btn-pausar-todos,
+.btn-retomar-todos {
+  padding: 10px 20px; /* Mesmo padding para todos os botões */
+  font-size: 16px; /* Mesmo tamanho de fonte */
   color: white;
   border: none;
+  border-radius: 5px;
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  margin-bottom: 20px;
-  display: block;
-  width: fit-content;
+  display: inline-block; /* Garante que os botões fiquem alinhados corretamente */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra inicial */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease; /* Transição suave para movimento, sombra e cor de fundo */
+}
+
+.btn-adicionar-pedido {
+  background: #007bff;
 }
 
 .btn-adicionar-pedido:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  background: linear-gradient(135deg, #27ae60, #219653);
+  background: #0056b3;
+  transform: translateY(-2px); /* Leve movimento para cima */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra maior ao passar o mouse */
+}
+
+.btn-pausar-todos {
+  background: #ff9800;
+}
+
+.btn-pausar-todos:hover {
+  background: #fb8c00;
+  transform: translateY(-2px); /* Leve movimento para cima */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra maior ao passar o mouse */
+}
+
+.btn-retomar-todos {
+  background: #4caf50;
+}
+
+.btn-retomar-todos:hover {
+  background: #45a049;
+  transform: translateY(-2px); /* Leve movimento para cima */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra maior ao passar o mouse */
+}
+
+.button-group {
+  display: flex;
+  gap: 10px; /* Espaçamento entre os botões */
+  margin-bottom: 20px;
 }
 
 /* Formulário */
@@ -734,6 +763,7 @@ h2 {
   border-radius: 4px;
   font-size: 14px;
 }
+
 .login-container {
   max-width: 400px;
   margin: 50px auto;
@@ -866,46 +896,4 @@ button {
   padding: 10px 20px;
   cursor: pointer;
   margin-right: 10px;
-}
-/* Estilos apenas para os botões */
-.btn-adicionar-pedido,
-.btn-pausar-todos,
-.btn-retomar-todos {
-  padding: 10px 20px; /* Mesmo padding para todos os botões */
-  font-size: 16px; /* Mesmo tamanho de fonte */
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  display: inline-block; /* Garante que os botões fiquem alinhados corretamente */
-}
-
-.btn-adicionar-pedido {
-  background: #007bff;
-}
-
-.btn-adicionar-pedido:hover {
-  background: #0056b3;
-}
-
-.btn-pausar-todos {
-  background: #ff9800;
-}
-
-.btn-pausar-todos:hover {
-  background: #fb8c00;
-}
-
-.btn-retomar-todos {
-  background: #4caf50;
-}
-
-.btn-retomar-todos:hover {
-  background: #45a049;
-}
-
-.button-group {
-  display: flex;
-  gap: 10px; /* Espaçamento entre os botões */
-  margin-bottom: 20px;
 }
