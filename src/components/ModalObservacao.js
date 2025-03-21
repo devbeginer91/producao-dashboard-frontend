@@ -1,25 +1,47 @@
 import React, { useState, useEffect } from 'react';
+import api from '../api';
 import './ModalObservacao.css';
 
-const ModalObservacao = ({ pedidoSelecionado, observacao, setObservacao, setMostrarModal, setMensagem }) => {
+const ModalObservacao = ({
+  pedidoSelecionado,
+  observacao,
+  setObservacao,
+  setMostrarModal,
+  setMensagem,
+}) => {
   const [historicoObservacoes, setHistoricoObservacoes] = useState([]);
   const [editandoObservacao, setEditandoObservacao] = useState(null);
   const [novaObservacao, setNovaObservacao] = useState(observacao || '');
 
   // Carregar o histórico de observações ao abrir o modal
-  useEffect(() => {
-    const fetchHistorico = async () => {
-      try {
-        const observacoesResponse = await fetch(`/historico-observacoes/${pedidoSelecionado.id}`);
-        const observacoesData = await observacoesResponse.json();
-        setHistoricoObservacoes(observacoesData);
-      } catch (error) {
-        console.error('Erro ao carregar histórico de observações:', error);
-        setMensagem('Erro ao carregar histórico de observações: ' + error.message);
+  const fetchHistorico = async () => {
+    if (!pedidoSelecionado?.id) {
+      console.log('Nenhum pedido selecionado para buscar histórico de observações');
+      setHistoricoObservacoes([]);
+      return;
+    }
+
+    try {
+      console.log(`Buscando histórico de observações para pedido ${pedidoSelecionado.id}`);
+      const response = await api.get(`/historico-observacoes/${pedidoSelecionado.id}`);
+      console.log('Resposta da API /historico-observacoes:', response.data);
+      const historico = Array.isArray(response.data) ? response.data : [];
+      setHistoricoObservacoes(historico);
+      console.log('Estado historicoObservacoes atualizado:', historico);
+      if (historico.length === 0) {
+        console.log(`Nenhum histórico de observações retornado para pedido ${pedidoSelecionado.id}`);
       }
-    };
+    } catch (error) {
+      console.error('Erro ao carregar histórico de observações:', error);
+      setMensagem('Erro ao carregar histórico de observações: ' + (error.response?.data.message || error.message));
+      setHistoricoObservacoes([]);
+    }
+  };
+
+  useEffect(() => {
+    console.log('useEffect disparado com pedidoSelecionado:', pedidoSelecionado);
     fetchHistorico();
-  }, [pedidoSelecionado, setMensagem]);
+  }, [pedidoSelecionado]);
 
   const handleSalvarObservacao = async () => {
     if (!novaObservacao.trim()) {
@@ -29,34 +51,28 @@ const ModalObservacao = ({ pedidoSelecionado, observacao, setObservacao, setMost
 
     try {
       if (editandoObservacao) {
-        const response = await fetch(`/historico-observacoes/${editandoObservacao.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ observacao: novaObservacao })
+        const response = await api.put(`/historico-observacoes/${editandoObservacao.id}`, {
+          observacao: novaObservacao
         });
-        if (!response.ok) throw new Error('Erro ao editar observação');
-        const updatedObservacao = await response.json();
+        if (!response.data) throw new Error('Erro ao editar observação');
+        const updatedObservacao = response.data;
         setHistoricoObservacoes(prev => 
           prev.map(obs => (obs.id === updatedObservacao.id ? updatedObservacao : obs))
         );
         setMensagem('Observação editada com sucesso.');
         setEditandoObservacao(null);
       } else {
-        const response = await fetch('/enviar-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pedido: pedidoSelecionado, observacao: novaObservacao })
+        const response = await api.post('/enviar-email', {
+          pedido: pedidoSelecionado,
+          observacao: novaObservacao
         });
-        if (!response.ok) throw new Error('Erro ao enviar observação');
-        const data = await response.json();
-        setMensagem(data.message);
-        const historicoResponse = await fetch(`/historico-observacoes/${pedidoSelecionado.id}`);
-        const updatedHistorico = await historicoResponse.json();
-        setHistoricoObservacoes(updatedHistorico);
+        if (!response.data) throw new Error('Erro ao enviar observação');
+        setMensagem('E-mail com observação enviado com sucesso!');
+        await fetchHistorico(); // Atualiza o histórico após enviar
       }
       setNovaObservacao('');
     } catch (error) {
-      setMensagem('Erro: ' + error.message);
+      setMensagem('Erro: ' + (error.response?.data.message || error.message));
     }
   };
 
@@ -69,14 +85,11 @@ const ModalObservacao = ({ pedidoSelecionado, observacao, setObservacao, setMost
     if (!window.confirm('Tem certeza que deseja excluir esta observação?')) return;
 
     try {
-      const response = await fetch(`/historico-observacoes/${id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Erro ao excluir observação');
+      await api.delete(`/historico-observacoes/${id}`);
       setHistoricoObservacoes(prev => prev.filter(obs => obs.id !== id));
       setMensagem('Observação excluída com sucesso.');
     } catch (error) {
-      setMensagem('Erro ao excluir observação: ' + error.message);
+      setMensagem('Erro ao excluir observação: ' + (error.response?.data.message || error.message));
     }
   };
 
