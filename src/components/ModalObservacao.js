@@ -13,6 +13,14 @@ const ModalObservacao = ({
   const [editandoObservacao, setEditandoObservacao] = useState(null);
   const [novaObservacao, setNovaObservacao] = useState(observacao || '');
 
+  // Função para formatar a data com segurança
+  const formatarData = (data) => {
+    if (!data || isNaN(new Date(data).getTime())) {
+      return 'Data inválida';
+    }
+    return new Date(data).toLocaleString('pt-BR');
+  };
+
   // Carregar o histórico de observações ao abrir o modal
   const fetchHistorico = async () => {
     if (!pedidoSelecionado?.id) {
@@ -104,7 +112,7 @@ const ModalObservacao = ({
             <ul>
               {historicoObservacoes.map(obs => (
                 <li key={obs.id}>
-                  <p><strong>{new Date(obs.dataEdicao).toLocaleString('pt-BR')}:</strong> {obs.observacao}</p>
+                  <p><strong>{formatarData(obs.dataEdicao)}:</strong> {obs.observacao}</p>
                   <button onClick={() => handleEditarObservacao(obs)}>Editar</button>
                   <button onClick={() => handleExcluirObservacao(obs.id)}>Excluir</button>
                 </li>
