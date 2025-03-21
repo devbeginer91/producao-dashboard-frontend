@@ -100,6 +100,20 @@ const ModalPesoVolume = ({
       return;
     }
 
+    // Preparar as quantidades editadas para enviar no e-mail
+    const quantidadesEditadas = pedidoParaConcluir.itens
+      .map((item, index) => {
+        const quantidadeAdicionada = quantidadesParaAdicionar[index] !== '' ? parseInt(quantidadesParaAdicionar[index], 10) || 0 : 0;
+        if (quantidadeAdicionada > 0) {
+          return {
+            codigoDesenho: item.codigoDesenho,
+            quantidade: quantidadeAdicionada,
+          };
+        }
+        return null;
+      })
+      .filter(edit => edit !== null);
+
     try {
       const inicioValido = formatDateToLocalISO(pedidoParaConcluir.inicio || new Date(), 'handleSubmit - inicio');
       const novosItens = pedidoParaConcluir.itens.map((item, index) => ({
@@ -123,7 +137,11 @@ const ModalPesoVolume = ({
         console.log('Enviando pedido concluído:', pedidoConcluido);
 
         const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoConcluido);
-        await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
+        await api.post('/enviar-email', { 
+          pedido: resposta.data, 
+          observacao: '', 
+          quantidadesEditadas 
+        });
         // Armazenar o pedido concluído no recentlyUpdatedPedidos
         window.recentlyUpdatedPedidos = window.recentlyUpdatedPedidos || new Map();
         window.recentlyUpdatedPedidos.set(pedidoConcluido.id, resposta.data);
@@ -142,7 +160,11 @@ const ModalPesoVolume = ({
         console.log('Enviando pedido atualizado:', pedidoAtualizado);
 
         const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoAtualizado);
-        await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
+        await api.post('/enviar-email', { 
+          pedido: resposta.data, 
+          observacao: '', 
+          quantidadesEditadas 
+        });
         // Armazenar o pedido atualizado no recentlyUpdatedPedidos
         window.recentlyUpdatedPedidos = window.recentlyUpdatedPedidos || new Map();
         window.recentlyUpdatedPedidos.set(pedidoAtualizado.id, resposta.data);
