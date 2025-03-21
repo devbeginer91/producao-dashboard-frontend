@@ -87,6 +87,7 @@ function App() {
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
   const pollingIntervalRef = useRef(null);
+  const recentlyUpdatedPedidos = useRef(new Map()); // Mapa para armazenar pedidos recém-atualizados
 
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
@@ -133,6 +134,21 @@ function App() {
           const tempoDecorrido = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
           tempoFinal = tempoPausado + tempoDecorrido;
         }
+        // Verificar se o pedido foi recentemente atualizado
+        const recentlyUpdated = recentlyUpdatedPedidos.current.get(pedido.id);
+        if (recentlyUpdated) {
+          // Se o pedido foi atualizado recentemente, usar os dados locais
+          return {
+            ...pedido,
+            ...recentlyUpdated,
+            inicio: inicioValido,
+            dataConclusao: recentlyUpdated.dataConclusao ? formatDateToLocalISO(recentlyUpdated.dataConclusao) : dataConclusaoValida,
+            tempo: recentlyUpdated.tempo || tempoFinal,
+            tempoPausado: recentlyUpdated.tempoPausado || tempoPausado,
+            pausado: recentlyUpdated.pausado || pedido.pausado,
+            itens: recentlyUpdated.itens || (Array.isArray(pedido.itens) ? pedido.itens : []),
+          };
+        }
         return {
           ...pedido,
           inicio: inicioValido,
@@ -153,6 +169,11 @@ function App() {
       setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
       setIsLoading(false);
       lastFetchTimestamp.current = now;
+
+      // Limpar pedidos recentemente atualizados após 5 segundos
+      setTimeout(() => {
+        recentlyUpdatedPedidos.current.clear();
+      }, 5000);
     } catch (error) {
       setMensagem('Erro ao carregar pedidos: ' + error.message);
     } finally {

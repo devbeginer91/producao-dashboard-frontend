@@ -54,7 +54,6 @@ const ModalPesoVolume = ({
       const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
       console.log('Resposta da API /historico-entregas:', response.data);
       const historico = Array.isArray(response.data) ? response.data : [];
-      // Ordenar por dataEdicao para garantir que as edições apareçam na ordem correta
       historico.sort((a, b) => new Date(a.dataEdicao) - new Date(b.dataEdicao));
       setHistoricoEntregas(historico);
       console.log('Estado historicoEntregas atualizado:', historico);
@@ -125,6 +124,9 @@ const ModalPesoVolume = ({
 
         const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoConcluido);
         await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
+        // Armazenar o pedido concluído no recentlyUpdatedPedidos
+        window.recentlyUpdatedPedidos = window.recentlyUpdatedPedidos || new Map();
+        window.recentlyUpdatedPedidos.set(pedidoConcluido.id, resposta.data);
         setPedidos((prev) => prev.filter((p) => p.id !== pedidoConcluido.id));
         setPedidosConcluidos((prev) => [...prev, resposta.data]);
         setMensagem('Pedido concluído e e-mail enviado!');
@@ -141,6 +143,9 @@ const ModalPesoVolume = ({
 
         const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoAtualizado);
         await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
+        // Armazenar o pedido atualizado no recentlyUpdatedPedidos
+        window.recentlyUpdatedPedidos = window.recentlyUpdatedPedidos || new Map();
+        window.recentlyUpdatedPedidos.set(pedidoAtualizado.id, resposta.data);
         setPedidos((prev) => prev.map((p) => (p.id === pedidoAtualizado.id ? resposta.data : p)));
         setMensagem('Quantidades entregues atualizadas e e-mail enviado!');
       }
