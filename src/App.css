@@ -867,3 +867,98 @@ button {
   cursor: pointer;
   margin-right: 10px;
 }
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.logo {
+  height: 50px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+h2 {
+  margin-top: 30px;
+  font-size: 20px;
+}
+
+.erro {
+  color: red;
+  font-weight: bold;
+}
+
+.sucesso {
+  color: green;
+  font-weight: bold;
+}
+
+.btn-desenho,
+.btn-logout,
+.btn-adicionar-pedido,
+.btn-pausar-todos,
+.btn-retomar-todos {
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn-desenho:hover,
+.btn-logout:hover,
+.btn-adicionar-pedido:hover,
+.btn-pausar-todos:hover,
+.btn-retomar-todos:hover {
+  background: #0056b3;
+}
+
+.btn-logout {
+  background: #dc3545;
+}
+
+.btn-logout:hover {
+  background: #c82333;
+}
+
+.btn-pausar-todos {
+  background: #ff9800;
+}
+
+.btn-pausar-todos:hover {
+  background: #fb8c00;
+}
+
+.btn-retomar-todos {
+  background: #4caf50;
+}
+
+.btn-retomar-todos:hover {
+  background: #45a049;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}

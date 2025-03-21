@@ -87,7 +87,7 @@ function App() {
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
   const pollingIntervalRef = useRef(null);
-  const recentlyUpdatedPedidos = useRef(new Map()); // Mapa para armazenar pedidos recém-atualizados
+  const recentlyUpdatedPedidos = useRef(new Map());
 
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
@@ -134,10 +134,8 @@ function App() {
           const tempoDecorrido = calcularTempo(dataReferencia, formatDateToLocalISO(new Date(), `fetchPedidos - pedido ${pedido.id}`));
           tempoFinal = tempoPausado + tempoDecorrido;
         }
-        // Verificar se o pedido foi recentemente atualizado
         const recentlyUpdated = recentlyUpdatedPedidos.current.get(pedido.id);
         if (recentlyUpdated) {
-          // Se o pedido foi atualizado recentemente, usar os dados locais
           return {
             ...pedido,
             ...recentlyUpdated,
@@ -170,7 +168,6 @@ function App() {
       setIsLoading(false);
       lastFetchTimestamp.current = now;
 
-      // Limpar pedidos recentemente atualizados após 5 segundos
       setTimeout(() => {
         recentlyUpdatedPedidos.current.clear();
       }, 5000);
@@ -194,7 +191,6 @@ function App() {
     };
   }, [carregarPedidos, isAuthenticated]);
 
-  // Polling para atualizar os tempos dos pedidos em andamento a cada 1 minuto
   useEffect(() => {
     const intervalo = setInterval(() => {
       setPedidos((prev) => {
@@ -210,19 +206,18 @@ function App() {
         });
         return [...novosPedidos];
       });
-    }, 60000); // 60 segundos
+    }, 60000);
     return () => clearInterval(intervalo);
   }, []);
 
-  // Polling para atualizar a lista de pedidos a cada 1 minuto
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    fetchPedidos(null, true); // Chamada inicial
+    fetchPedidos(null, true);
 
     pollingIntervalRef.current = setInterval(() => {
       fetchPedidos(null, true);
-    }, 60000); // 60 segundos
+    }, 60000);
 
     return () => {
       if (pollingIntervalRef.current) {
@@ -346,6 +341,46 @@ function App() {
     }
   };
 
+  const pausarTodosPedidos = async () => {
+    if (pedidos.length === 0) {
+      setMensagem('Nenhum pedido em andamento para pausar.');
+      return;
+    }
+
+    try {
+      const promises = pedidos.map(pedido => {
+        if (pedido.pausado !== '1') {
+          return pausarPedido(pedido.id);
+        }
+        return Promise.resolve();
+      });
+      await Promise.all(promises);
+      setMensagem('Todos os pedidos em andamento foram pausados com sucesso.');
+    } catch (error) {
+      setMensagem('Erro ao pausar todos os pedidos: ' + (error.response?.data.message || error.message));
+    }
+  };
+
+  const retomarTodosPedidos = async () => {
+    if (pedidos.length === 0) {
+      setMensagem('Nenhum pedido em andamento para retomar.');
+      return;
+    }
+
+    try {
+      const promises = pedidos.map(pedido => {
+        if (pedido.pausado === '1') {
+          return retomarPedido(pedido.id);
+        }
+        return Promise.resolve();
+      });
+      await Promise.all(promises);
+      setMensagem('Todos os pedidos em andamento foram retomados com sucesso.');
+    } catch (error) {
+      setMensagem('Erro ao retomar todos os pedidos: ' + (error.response?.data.message || error.message));
+    }
+  };
+
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
@@ -376,7 +411,12 @@ function App() {
               {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
               {isLoading && <p>Carregando pedidos...</p>}
 
-              <button className="btn-adicionar-pedido" onClick={() => setMostrarFormulario(true)}>Adicionar Pedido Novo</button>
+              <div className="button-group">
+                <button className="btn-adicionar-pedido" onClick={() => setMostrarFormulario(true)}>Adicionar Pedido Novo</button>
+                <button className="btn-pausar-todos" onClick={pausarTodosPedidos}>Pausar Todos</button>
+                <button className="btn-retomar-todos" onClick={retomarTodosPedidos}>Retomar Todos</button>
+              </div>
+
               {mostrarFormulario && (
                 <PedidoForm
                   novoPedido={novoPedido}
