@@ -867,78 +867,25 @@ button {
   cursor: pointer;
   margin-right: 10px;
 }
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f4f4f4;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.logo {
-  height: 50px;
-}
-
-h1 {
-  margin: 0;
-  font-size: 24px;
-}
-
-h2 {
-  margin-top: 30px;
-  font-size: 20px;
-}
-
-.erro {
-  color: red;
-  font-weight: bold;
-}
-
-.sucesso {
-  color: green;
-  font-weight: bold;
-}
-
-.btn-desenho,
-.btn-logout,
+/* Estilos apenas para os botões */
 .btn-adicionar-pedido,
 .btn-pausar-todos,
 .btn-retomar-todos {
-  padding: 10px 20px;
-  background: #007bff;
+  padding: 10px 20px; /* Mesmo padding para todos os botões */
+  font-size: 16px; /* Mesmo tamanho de fonte */
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 16px;
+  display: inline-block; /* Garante que os botões fiquem alinhados corretamente */
 }
 
-.btn-desenho:hover,
-.btn-logout:hover,
-.btn-adicionar-pedido:hover,
-.btn-pausar-todos:hover,
-.btn-retomar-todos:hover {
+.btn-adicionar-pedido {
+  background: #007bff;
+}
+
+.btn-adicionar-pedido:hover {
   background: #0056b3;
-}
-
-.btn-logout {
-  background: #dc3545;
-}
-
-.btn-logout:hover {
-  background: #c82333;
 }
 
 .btn-pausar-todos {
@@ -959,6 +906,6 @@ h2 {
 
 .button-group {
   display: flex;
-  gap: 10px;
+  gap: 10px; /* Espaçamento entre os botões */
   margin-bottom: 20px;
 }
