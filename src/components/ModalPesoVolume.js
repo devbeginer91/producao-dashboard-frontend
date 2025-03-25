@@ -27,12 +27,9 @@ const ModalPesoVolume = ({
   const formatDateToLocalISO = (date, context = 'unknown') => {
     const d = date ? new Date(date) : new Date();
     if (isNaN(d.getTime()) || (typeof date === 'string' && date.includes('undefined'))) {
-      console.warn(`[formatDateToLocalISO - ${context}] Data inválida detectada, usando data atual:`, date);
       return new Date().toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).slice(0, 19);
     }
-    const isoString = d.toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).slice(0, 19);
-    console.log(`[formatDateToLocalISO - ${context}] Data formatada: ${isoString}`);
-    return isoString;
+    return d.toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).slice(0, 19);
   };
 
   const verificarPedidoCompleto = (novasQuantidadesEntregues) => {
@@ -44,22 +41,16 @@ const ModalPesoVolume = ({
 
   const fetchHistorico = async () => {
     if (!pedidoParaConcluir?.id) {
-      console.log('Nenhum pedido selecionado para buscar histórico');
       setHistoricoEntregas([]);
       return;
     }
   
     try {
-      console.log(`Buscando histórico para pedido ${pedidoParaConcluir.id}`);
       const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
-      console.log('Resposta da API /historico-entregas:', response.data);
       const historico = Array.isArray(response.data) ? response.data : [];
+      console.log(`fetchHistorico - Dados recebidos do backend para pedido ${pedidoParaConcluir.id}:`, historico);
       historico.sort((a, b) => new Date(a.dataEdicao) - new Date(b.dataEdicao));
       setHistoricoEntregas(historico);
-      console.log('Estado historicoEntregas atualizado:', historico);
-      if (historico.length === 0) {
-        console.log(`Nenhum histórico retornado para pedido ${pedidoParaConcluir.id}`);
-      }
     } catch (error) {
       console.error('Erro ao carregar histórico:', error);
       setMensagem('Erro ao carregar histórico: ' + (error.response?.data.message || error.message));
@@ -68,7 +59,6 @@ const ModalPesoVolume = ({
   };
 
   useEffect(() => {
-    console.log('useEffect disparado com pedidoParaConcluir:', pedidoParaConcluir);
     fetchHistorico();
     if (pedidoParaConcluir?.itemParaEditar) {
       const completo = verificarPedidoCompleto(quantidadesParaAdicionar);
@@ -100,7 +90,6 @@ const ModalPesoVolume = ({
       return;
     }
 
-    // Preparar as quantidades editadas para enviar no e-mail
     const quantidadesEditadas = pedidoParaConcluir.itens
       .map((item, index) => {
         const quantidadeAdicionada = quantidadesParaAdicionar[index] !== '' ? parseInt(quantidadesParaAdicionar[index], 10) || 0 : 0;
@@ -134,15 +123,12 @@ const ModalPesoVolume = ({
           tempo: pedidoParaConcluir.tempo,
         };
 
-        console.log('Enviando pedido concluído:', pedidoConcluido);
-
         const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoConcluido);
         await api.post('/enviar-email', { 
           pedido: resposta.data, 
           observacao: '', 
           quantidadesEditadas 
         });
-        // Armazenar o pedido concluído no recentlyUpdatedPedidos
         window.recentlyUpdatedPedidos = window.recentlyUpdatedPedidos || new Map();
         window.recentlyUpdatedPedidos.set(pedidoConcluido.id, resposta.data);
         setPedidos((prev) => prev.filter((p) => p.id !== pedidoConcluido.id));
@@ -157,15 +143,12 @@ const ModalPesoVolume = ({
           volume: volume ? parseFloat(volume) : null,
         };
 
-        console.log('Enviando pedido atualizado:', pedidoAtualizado);
-
         const resposta = await api.put(`/pedidos/${pedidoParaConcluir.id}`, pedidoAtualizado);
         await api.post('/enviar-email', { 
           pedido: resposta.data, 
           observacao: '', 
           quantidadesEditadas 
         });
-        // Armazenar o pedido atualizado no recentlyUpdatedPedidos
         window.recentlyUpdatedPedidos = window.recentlyUpdatedPedidos || new Map();
         window.recentlyUpdatedPedidos.set(pedidoAtualizado.id, resposta.data);
         setPedidos((prev) => prev.map((p) => (p.id === pedidoAtualizado.id ? resposta.data : p)));
@@ -177,7 +160,7 @@ const ModalPesoVolume = ({
       setMostrarModalPesoVolume(false);
       setPedidoParaConcluir(null);
       await fetchHistorico();
-      await carregarPedidos(); // Recarregar os pedidos para atualizar o saldo
+      await carregarPedidos();
     } catch (error) {
       setMensagem('Erro ao processar: ' + (error.response?.data.message || error.message));
       await carregarPedidos();
@@ -209,15 +192,18 @@ const ModalPesoVolume = ({
       });
       if (!response.data) throw new Error('Erro ao editar entrega');
       const updatedEntrega = response.data;
+      console.log(`handleSalvarEntrega - Dados recebidos do backend após edição (ID ${editandoEntrega.id}):`, updatedEntrega);
       setHistoricoEntregas(prev =>
         prev.map(ent => (ent.id === updatedEntrega.id ? { ...ent, ...updatedEntrega, codigoDesenho: ent.codigoDesenho } : ent))
       );
+      console.log(`handleSalvarEntrega - Estado historicoEntregas após atualização:`, historicoEntregas);
       setMensagem('Entrega editada com sucesso.');
       setEditandoEntrega(null);
       setNovaQuantidadeEntregue('');
-      await carregarPedidos(); // Recarregar os pedidos para atualizar o saldo
-      await fetchHistorico(); // Atualizar o histórico
+      await carregarPedidos();
+      await fetchHistorico();
     } catch (error) {
+      console.error('Erro ao editar entrega:', error);
       setMensagem('Erro ao editar entrega: ' + (error.response?.data.message || error.message));
     }
   };
@@ -229,8 +215,8 @@ const ModalPesoVolume = ({
       await api.delete(`/historico-entregas/${id}`);
       setHistoricoEntregas(prev => prev.filter(ent => ent.id !== id));
       setMensagem('Entrada de entrega excluída com sucesso.');
-      await carregarPedidos(); // Recarregar os pedidos para atualizar o saldo
-      await fetchHistorico(); // Atualizar o histórico
+      await carregarPedidos();
+      await fetchHistorico();
     } catch (error) {
       setMensagem('Erro ao excluir entrega: ' + (error.response?.data.message || error.message));
     }
@@ -277,35 +263,35 @@ const ModalPesoVolume = ({
           </div>
 
           <div className="historico-entregas">
-  <h3>Histórico de Entregas</h3>
-  {historicoEntregas.length > 0 ? (
-    <table className="tabela-historico">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Qtd Adicionada</th>
-          <th>Data</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        {historicoEntregas.map((entry) => (
-          <tr key={entry.id}>
-            <td>{entry.codigoDesenho || 'Desconhecido'}</td>
-            <td>{entry.quantidadeEntregue || 'N/A'}</td>
-            <td>{entry.dataEdicao ? formatarDataHora(entry.dataEdicao) : 'N/A'}</td>
-            <td>
-              <button type="button" onClick={() => handleEditarEntrega(entry)}>Editar</button>
-              <button type="button" onClick={() => handleExcluirEntrega(entry.id)}>Excluir</button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ) : (
-    <p>Nenhuma entrega registrada.</p>
-  )}
-</div>
+            <h3>Histórico de Entregas</h3>
+            {historicoEntregas.length > 0 ? (
+              <table className="tabela-historico">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Qtd Adicionada</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historicoEntregas.map((entry) => (
+                    <tr key={entry.id}>
+                      <td>{entry.codigoDesenho || 'Desconhecido'}</td>
+                      <td>{entry.quantidadeEntregue || 'N/A'}</td>
+                      <td>{entry.dataEdicao ? formatarDataHora(entry.dataEdicao) : 'N/A'}</td>
+                      <td>
+                        <button type="button" onClick={() => handleEditarEntrega(entry)}>Editar</button>
+                        <button type="button" onClick={() => handleExcluirEntrega(entry.id)}>Excluir</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>Nenhuma entrega registrada.</p>
+            )}
+          </div>
 
           {editandoEntrega ? (
             <div className="editar-entrega">
