@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react';
 import api from '../api';
 
+
 const PedidoForm = ({
   novoPedido,
   setNovoPedido,
   pedidoParaEditar,
   setPedidoParaEditar,
+  mostrarFormulario, // Adicionada a prop mostrarFormulario
   setMostrarFormulario,
   setMensagem,
   carregarPedidos,

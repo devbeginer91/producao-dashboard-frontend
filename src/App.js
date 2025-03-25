@@ -423,6 +423,7 @@ function App() {
                   setNovoPedido={setNovoPedido}
                   pedidoParaEditar={pedidoParaEditar}
                   setPedidoParaEditar={setPedidoParaEditar}
+                  mostrarFormulario={mostrarFormulario} // Adicionada a prop mostrarFormulario
                   setMostrarFormulario={setMostrarFormulario}
                   setMensagem={setMensagem}
                   carregarPedidos={carregarPedidos}
