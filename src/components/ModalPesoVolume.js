@@ -47,14 +47,20 @@ const ModalPesoVolume = ({
   
     try {
       const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
-      const historico = Array.isArray(response.data) ? response.data : [];
-      console.log(`fetchHistorico - Dados recebidos do backend para pedido ${pedidoParaConcluir.id}:`, historico);
-      historico.sort((a, b) => new Date(a.dataEdicao) - new Date(b.dataEdicao));
-      setHistoricoEntregas(historico);
+      const historico = Array.isArray(response.data) ? response.data.map(item => ({
+        ...item,
+        codigoDesenho: item.codigodesenho || item.codigoDesenho || 'Desconhecido',
+        quantidadeEntregue: item.quantidadeentregue || item.quantidadeEntregue || 0,
+        dataEdicao: item.dataedicao || item.dataEdicao,
+      })) : [];
+      console.log(`fetchHistorico - Dados normalizados para pedido ${pedidoParaConcluir.id}:`, historico);
+      if (historico.length > 0) {
+        historico.sort((a, b) => new Date(a.dataEdicao) - new Date(b.dataEdicao));
+        setHistoricoEntregas(historico);
+      }
     } catch (error) {
       console.error('Erro ao carregar histórico:', error);
       setMensagem('Erro ao carregar histórico: ' + (error.response?.data.message || error.message));
-      setHistoricoEntregas([]);
     }
   };
 
@@ -193,13 +199,13 @@ const ModalPesoVolume = ({
       if (!response.data) throw new Error('Erro ao editar entrega');
       const updatedEntrega = {
         ...response.data,
-        codigoDesenho: response.data.codigodesenho,
-        quantidadeEntregue: response.data.quantidadeentregue,
-        dataEdicao: response.data.dataedicao,
+        codigoDesenho: response.data.codigodesenho || response.data.codigoDesenho || 'Desconhecido',
+        quantidadeEntregue: response.data.quantidadeentregue || response.data.quantidadeEntregue || 0,
+        dataEdicao: response.data.dataedicao || response.data.dataEdicao,
       };
       console.log(`handleSalvarEntrega - Dados normalizados após edição (ID ${editandoEntrega.id}):`, updatedEntrega);
       setHistoricoEntregas(prev =>
-        prev.map(ent => (ent.id === updatedEntrega.id ? { ...ent, ...updatedEntrega } : ent))
+        prev.map(ent => (ent.id === updatedEntrega.id ? updatedEntrega : ent))
       );
       console.log(`handleSalvarEntrega - Estado historicoEntregas após atualização:`, historicoEntregas);
       setMensagem('Entrega editada com sucesso.');
