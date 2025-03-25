@@ -48,7 +48,7 @@ const ModalPesoVolume = ({
       setHistoricoEntregas([]);
       return;
     }
-
+  
     try {
       console.log(`Buscando histórico para pedido ${pedidoParaConcluir.id}`);
       const response = await api.get(`/historico-entregas/${pedidoParaConcluir.id}`);
@@ -202,7 +202,7 @@ const ModalPesoVolume = ({
       setMensagem('Quantidade entregue deve ser um número não negativo.');
       return;
     }
-
+  
     try {
       const response = await api.put(`/historico-entregas/${editandoEntrega.id}`, {
         quantidadeEntregue: parseInt(novaQuantidadeEntregue, 10)
@@ -210,7 +210,7 @@ const ModalPesoVolume = ({
       if (!response.data) throw new Error('Erro ao editar entrega');
       const updatedEntrega = response.data;
       setHistoricoEntregas(prev =>
-        prev.map(ent => (ent.id === updatedEntrega.id ? { ...updatedEntrega, codigoDesenho: ent.codigoDesenho } : ent))
+        prev.map(ent => (ent.id === updatedEntrega.id ? { ...ent, ...updatedEntrega, codigoDesenho: ent.codigoDesenho } : ent))
       );
       setMensagem('Entrega editada com sucesso.');
       setEditandoEntrega(null);
@@ -277,35 +277,35 @@ const ModalPesoVolume = ({
           </div>
 
           <div className="historico-entregas">
-            <h3>Histórico de Entregas</h3>
-            {historicoEntregas.length > 0 ? (
-              <table className="tabela-historico">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Qtd Adicionada</th>
-                    <th>Data</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historicoEntregas.map((entry) => (
-                    <tr key={entry.id}>
-                      <td>{entry.codigoDesenho || 'Desconhecido'}</td>
-                      <td>{entry.quantidadeEntregue || 'N/A'}</td>
-                      <td>{entry.dataEdicao ? formatarDataHora(entry.dataEdicao) : 'N/A'}</td>
-                      <td>
-                        <button type="button" onClick={() => handleEditarEntrega(entry)}>Editar</button>
-                        <button type="button" onClick={() => handleExcluirEntrega(entry.id)}>Excluir</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>Nenhuma entrega registrada.</p>
-            )}
-          </div>
+  <h3>Histórico de Entregas</h3>
+  {historicoEntregas.length > 0 ? (
+    <table className="tabela-historico">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Qtd Adicionada</th>
+          <th>Data</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {historicoEntregas.map((entry) => (
+          <tr key={entry.id}>
+            <td>{entry.codigoDesenho || 'Desconhecido'}</td>
+            <td>{entry.quantidadeEntregue || 'N/A'}</td>
+            <td>{entry.dataEdicao ? formatarDataHora(entry.dataEdicao) : 'N/A'}</td>
+            <td>
+              <button type="button" onClick={() => handleEditarEntrega(entry)}>Editar</button>
+              <button type="button" onClick={() => handleExcluirEntrega(entry.id)}>Excluir</button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ) : (
+    <p>Nenhuma entrega registrada.</p>
+  )}
+</div>
 
           {editandoEntrega ? (
             <div className="editar-entrega">
