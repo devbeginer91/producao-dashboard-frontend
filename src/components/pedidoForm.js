@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import api from '../api';
-import { formatDateToLocalISO } from '../App'; // Mantido como prop
-import { formatarDataHora } from '../utils'; // Importando do utils.js
+import './PedidoForm.css';
 
 const PedidoForm = ({
   novoPedido,
@@ -17,103 +16,134 @@ const PedidoForm = ({
   setMostrarModalPesoVolume,
   setPedidoParaConcluir,
   moverParaAndamento,
-  formatDateToLocalISO, // Recebendo como prop
+  formatDateToLocalISO,
 }) => {
+  useEffect(() => {
+    if (pedidoParaEditar) {
+      console.log('Carregando pedido para edição:', pedidoParaEditar);
+      setNovoPedido({
+        ...pedidoParaEditar,
+        itens: pedidoParaEditar.itens && pedidoParaEditar.itens.length > 0
+          ? pedidoParaEditar.itens.map(item => ({
+              ...item,
+              quantidadePedido: item.quantidadePedido ? item.quantidadePedido.toString() : '',
+              quantidadeEntregue: item.quantidadeEntregue ? item.quantidadeEntregue.toString() : '0',
+            }))
+          : [{ codigoDesenho: '', quantidadePedido: '' }],
+      });
+    }
+  }, [pedidoParaEditar, setNovoPedido]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setNovoPedido((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleItemChange = (index, e) => {
+    const { name, value } = e.target;
+    const novosItens = [...novoPedido.itens];
+    novosItens[index] = {
+      ...novosItens[index],
+      [name]: value,
+    };
+    console.log(`Atualizando item ${index}:`, novosItens[index]); // Log para depuração
+    setNovoPedido((prev) => ({
+      ...prev,
+      itens: novosItens,
+    }));
+  };
+
+  const adicionarItem = () => {
+    setNovoPedido((prev) => ({
+      ...prev,
+      itens: [...prev.itens, { codigoDesenho: '', quantidadePedido: '' }],
+    }));
+  };
+
+  const removerItem = (index) => {
+    if (novoPedido.itens.length === 1) {
+      setMensagem('O pedido deve ter pelo menos um item.');
+      return;
+    }
+    const novosItens = novoPedido.itens.filter((_, i) => i !== index);
+    setNovoPedido((prev) => ({
+      ...prev,
+      itens: novosItens,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const camposObrigatorios = ['empresa', 'numeroOS', 'dataEntrada', 'previsaoEntrega'];
-    const erros = camposObrigatorios.filter((campo) => !novoPedido[campo]);
-    if (erros.length > 0 || !Array.isArray(novoPedido.itens) || !novoPedido.itens.length || novoPedido.itens.some(item => !item.codigoDesenho || !item.quantidadePedido)) {
-      setMensagem('Preencha todos os campos obrigatórios e adicione ao menos um item com código e quantidade.');
+
+    if (!novoPedido.empresa || !novoPedido.numeroOS || !novoPedido.dataEntrada || !novoPedido.previsaoEntrega) {
+      setMensagem('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
 
-    const dataEntrada = new Date(novoPedido.dataEntrada);
-    const previsaoEntrega = new Date(novoPedido.previsaoEntrega);
-    if (isNaN(dataEntrada.getTime()) || isNaN(previsaoEntrega.getTime())) {
-      setMensagem('Datas inválidas.');
+    const itensValidos = novoPedido.itens.every(
+      (item) => item.codigoDesenho && item.quantidadePedido && parseInt(item.quantidadePedido, 10) > 0
+    );
+
+    if (!itensValidos) {
+      setMensagem('Todos os itens devem ter código e quantidade válida (maior que 0).');
       return;
     }
 
-    const inicioValido = formatDateToLocalISO(new Date(), 'handleSubmit');
-
-    const pedidoParaEnviar = {
+    const pedidoFormatado = {
       ...novoPedido,
-      inicio: inicioValido,
-      tempo: novoPedido.status === 'novo' ? 0 : novoPedido.tempo || 0,
-      status: novoPedido.status, // Permite qualquer status
-      itens: novoPedido.itens.map(item => ({
-        codigoDesenho: item.codigoDesenho,
-        quantidadePedido: parseInt(item.quantidadePedido, 10) || 0,
-        quantidadeEntregue: parseInt(item.quantidadeEntregue || 0, 10),
+      inicio: formatDateToLocalISO(novoPedido.inicio || new Date(), 'handleSubmit - inicio'),
+      itens: novoPedido.itens.map((item) => ({
+        ...item,
+        quantidadePedido: parseInt(item.quantidadePedido, 10), // Converte para número
+        quantidadeEntregue: parseInt(item.quantidadeEntregue || 0, 10), // Converte para número
       })),
     };
 
-    console.log('Dados enviados ao backend:', pedidoParaEnviar);
+    console.log('Enviando pedido formatado:', pedidoFormatado); // Log para depuração
 
     try {
-      let resposta;
       if (pedidoParaEditar) {
-        if (novoPedido.status === 'andamento' && pedidoParaEditar.status !== 'andamento') {
-          setPedidoParaConcluir(pedidoParaEnviar);
-          setMostrarModalPesoVolume(true);
-          setMensagem('Preencha peso e volume para mover para "Em Andamento".');
-          resetForm();
-          return;
-        } else if (novoPedido.status === 'concluido' && pedidoParaEditar.status !== 'concluido') {
-          setPedidoParaConcluir(pedidoParaEnviar);
-          setMostrarModalPesoVolume(true);
-          setMensagem('Preencha peso e volume para concluir o pedido.');
-          resetForm();
-          return;
-        }
-        resposta = await api.put(`/pedidos/${pedidoParaEditar.id}`, pedidoParaEnviar);
+        const resposta = await api.put(`/pedidos/${pedidoParaEditar.id}`, pedidoFormatado);
         await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
-        atualizarListas(resposta.data);
         setMensagem('Pedido atualizado e e-mail enviado!');
+        setPedidos((prev) => prev.map((p) => (p.id === pedidoParaEditar.id ? resposta.data : p)));
+        setPedidosAndamento((prev) => prev.map((p) => (p.id === pedidoParaEditar.id ? resposta.data : p)));
+        setPedidosConcluidos((prev) => prev.map((p) => (p.id === pedidoParaEditar.id ? resposta.data : p)));
       } else {
-        resposta = await api.post('/pedidos', pedidoParaEnviar);
-        await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
-        if (resposta.data.status === 'novo') {
-          setPedidosAndamento((prev) => [...prev, resposta.data]);
-          setMensagem('Pedido adicionado como "Novo" e e-mail enviado!');
-        } else if (resposta.data.status === 'andamento') {
-          setPedidos((prev) => [...prev, resposta.data]);
-          setMostrarModalPesoVolume(true);
-          setPedidoParaConcluir(resposta.data);
-          setMensagem('Preencha peso e volume para "Em Andamento".');
-        } else if (resposta.data.status === 'concluido') {
-          setPedidosConcluidos((prev) => [...prev, resposta.data]);
-          setMostrarModalPesoVolume(true);
-          setPedidoParaConcluir(resposta.data);
-          setMensagem('Preencha peso e volume para concluir.');
-        }
+        const resposta = await api.post('/pedidos', pedidoFormatado);
+        setMensagem('Pedido adicionado com sucesso!');
+        setPedidosAndamento((prev) => [...prev, resposta.data]);
       }
-      resetForm();
+
+      setNovoPedido({
+        empresa: '',
+        numeroOS: '',
+        dataEntrada: '',
+        previsaoEntrega: '',
+        responsavel: '',
+        status: 'novo',
+        inicio: formatDateToLocalISO(new Date(), 'novoPedido reset'),
+        itens: [{ codigoDesenho: '', quantidadePedido: '' }],
+      });
+      setPedidoParaEditar(null);
+      setMostrarFormulario(false);
+      carregarPedidos();
     } catch (error) {
       setMensagem('Erro ao processar pedido: ' + (error.response?.data.message || error.message));
-      await carregarPedidos();
+      carregarPedidos();
     }
   };
 
-  const atualizarListas = (pedido) => {
-    if (pedido.status === 'novo') {
-      setPedidosAndamento((prev) => [...prev.filter((p) => p.id !== pedido.id), pedido]);
-      setPedidos((prev) => prev.filter((p) => p.id !== pedido.id));
-      setPedidosConcluidos((prev) => prev.filter((p) => p.id !== pedido.id));
-    } else if (pedido.status === 'andamento') {
-      setPedidos((prev) => [...prev.filter((p) => p.id !== pedido.id), pedido]);
-      setPedidosAndamento((prev) => prev.filter((p) => p.id !== pedido.id));
-      setPedidosConcluidos((prev) => prev.filter((p) => p.id !== pedido.id));
-    } else if (pedido.status === 'concluido') {
-      setPedidosConcluidos((prev) => [...prev.filter((p) => p.id !== pedido.id), pedido]);
-      setPedidos((prev) => prev.filter((p) => p.id !== pedido.id));
-      setPedidosAndamento((prev) => prev.filter((p) => p.id !== pedido.id));
+  const handleAndamento = async () => {
+    if (!pedidoParaEditar) {
+      setMensagem('Nenhum pedido selecionado para mover.');
+      return;
     }
-  };
-
-  const resetForm = () => {
-    const novoInicio = formatDateToLocalISO(new Date(), 'resetForm');
+    await moverParaAndamento(pedidoParaEditar.id);
+    setMostrarFormulario(false);
     setNovoPedido({
       empresa: '',
       numeroOS: '',
@@ -121,87 +151,80 @@ const PedidoForm = ({
       previsaoEntrega: '',
       responsavel: '',
       status: 'novo',
-      inicio: novoInicio,
-      tempo: 0,
-      peso: null,
-      volume: null,
-      dataConclusao: null,
-      pausado: '0', // Alterado de 0 para '0' para consistência com o backend
-      tempoPausado: 0,
-      dataPausada: null,
+      inicio: formatDateToLocalISO(new Date(), 'novoPedido reset'),
       itens: [{ codigoDesenho: '', quantidadePedido: '' }],
     });
-    setMostrarFormulario(false);
     setPedidoParaEditar(null);
   };
 
-  const adicionarItem = () => {
+  const handleConcluir = () => {
+    if (!pedidoParaEditar) {
+      setMensagem('Nenhum pedido selecionado para concluir.');
+      return;
+    }
+    const pedidoParaConcluirAtualizado = {
+      ...pedidoParaEditar,
+      inicio: formatDateToLocalISO(pedidoParaEditar.inicio || new Date(), 'handleConcluir - inicio'),
+    };
+    setPedidoParaConcluir(pedidoParaConcluirAtualizado);
+    setMostrarModalPesoVolume(true);
+    setMostrarFormulario(false);
     setNovoPedido({
-      ...novoPedido,
-      itens: Array.isArray(novoPedido.itens) ? [...novoPedido.itens, { codigoDesenho: '', quantidadePedido: '' }] : [{ codigoDesenho: '', quantidadePedido: '' }],
+      empresa: '',
+      numeroOS: '',
+      dataEntrada: '',
+      previsaoEntrega: '',
+      responsavel: '',
+      status: 'novo',
+      inicio: formatDateToLocalISO(new Date(), 'novoPedido reset'),
+      itens: [{ codigoDesenho: '', quantidadePedido: '' }],
     });
+    setPedidoParaEditar(null);
   };
-
-  const removerItem = (index) => {
-    setNovoPedido({
-      ...novoPedido,
-      itens: Array.isArray(novoPedido.itens) ? novoPedido.itens.filter((_, i) => i !== index) : [{ codigoDesenho: '', quantidadePedido: '' }],
-    });
-  };
-
-  const atualizarItem = (index, campo, valor) => {
-    const itensAtuais = Array.isArray(novoPedido.itens) ? [...novoPedido.itens] : [{ codigoDesenho: '', quantidadePedido: '' }];
-    itensAtuais[index] = { ...itensAtuais[index], [campo]: valor };
-    setNovoPedido({ ...novoPedido, itens: itensAtuais });
-  };
-
-  const itens = Array.isArray(novoPedido.itens) ? novoPedido.itens : [{ codigoDesenho: '', quantidadePedido: '' }];
 
   return (
-    <form onSubmit={handleSubmit} className="formulario">
+    <form onSubmit={handleSubmit} className={`formulario ${!mostrarFormulario ? 'hidden' : ''}`}>
       <div>
         <label htmlFor="empresa">Empresa *</label>
         <input
           type="text"
           id="empresa"
+          name="empresa"
           value={novoPedido.empresa}
-          onChange={(e) => setNovoPedido({ ...novoPedido, empresa: e.target.value })}
+          onChange={handleChange}
           required
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck="false"
         />
       </div>
       <div>
-        <label htmlFor="numeroOS">Número da OS *</label>
+        <label htmlFor="numeroOS">Nº OS *</label>
         <input
           type="text"
           id="numeroOS"
+          name="numeroOS"
           value={novoPedido.numeroOS}
-          onChange={(e) => setNovoPedido({ ...novoPedido, numeroOS: e.target.value })}
+          onChange={handleChange}
           required
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck="false"
         />
       </div>
       <div>
-        <label htmlFor="dataEntrada">Data de Entrada *</label>
+        <label htmlFor="dataEntrada">Data Entrada *</label>
         <input
           type="date"
           id="dataEntrada"
+          name="dataEntrada"
           value={novoPedido.dataEntrada}
-          onChange={(e) => setNovoPedido({ ...novoPedido, dataEntrada: e.target.value })}
+          onChange={handleChange}
           required
         />
       </div>
       <div>
-        <label htmlFor="previsaoEntrega">Previsão de Entrega *</label>
+        <label htmlFor="previsaoEntrega">Previsão Entrega *</label>
         <input
           type="date"
           id="previsaoEntrega"
+          name="previsaoEntrega"
           value={novoPedido.previsaoEntrega}
-          onChange={(e) => setNovoPedido({ ...novoPedido, previsaoEntrega: e.target.value })}
+          onChange={handleChange}
           required
         />
       </div>
@@ -210,46 +233,23 @@ const PedidoForm = ({
         <input
           type="text"
           id="responsavel"
+          name="responsavel"
           value={novoPedido.responsavel}
-          onChange={(e) => setNovoPedido({ ...novoPedido, responsavel: e.target.value })}
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck="false"
+          onChange={handleChange}
         />
       </div>
-      <div>
-        <label htmlFor="status">Status</label>
-        <select
-          id="status"
-          value={novoPedido.status}
-          onChange={(e) => {
-            const novoStatus = e.target.value;
-            setNovoPedido({ ...novoPedido, status: novoStatus });
-            if (pedidoParaEditar && moverParaAndamento && novoStatus === 'andamento') {
-              moverParaAndamento(pedidoParaEditar.id);
-            }
-          }}
-        >
-          <option value="novo">Novo</option>
-          <option value="andamento">Em Andamento</option>
-          <option value="concluido">Concluído</option>
-        </select>
-      </div>
 
-      <h3>Itens do Pedido</h3>
-      {itens.map((item, index) => (
+      {novoPedido.itens.map((item, index) => (
         <div key={index} className="item-group">
           <div>
             <label htmlFor={`codigoDesenho-${index}`}>Código do Desenho *</label>
             <input
               type="text"
               id={`codigoDesenho-${index}`}
+              name="codigoDesenho"
               value={item.codigoDesenho}
-              onChange={(e) => atualizarItem(index, 'codigoDesenho', e.target.value)}
+              onChange={(e) => handleItemChange(index, e)}
               required
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
             />
           </div>
           <div>
@@ -257,21 +257,62 @@ const PedidoForm = ({
             <input
               type="number"
               id={`quantidadePedido-${index}`}
+              name="quantidadePedido"
               value={item.quantidadePedido}
-              onChange={(e) => atualizarItem(index, 'quantidadePedido', e.target.value)}
-              min="0"
+              onChange={(e) => handleItemChange(index, e)}
+              min="1"
               required
             />
           </div>
-          {itens.length > 1 && (
-            <button type="button" onClick={() => removerItem(index)}>Remover</button>
-          )}
+          <button
+            type="button"
+            onClick={() => removerItem(index)}
+            className="btn-excluir"
+            style={{ marginTop: '24px' }}
+          >
+            Remover
+          </button>
         </div>
       ))}
+
+      <button type="button" onClick={adicionarItem} className="btn-adicionar-item">
+        Adicionar Item
+      </button>
+
       <div className="form-buttons">
-        <button type="button" onClick={adicionarItem} className="btn-adicionar-item">Adicionar Item</button>
-        <button type="submit" className="btn-submit">{pedidoParaEditar ? 'Salvar | QTD a Entregar' : 'Adicionar Pedido'}</button>
-        <button type="button" onClick={resetForm} className="btn-cancelar">Cancelar</button>
+        <button type="submit" className="btn-submit">
+          {pedidoParaEditar ? 'Salvar' : 'Adicionar Pedido'}
+        </button>
+        {pedidoParaEditar && (
+          <>
+            <button type="button" onClick={handleAndamento} className="btn-mover">
+              Mover para Andamento
+            </button>
+            <button type="button" onClick={handleConcluir} className="btn-concluir">
+              Concluir Pedido
+            </button>
+          </>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            setMostrarFormulario(false);
+            setNovoPedido({
+              empresa: '',
+              numeroOS: '',
+              dataEntrada: '',
+              previsaoEntrega: '',
+              responsavel: '',
+              status: 'novo',
+              inicio: formatDateToLocalISO(new Date(), 'novoPedido reset'),
+              itens: [{ codigoDesenho: '', quantidadePedido: '' }],
+            });
+            setPedidoParaEditar(null);
+          }}
+          className="btn-cancelar"
+        >
+          Cancelar
+        </button>
       </div>
     </form>
   );
