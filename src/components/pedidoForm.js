@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import api from '../api';
-import './PedidoForm.css';
 
 const PedidoForm = ({
   novoPedido,
