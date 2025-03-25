@@ -22,10 +22,21 @@ const PedidoForm = ({
   useEffect(() => {
     if (pedidoParaEditar) {
       console.log('Carregando pedido para edição:', pedidoParaEditar);
+      // Filtrar itens duplicados com base no codigoDesenho, mantendo apenas o último
+      const itensUnicos = [];
+      const codigosVistos = new Set();
+      for (const item of pedidoParaEditar.itens.slice().reverse()) {
+        if (!codigosVistos.has(item.codigoDesenho)) {
+          codigosVistos.add(item.codigoDesenho);
+          itensUnicos.push(item);
+        }
+      }
+      itensUnicos.reverse();
+
       setNovoPedido({
         ...pedidoParaEditar,
-        itens: pedidoParaEditar.itens && pedidoParaEditar.itens.length > 0
-          ? pedidoParaEditar.itens.map(item => ({
+        itens: itensUnicos.length > 0
+          ? itensUnicos.map(item => ({
               ...item,
               quantidadePedido: item.quantidadePedido ? item.quantidadePedido.toString() : '',
               quantidadeEntregue: item.quantidadeEntregue ? item.quantidadeEntregue.toString() : '0',
@@ -53,12 +64,23 @@ const PedidoForm = ({
 
     const inicioValido = formatDateToLocalISO(new Date(), 'handleSubmit');
 
+    // Filtrar itens duplicados no frontend, mantendo apenas o último item com o mesmo codigoDesenho
+    const itensUnicos = [];
+    const codigosVistos = new Set();
+    for (const item of novoPedido.itens.slice().reverse()) {
+      if (!codigosVistos.has(item.codigoDesenho)) {
+        codigosVistos.add(item.codigoDesenho);
+        itensUnicos.push(item);
+      }
+    }
+    itensUnicos.reverse();
+
     const pedidoParaEnviar = {
       ...novoPedido,
       inicio: inicioValido,
       tempo: novoPedido.status === 'novo' ? 0 : novoPedido.tempo || 0,
       status: novoPedido.status, // Permite qualquer status
-      itens: novoPedido.itens.map(item => ({
+      itens: itensUnicos.map(item => ({
         ...item,
         codigoDesenho: item.codigoDesenho,
         quantidadePedido: parseInt(item.quantidadePedido, 10) || 0,
