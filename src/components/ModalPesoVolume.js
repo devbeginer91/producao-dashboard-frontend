@@ -191,10 +191,15 @@ const ModalPesoVolume = ({
         quantidadeEntregue: parseInt(novaQuantidadeEntregue, 10)
       });
       if (!response.data) throw new Error('Erro ao editar entrega');
-      const updatedEntrega = response.data;
-      console.log(`handleSalvarEntrega - Dados recebidos do backend após edição (ID ${editandoEntrega.id}):`, updatedEntrega);
+      const updatedEntrega = {
+        ...response.data,
+        codigoDesenho: response.data.codigodesenho,
+        quantidadeEntregue: response.data.quantidadeentregue,
+        dataEdicao: response.data.dataedicao,
+      };
+      console.log(`handleSalvarEntrega - Dados normalizados após edição (ID ${editandoEntrega.id}):`, updatedEntrega);
       setHistoricoEntregas(prev =>
-        prev.map(ent => (ent.id === updatedEntrega.id ? { ...ent, ...updatedEntrega, codigoDesenho: ent.codigoDesenho } : ent))
+        prev.map(ent => (ent.id === updatedEntrega.id ? { ...ent, ...updatedEntrega } : ent))
       );
       console.log(`handleSalvarEntrega - Estado historicoEntregas após atualização:`, historicoEntregas);
       setMensagem('Entrega editada com sucesso.');
