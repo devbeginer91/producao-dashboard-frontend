@@ -209,8 +209,8 @@ const ModalPesoVolume = ({
       });
       if (!response.data) throw new Error('Erro ao editar entrega');
       const updatedEntrega = response.data;
-      setHistoricoEntregas(prev => 
-        prev.map(ent => (ent.id === updatedEntrega.id ? { ...ent, ...updatedEntrega } : ent))
+      setHistoricoEntregas(prev =>
+        prev.map(ent => (ent.id === updatedEntrega.id ? { ...updatedEntrega, codigoDesenho: ent.codigoDesenho } : ent))
       );
       setMensagem('Entrega editada com sucesso.');
       setEditandoEntrega(null);
