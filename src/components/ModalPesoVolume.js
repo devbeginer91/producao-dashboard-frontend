@@ -177,6 +177,7 @@ const ModalPesoVolume = ({
       setMostrarModalPesoVolume(false);
       setPedidoParaConcluir(null);
       await fetchHistorico();
+      await carregarPedidos(); // Recarregar os pedidos para atualizar o saldo
     } catch (error) {
       setMensagem('Erro ao processar: ' + (error.response?.data.message || error.message));
       await carregarPedidos();
@@ -204,16 +205,18 @@ const ModalPesoVolume = ({
 
     try {
       const response = await api.put(`/historico-entregas/${editandoEntrega.id}`, {
-        quantidadeEntregue: parseInt(novaQuantidadeEntregue)
+        quantidadeEntregue: parseInt(novaQuantidadeEntregue, 10)
       });
       if (!response.data) throw new Error('Erro ao editar entrega');
       const updatedEntrega = response.data;
       setHistoricoEntregas(prev => 
-        prev.map(ent => (ent.id === updatedEntrega.id ? updatedEntrega : ent))
+        prev.map(ent => (ent.id === updatedEntrega.id ? { ...ent, ...updatedEntrega } : ent))
       );
       setMensagem('Entrega editada com sucesso.');
       setEditandoEntrega(null);
       setNovaQuantidadeEntregue('');
+      await carregarPedidos(); // Recarregar os pedidos para atualizar o saldo
+      await fetchHistorico(); // Atualizar o histórico
     } catch (error) {
       setMensagem('Erro ao editar entrega: ' + (error.response?.data.message || error.message));
     }
@@ -226,6 +229,8 @@ const ModalPesoVolume = ({
       await api.delete(`/historico-entregas/${id}`);
       setHistoricoEntregas(prev => prev.filter(ent => ent.id !== id));
       setMensagem('Entrada de entrega excluída com sucesso.');
+      await carregarPedidos(); // Recarregar os pedidos para atualizar o saldo
+      await fetchHistorico(); // Atualizar o histórico
     } catch (error) {
       setMensagem('Erro ao excluir entrega: ' + (error.response?.data.message || error.message));
     }
@@ -286,9 +291,9 @@ const ModalPesoVolume = ({
                 <tbody>
                   {historicoEntregas.map((entry) => (
                     <tr key={entry.id}>
-                      <td>{entry.codigodesenho || 'Desconhecido'}</td>
-                      <td>{entry.quantidadeentregue || 'N/A'}</td>
-                      <td>{entry.dataedicao ? formatarDataHora(entry.dataedicao) : 'N/A'}</td>
+                      <td>{entry.codigoDesenho || 'Desconhecido'}</td>
+                      <td>{entry.quantidadeEntregue || 'N/A'}</td>
+                      <td>{entry.dataEdicao ? formatarDataHora(entry.dataEdicao) : 'N/A'}</td>
                       <td>
                         <button type="button" onClick={() => handleEditarEntrega(entry)}>Editar</button>
                         <button type="button" onClick={() => handleExcluirEntrega(entry.id)}>Excluir</button>
