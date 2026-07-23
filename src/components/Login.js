@@ -10,25 +10,17 @@ const Login = ({ setIsAuthenticated }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (username === 'DCA' && password === 'DCAPRODUCAO123') {
-      // Simulação de autenticação (você pode adicionar uma requisição ao backend aqui)
-      setIsAuthenticated(true);
-      localStorage.setItem('isAuthenticated', 'true'); // Persistir login
-      navigate('/'); // Redireciona para o dashboard
-    } else {
-      try {
-        // Se você tiver uma rota de login no backend, use:
-        const response = await api.post('/login', { username, password });
-        if (response.data.success) {
-          setIsAuthenticated(true);
-          localStorage.setItem('isAuthenticated', 'true');
-          navigate('/');
-        } else {
-          setError('Usuário ou senha incorretos');
-        }
-      } catch (err) {
-        setError('Erro ao fazer login: ' + err.message);
+    try {
+      const response = await api.post('/login', { username, password });
+      if (response.data.success) {
+        setIsAuthenticated(true);
+        localStorage.setItem('isAuthenticated', 'true');
+        navigate('/');
+      } else {
+        setError('Usuário ou senha incorretos');
       }
+    } catch (err) {
+      setError('Usuário ou senha incorretos');
     }
   };
 
