@@ -1,5 +1,4 @@
-import React, { useCallback } from 'react';
-import debounce from 'lodash/debounce'; // Necessita instalar lodash
+import React from 'react';
 
 const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) => {
   const filtrarPedidos = (lista) => {
@@ -10,11 +9,6 @@ const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) 
     );
   };
 
-  const handleBuscaChange = useCallback(
-    debounce((value) => setBusca(value), 300),
-    [setBusca]
-  );
-
   return (
     <div className="busca">
       <div className="busca-container">
@@ -24,7 +18,7 @@ const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) 
           name="buscaInput"
           placeholder="Buscar por Empresa ou Nº OS"
           value={busca}
-          onChange={(e) => handleBuscaChange(e.target.value)}
+          onChange={(e) => setBusca(e.target.value)}
         />
         <button className="btn-exportar" onClick={exportarPDF}>Exportar PDF</button>
       </div>
