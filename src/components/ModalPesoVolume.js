@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatarDataHora } from '../utils';
+import { FiEdit2, FiTrash2, FiSave, FiX, FiCheckCircle, FiPackage } from 'react-icons/fi';
 import './ModalPesoVolume.css';
 
 const ModalPesoVolume = ({
@@ -235,8 +236,8 @@ const ModalPesoVolume = ({
 
   return (
     <div className="modal">
-      <div className="modal-content" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-        <h2>{pedidoParaConcluir?.itemParaEditar ? 'Quantidade a Entregar' : 'Concluir Pedido'}</h2>
+      <div className="modal-content">
+        <h2><FiPackage /> {pedidoParaConcluir?.itemParaEditar ? 'Quantidade a Entregar' : 'Concluir Pedido'}</h2>
         <form onSubmit={handleSubmit}>
           <div>
             <h3>Itens do Pedido</h3>
@@ -292,8 +293,10 @@ const ModalPesoVolume = ({
                       <td>{entry.quantidadeEntregue || 'N/A'}</td>
                       <td>{entry.dataEdicao ? formatarDataHora(entry.dataEdicao) : 'N/A'}</td>
                       <td>
-                        <button type="button" onClick={() => handleEditarEntrega(entry)}>Editar</button>
-                        <button type="button" onClick={() => handleExcluirEntrega(entry.id)}>Excluir</button>
+                        <div className="historico-entregas-acoes">
+                          <button type="button" className="btn-editar-entrega" onClick={() => handleEditarEntrega(entry)}><FiEdit2 /> Editar</button>
+                          <button type="button" className="btn-excluir-entrega" onClick={() => handleExcluirEntrega(entry.id)}><FiTrash2 /> Excluir</button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -314,9 +317,9 @@ const ModalPesoVolume = ({
                 placeholder="Nova quantidade entregue"
                 min="0"
               />
-              <button type="button" onClick={handleSalvarEntrega}>Salvar</button>
-              <button type="button" onClick={() => { setEditandoEntrega(null); setNovaQuantidadeEntregue(''); }}>
-                Cancelar
+              <button type="button" onClick={handleSalvarEntrega}><FiSave /> Salvar</button>
+              <button type="button" className="btn-cancelar-entrega" onClick={() => { setEditandoEntrega(null); setNovaQuantidadeEntregue(''); }}>
+                <FiX /> Cancelar
               </button>
             </div>
           ) : (
@@ -346,9 +349,10 @@ const ModalPesoVolume = ({
                 />
               </div>
               <div className="modal-buttons">
-                <button type="submit">Concluir</button>
+                <button type="submit"><FiCheckCircle /> Concluir</button>
                 <button
                   type="button"
+                  className="btn-cancelar-entrega"
                   onClick={() => {
                     setPeso('');
                     setVolume('');
@@ -358,7 +362,7 @@ const ModalPesoVolume = ({
                     setNovaQuantidadeEntregue('');
                   }}
                 >
-                  Cancelar
+                  <FiX /> Cancelar
                 </button>
               </div>
             </>

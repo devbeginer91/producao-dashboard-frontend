@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
 import api from '../api';
 import { formatarDataHora } from '../utils';
+import {
+  FiCheckCircle,
+  FiArrowRightCircle,
+  FiEdit2,
+  FiTrash2,
+  FiMessageSquare,
+  FiChevronDown,
+  FiChevronUp,
+  FiPause,
+  FiPlay,
+  FiAlertTriangle,
+} from 'react-icons/fi';
 
 const PedidoTable = ({
   pedidos,
@@ -188,7 +200,7 @@ const PedidoTable = ({
               <td>{formatarData(pedido.dataEntrada)}</td>
               <td>
                 {formatarData(pedido.previsaoEntrega)}
-                {isPastDue(pedido.previsaoEntrega) && <span className="atrasado-icon">⚠️</span>}
+                {isPastDue(pedido.previsaoEntrega) && <FiAlertTriangle className="atrasado-icon" title="Atrasado" />}
               </td>
               <td>{logAndRender('responsavel:', pedido.responsavel)}</td>
               <td className="data-hora">
@@ -228,7 +240,7 @@ const PedidoTable = ({
                     }}
                   >
                     {console.log(`Renderizando botão para pedido ${pedido.id}: pausado = ${pedido.pausado}`)}
-                    {pedido.pausado === '1' ? 'Retomar' : 'Pausar'}
+                    {pedido.pausado === '1' ? <><FiPlay /> Retomar</> : <><FiPause /> Pausar</>}
                   </button>
                 )}
               </td>
@@ -236,27 +248,28 @@ const PedidoTable = ({
                 <div className="btn-container">
                   <div className="btn-row">
                     {tipo === 'andamento' && (
-                      <button className="btn-concluir" onClick={() => concluirPedido(pedido.id)}>Concluir</button>
+                      <button className="btn-concluir" onClick={() => concluirPedido(pedido.id)}><FiCheckCircle /> Concluir</button>
                     )}
                     {tipo === 'novo' && (
-                      <button className="btn-mover" onClick={() => moverParaAndamento(pedido.id)}>Andamento</button>
+                      <button className="btn-mover" onClick={() => moverParaAndamento(pedido.id)}><FiArrowRightCircle /> Andamento</button>
                     )}
                     {tipo === 'andamento' && (
-                      <button className="btn-editar" onClick={() => editarQuantidadeEntregue(pedido.id)}>Editar</button>
+                      <button className="btn-editar" onClick={() => editarQuantidadeEntregue(pedido.id)}><FiEdit2 /> Editar</button>
                     )}
                     {tipo === 'novo' && (
                       <button className="btn-editar" onClick={() => {
                         setPedidoParaEditar(pedido);
                         setNovoPedido({ ...pedido, itens: pedido.itens || [{ codigoDesenho: '', quantidadePedido: '' }] });
                         setMostrarFormulario(true);
-                      }}>Editar</button>
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}><FiEdit2 /> Editar</button>
                     )}
-                    <button className="btn-excluir" onClick={() => excluirPedido(pedido.id)}>Excluir</button>
+                    <button className="btn-excluir" onClick={() => excluirPedido(pedido.id)}><FiTrash2 /> Excluir</button>
                   </div>
                   <div className="btn-row">
-                    <button className="btn-observacao" onClick={() => abrirModalObservacao(pedido)}>Obs</button>
+                    <button className="btn-observacao" onClick={() => abrirModalObservacao(pedido)}><FiMessageSquare /> Obs</button>
                     <button className="btn-expandir" onClick={() => toggleExpand(pedido.id)}>
-                      {expandedRows.includes(pedido.id) ? 'Recolher' : 'Expandir'}
+                      {expandedRows.includes(pedido.id) ? <><FiChevronUp /> Recolher</> : <><FiChevronDown /> Expandir</>}
                     </button>
                   </div>
                 </div>

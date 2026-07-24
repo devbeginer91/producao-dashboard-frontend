@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import api from '../api';
 import { formatDateToLocalISO } from '../App'; // Mantido como prop
 import { formatarDataHora } from '../utils'; // Importando do utils.js
+import { FiPlus, FiTrash2, FiSave, FiX } from 'react-icons/fi';
 
 const PedidoForm = ({
   novoPedido,
@@ -276,42 +277,57 @@ const PedidoForm = ({
         </select>
       </div>
 
-      <h3>Itens do Pedido</h3>
-      {itens.map((item, index) => (
-        <div key={index} className="item-group">
-          <div>
-            <label htmlFor={`codigoDesenho-${index}`}>Código do Desenho *</label>
-            <input
-              type="text"
-              id={`codigoDesenho-${index}`}
-              value={item.codigoDesenho}
-              onChange={(e) => atualizarItem(index, 'codigoDesenho', e.target.value)}
-              required
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-          </div>
-          <div>
-            <label htmlFor={`quantidadePedido-${index}`}>Quantidade Pedida *</label>
-            <input
-              type="number"
-              id={`quantidadePedido-${index}`}
-              value={item.quantidadePedido}
-              onChange={(e) => atualizarItem(index, 'quantidadePedido', e.target.value)}
-              min="0"
-              required
-            />
-          </div>
-          {itens.length > 1 && (
-            <button type="button" onClick={() => removerItem(index)}>Remover</button>
-          )}
+      <div className="itens-form">
+        <h3>Itens do Pedido</h3>
+        <div className="itens-form-header">
+          <span>Código do Desenho</span>
+          <span>Quantidade Pedida</span>
+          <span aria-hidden="true"></span>
         </div>
-      ))}
+        <div className="itens-form-list">
+          {itens.map((item, index) => (
+            <div key={index} className="item-form-row">
+              <label htmlFor={`codigoDesenho-${index}`} className="sr-only">Código do Desenho *</label>
+              <input
+                type="text"
+                id={`codigoDesenho-${index}`}
+                placeholder="Código do Desenho"
+                value={item.codigoDesenho}
+                onChange={(e) => atualizarItem(index, 'codigoDesenho', e.target.value)}
+                required
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+              />
+              <label htmlFor={`quantidadePedido-${index}`} className="sr-only">Quantidade Pedida *</label>
+              <input
+                type="number"
+                id={`quantidadePedido-${index}`}
+                placeholder="Qtd."
+                value={item.quantidadePedido}
+                onChange={(e) => atualizarItem(index, 'quantidadePedido', e.target.value)}
+                min="0"
+                required
+              />
+              {itens.length > 1 && (
+                <button
+                  type="button"
+                  className="btn-remover-item"
+                  onClick={() => removerItem(index)}
+                  title="Remover item"
+                  aria-label="Remover item"
+                >
+                  <FiTrash2 />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <button type="button" onClick={adicionarItem} className="btn-adicionar-item"><FiPlus /> Adicionar Item</button>
+      </div>
       <div className="form-buttons">
-        <button type="button" onClick={adicionarItem} className="btn-adicionar-item">Adicionar Item</button>
-        <button type="submit" className="btn-submit">{pedidoParaEditar ? 'Salvar | QTD a Entregar' : 'Adicionar Pedido'}</button>
-        <button type="button" onClick={resetForm} className="btn-cancelar">Cancelar</button>
+        <button type="submit" className="btn-submit"><FiSave /> {pedidoParaEditar ? 'Salvar | QTD a Entregar' : 'Adicionar Pedido'}</button>
+        <button type="button" onClick={resetForm} className="btn-cancelar"><FiX /> Cancelar</button>
       </div>
     </form>
   );

@@ -1,64 +1,67 @@
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; /* Adicionado para garantir que o modal fique sobreposto */
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 5px;
-  width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
 .historico-observacoes {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-lg);
+}
+
+.historico-observacoes h3 {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: var(--space-sm);
 }
 
 .historico-observacoes ul {
   list-style: none;
   padding: 0;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 .historico-observacoes li {
-  margin-bottom: 10px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 5px;
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 }
 
-.historico-observacoes li button {
-  margin-left: 10px;
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
+.historico-observacoes li p {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--color-text);
 }
 
-.historico-observacoes li button:hover {
-  background: #0056b3;
+.historico-observacoes-acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.historico-observacoes-acoes button {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+}
+
+.btn-editar-obs {
+  background: var(--color-info) !important;
+}
+
+.btn-excluir-obs {
+  background: var(--color-danger) !important;
 }
 
 .nova-observacao {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-lg);
 }
 
-textarea {
-  width: 100%;
-  margin-bottom: 10px;
+.nova-observacao h3 {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: var(--space-sm);
 }
 
-button {
-  padding: 10px 20px;
-  cursor: pointer;
-  margin-right: 10px;
+.btn-fechar-modal {
+  background: #64748b !important;
 }

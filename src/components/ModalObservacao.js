@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { FiEdit2, FiTrash2, FiSend, FiX, FiMessageSquare } from 'react-icons/fi';
 import './ModalObservacao.css';
 
 const ModalObservacao = ({
@@ -104,7 +105,7 @@ const ModalObservacao = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>Observações do Pedido {pedidoSelecionado.numeroOS}</h2>
+        <h2><FiMessageSquare /> Observações do Pedido {pedidoSelecionado.numeroOS}</h2>
 
         <div className="historico-observacoes">
           <h3>Histórico de Observações</h3>
@@ -113,8 +114,10 @@ const ModalObservacao = ({
               {historicoObservacoes.map(obs => (
                 <li key={obs.id}>
                   <p><strong>{formatarData(obs.dataEdicao)}:</strong> {obs.observacao}</p>
-                  <button onClick={() => handleEditarObservacao(obs)}>Editar</button>
-                  <button onClick={() => handleExcluirObservacao(obs.id)}>Excluir</button>
+                  <div className="historico-observacoes-acoes">
+                    <button className="btn-editar-obs" onClick={() => handleEditarObservacao(obs)}><FiEdit2 /> Editar</button>
+                    <button className="btn-excluir-obs" onClick={() => handleExcluirObservacao(obs.id)}><FiTrash2 /> Excluir</button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -133,12 +136,12 @@ const ModalObservacao = ({
             cols="50"
           />
           <button onClick={handleSalvarObservacao}>
-            {editandoObservacao ? 'Salvar Edição' : 'Adicionar Observação'}
+            <FiSend /> {editandoObservacao ? 'Salvar Edição' : 'Adicionar Observação'}
           </button>
         </div>
 
-        <button onClick={() => { setMostrarModal(false); setEditandoObservacao(null); setNovaObservacao(''); }}>
-          Fechar
+        <button className="btn-fechar-modal" onClick={() => { setMostrarModal(false); setEditandoObservacao(null); setNovaObservacao(''); }}>
+          <FiX /> Fechar
         </button>
       </div>
     </div>

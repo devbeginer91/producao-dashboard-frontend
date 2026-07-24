@@ -1,4 +1,5 @@
 import React from 'react';
+import { FiSearch, FiDownload } from 'react-icons/fi';
 
 const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) => {
   const filtrarPedidos = (lista) => {
@@ -12,15 +13,18 @@ const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) 
   return (
     <div className="busca">
       <div className="busca-container">
-        <input
-          type="text"
-          id="buscaInput"
-          name="buscaInput"
-          placeholder="Buscar por Empresa ou Nº OS"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-        />
-        <button className="btn-exportar" onClick={exportarPDF}>Exportar PDF</button>
+        <div className="busca-input-wrapper">
+          <FiSearch className="busca-icon" />
+          <input
+            type="text"
+            id="buscaInput"
+            name="buscaInput"
+            placeholder="Buscar por Empresa ou Nº OS"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+        <button className="btn-exportar" onClick={exportarPDF}><FiDownload /> Exportar PDF</button>
       </div>
       {busca && (
         <ul className="lista-suspensa">
