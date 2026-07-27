@@ -1,26 +1,23 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiUser, FiLock, FiLogIn, FiAlertCircle } from 'react-icons/fi';
+import { FiHash, FiLock, FiLogIn, FiAlertCircle } from 'react-icons/fi';
 import api from '../api';
 
-const Login = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+const LoginColaborador = ({ onLogin }) => {
+  const [matricula, setMatricula] = useState('');
+  const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      const response = await api.post('/login', { username, password });
-      if (response.data.success) {
-        onLogin({ tipo: 'admin' });
-        navigate('/');
-      } else {
-        setError('Usuário ou senha incorretos');
-      }
+      const response = await api.post('/colaboradores/login', { matricula, senha });
+      onLogin({ tipo: 'colaborador', ...response.data });
+      navigate('/colaborador');
     } catch (err) {
-      setError('Usuário ou senha incorretos');
+      setError(err.response?.data?.message || 'Matrícula ou senha incorretos');
     }
   };
 
@@ -28,32 +25,32 @@ const Login = ({ onLogin }) => {
     <div className="login-page">
       <div className="login-container">
         <img src="/logoNF.jpg" alt="Logo" className="login-logo" />
-        <h2>Controle de Produção</h2>
-        <p className="login-subtitle">Entre com suas credenciais para continuar</p>
+        <h2>Colaborador</h2>
+        <p className="login-subtitle">Ordens de produção</p>
         <form onSubmit={handleLogin}>
           <div className="login-field">
-            <label htmlFor="username">Usuário</label>
+            <label htmlFor="colab-matricula">Matrícula</label>
             <div className="input-with-icon">
-              <FiUser className="input-icon" />
+              <FiHash className="input-icon" />
               <input
-                id="username"
+                id="colab-matricula"
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={matricula}
+                onChange={(e) => setMatricula(e.target.value)}
                 autoComplete="username"
                 required
               />
             </div>
           </div>
           <div className="login-field">
-            <label htmlFor="password">Senha</label>
+            <label htmlFor="colab-senha">Senha</label>
             <div className="input-with-icon">
               <FiLock className="input-icon" />
               <input
-                id="password"
+                id="colab-senha"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
                 autoComplete="current-password"
                 required
               />
@@ -69,12 +66,12 @@ const Login = ({ onLogin }) => {
           </button>
         </form>
         <div className="login-links">
-          <Link to="/login-pcp">Entrar como PCP</Link>
-          <Link to="/login-colaborador">Entrar como colaborador</Link>
+          <Link to="/cadastro-colaborador">Ainda não tenho cadastro</Link>
+          <Link to="/login">Entrar como admin</Link>
         </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default LoginColaborador;

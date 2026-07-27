@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiLogOut, FiX } from 'react-icons/fi';
+import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiLogOut, FiX } from 'react-icons/fi';
 
 const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -28,6 +28,11 @@ const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => 
 
   const irParaImportarChicotes = () => {
     navigate('/importar-chicotes');
+    onClose();
+  };
+
+  const irParaPriorizarProducao = () => {
+    navigate('/priorizar-producao');
     onClose();
   };
 
@@ -66,6 +71,13 @@ const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => 
           <button className="sidebar-nav-item" onClick={irParaConcluidos}>
             <FiCheckCircle /> <span>Concluídos</span>
             <span className="sidebar-badge">{counts.concluido ?? 0}</span>
+          </button>
+        </nav>
+
+        <nav className="sidebar-nav">
+          <span className="sidebar-nav-title">Produção</span>
+          <button className="sidebar-nav-item" onClick={irParaPriorizarProducao}>
+            <FiStar /> <span>Priorizar Produção</span>
           </button>
         </nav>
 

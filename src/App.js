@@ -8,9 +8,22 @@ import Layout from './components/Layout';
 import DashboardPage from './components/DashboardPage';
 import PedidoListPage from './components/PedidoListPage';
 import ImportarChicotesPage from './components/ImportarChicotesPage';
+import PCPPage from './components/PCPPage';
+import ColaboradorPage from './components/ColaboradorPage';
 import Login from './components/Login';
+import LoginPCP from './components/LoginPCP';
+import LoginColaborador from './components/LoginColaborador';
+import CadastroColaborador from './components/CadastroColaborador';
 import api from './api';
 import { formatarDataHora } from './utils';
+
+const homeFor = (auth) => {
+  if (!auth) return '/login';
+  if (auth.tipo === 'admin') return '/';
+  if (auth.tipo === 'pcp') return '/pcp';
+  if (auth.tipo === 'colaborador') return '/colaborador';
+  return '/login';
+};
 
 // Função para formatar datas no formato YYYY-MM-DD HH:MM:SS com fuso horário America/Sao_Paulo (UTC-3)
 export const formatDateToLocalISO = (date, context = 'unknown') => {
@@ -43,9 +56,31 @@ const formatarTempo = (tempo) => {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    localStorage.getItem('isAuthenticated') === 'true'
-  );
+  const [auth, setAuth] = useState(() => {
+    const stored = localStorage.getItem('auth');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return null;
+      }
+    }
+    // Compatibilidade com o login antigo (só admin, flag booleana)
+    if (localStorage.getItem('isAuthenticated') === 'true') {
+      return { tipo: 'admin' };
+    }
+    return null;
+  });
+  const isAuthenticated = auth?.tipo === 'admin';
+
+  useEffect(() => {
+    if (auth) {
+      localStorage.setItem('auth', JSON.stringify(auth));
+    } else {
+      localStorage.removeItem('auth');
+    }
+    localStorage.removeItem('isAuthenticated');
+  }, [auth]);
   const [pedidos, setPedidos] = useState([]);
   const [pedidosAndamento, setPedidosAndamento] = useState([]);
   const [pedidosConcluidos, setPedidosConcluidos] = useState([]);
@@ -356,8 +391,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('isAuthenticated');
+    setAuth(null);
   };
 
   const cardActionProps = {
@@ -381,10 +415,45 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={
-          !isAuthenticated ? (
-            <Login setIsAuthenticated={setIsAuthenticated} />
+          !auth ? (
+            <Login onLogin={setAuth} />
           ) : (
-            <Navigate to="/" />
+            <Navigate to={homeFor(auth)} />
+          )
+        } />
+        <Route path="/login-pcp" element={
+          !auth ? (
+            <LoginPCP onLogin={setAuth} />
+          ) : (
+            <Navigate to={homeFor(auth)} />
+          )
+        } />
+        <Route path="/login-colaborador" element={
+          !auth ? (
+            <LoginColaborador onLogin={setAuth} />
+          ) : (
+            <Navigate to={homeFor(auth)} />
+          )
+        } />
+        <Route path="/cadastro-colaborador" element={
+          !auth ? (
+            <CadastroColaborador />
+          ) : (
+            <Navigate to={homeFor(auth)} />
+          )
+        } />
+        <Route path="/pcp" element={
+          auth?.tipo === 'pcp' ? (
+            <PCPPage pcpNome={auth.nome} onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/login-pcp" />
+          )
+        } />
+        <Route path="/colaborador" element={
+          auth?.tipo === 'colaborador' ? (
+            <ColaboradorPage colaborador={auth} onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/login-colaborador" />
           )
         } />
         <Route
@@ -427,7 +496,7 @@ function App() {
                 setVolume={setVolume}
               />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to={homeFor(auth)} />
             )
           }
         >
@@ -489,6 +558,10 @@ function App() {
           <Route
             path="/importar-chicotes"
             element={<ImportarChicotesPage setSidebarOpen={setSidebarOpen} />}
+          />
+          <Route
+            path="/priorizar-producao"
+            element={<PCPPage setSidebarOpen={setSidebarOpen} />}
           />
         </Route>
       </Routes>

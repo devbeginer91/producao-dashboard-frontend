@@ -1638,3 +1638,138 @@ body {
   margin-bottom: 10px;
   font-size: 13px;
 }
+
+.login-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.login-links a {
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-links a:hover {
+  text-decoration: underline;
+}
+
+.sucesso-cadastro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-success-dark);
+  background: rgba(22, 163, 74, 0.08);
+  padding: var(--space-md);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+/* Tela do PCP */
+.pcp-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.pcp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.pcp-row-prioritario {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+}
+
+.pcp-row-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  min-width: 220px;
+}
+
+.pcp-row-empresa {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.pcp-row-os,
+.pcp-row-codigo {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.pcp-status {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.pcp-status-andamento {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  border-color: transparent;
+}
+
+.pcp-row-chicote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pcp-row-chicote select {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--color-surface);
+}
+
+.pcp-sugestao {
+  font-size: 11px;
+  color: var(--color-accent);
+  font-style: italic;
+}
+
+.pcp-sem-sugestao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-warning-dark);
+}
+
+/* Tela do colaborador */
+.colaborador-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-xl);
+}
+
+.colaborador-saudacao {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-lg);
+}
