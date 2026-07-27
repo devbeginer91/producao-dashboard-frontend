@@ -1764,7 +1764,7 @@ body {
 
 /* Tela do colaborador */
 .colaborador-page {
-  max-width: 720px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: var(--space-xl);
 }
@@ -1772,4 +1772,137 @@ body {
 .colaborador-saudacao {
   color: var(--color-text-muted);
   margin-bottom: var(--space-lg);
+}
+
+.op-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-lg);
+}
+
+.op-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.op-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-sm);
+}
+
+.op-card-empresa {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.op-card-os {
+  font-weight: 800;
+  font-size: 28px;
+  color: var(--color-primary);
+  letter-spacing: -0.02em;
+}
+
+.op-etapas-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.op-etapa-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.op-etapa-tab.ativa {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary) inset;
+}
+
+.op-etapa-tab.op-etapa-em_andamento {
+  background: var(--color-accent);
+  color: white;
+  border-color: transparent;
+}
+
+.op-etapa-tab.op-etapa-pausado {
+  background: #fffbeb;
+  color: var(--color-warning-dark);
+  border-color: #fde68a;
+}
+
+.op-etapa-tab.op-etapa-concluido {
+  background: var(--color-success);
+  color: white;
+  border-color: transparent;
+}
+
+.op-etapa-painel {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.op-etapa-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  margin: 0;
+}
+
+.op-etapa-instrucoes {
+  font-size: 13.5px;
+  color: var(--color-text);
+  white-space: pre-line;
+  margin: 0;
+}
+
+.op-cronometro {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 34px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-primary);
+  padding: var(--space-sm) 0;
+}
+
+.op-controles {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.op-etapa-concluida {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-success-dark);
+  font-weight: 700;
+  margin: 0;
 }
