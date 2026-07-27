@@ -5,14 +5,16 @@ import './App.css';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PedidoForm from './components/pedidoForm';
-import PedidoTable from './components/PedidoTable';
+import PedidoBoard from './components/PedidoBoard';
+import Sidebar from './components/Sidebar';
+import StatsBar from './components/StatsBar';
 import ModalObservacao from './components/ModalObservacao';
 import ModalPesoVolume from './components/ModalPesoVolume';
 import Busca from './components/Busca';
 import Login from './components/Login';
 import api from './api';
 import { formatarDataHora } from './utils';
-import { FiFileText, FiLogOut, FiPlus, FiPause, FiPlay, FiClock, FiInbox, FiCheckCircle } from 'react-icons/fi';
+import { FiMenu, FiPlus, FiPause, FiPlay, FiX } from 'react-icons/fi';
 
 // Função para formatar datas no formato YYYY-MM-DD HH:MM:SS com fuso horário America/Sao_Paulo (UTC-3)
 export const formatDateToLocalISO = (date, context = 'unknown') => {
@@ -84,11 +86,17 @@ function App() {
   const [pedidoParaConcluir, setPedidoParaConcluir] = useState(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isFetching = useRef(false);
   const lastFetchTimestamp = useRef(0);
   const pollingIntervalRef = useRef(null);
   const recentlyUpdatedPedidos = useRef(new Map());
+  const columnRefs = useRef({ novo: null, andamento: null, concluido: null });
+
+  const scrollToColumn = (tipo) => {
+    columnRefs.current[tipo]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+  };
 
   const parseDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string' || dateStr.includes('undefined')) {
@@ -399,129 +407,106 @@ function App() {
         } />
         <Route path="/" element={
           isAuthenticated ? (
-            <div className="container">
-              <div className="header">
-                <div className="header-brand">
-                  <img src="/logoNF.jpg" alt="Logo" className="logo" />
+            <div className="app-shell">
+              <Sidebar
+                counts={{
+                  novo: pedidosAndamento.length,
+                  andamento: pedidos.length,
+                  concluido: pedidosConcluidos.length,
+                }}
+                onNavigate={scrollToColumn}
+                onLogout={handleLogout}
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+              />
+
+              <main className="app-main">
+                <header className="topbar">
+                  <button className="btn-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
+                    <FiMenu />
+                  </button>
                   <h1>Controle de Produção</h1>
-                </div>
-                <div className="header-actions">
-                  <button className="btn-desenho" onClick={() => window.open('https://drive.google.com/drive/folders/1vzemVbLeotHD0xirxUPsvNb9qBccQFcd?usp=sharing', '_blank')}>
-                    <FiFileText /> Desenho
+                  <button className="btn-adicionar-pedido" onClick={() => setMostrarFormulario(true)}>
+                    <FiPlus /> Adicionar Pedido
                   </button>
-                  <button className="btn-logout" onClick={handleLogout}>
-                    <FiLogOut /> Sair
-                  </button>
-                </div>
-              </div>
+                </header>
 
-              {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
-              {isLoading && <p className="loading">Carregando pedidos...</p>}
+                {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
+                {isLoading && <p className="loading">Carregando pedidos...</p>}
 
-              <div className="button-group">
-                <button className="btn-adicionar-pedido" onClick={() => setMostrarFormulario(true)}>
-                  <FiPlus /> Adicionar Pedido Novo
-                </button>
-                <button className="btn-pausar-todos" onClick={pausarTodosPedidos}>
-                  <FiPause /> Pausar Todos
-                </button>
-                <button className="btn-retomar-todos" onClick={retomarTodosPedidos}>
-                  <FiPlay /> Retomar Todos
-                </button>
-              </div>
+                <StatsBar novos={pedidosAndamento} andamento={pedidos} concluidos={pedidosConcluidos} />
 
-              {mostrarFormulario && (
-                <PedidoForm
-                  novoPedido={novoPedido}
-                  setNovoPedido={setNovoPedido}
-                  pedidoParaEditar={pedidoParaEditar}
-                  setPedidoParaEditar={setPedidoParaEditar}
-                  mostrarFormulario={mostrarFormulario} // Adicionada a prop mostrarFormulario
-                  setMostrarFormulario={setMostrarFormulario}
-                  setMensagem={setMensagem}
+                <Busca
+                  busca={busca}
+                  setBusca={setBusca}
                   carregarPedidos={carregarPedidos}
+                  todosPedidos={[...pedidos, ...pedidosAndamento, ...pedidosConcluidos]}
+                  exportarPDF={exportarPDF}
+                />
+
+                <PedidoBoard
+                  novos={pedidosAndamento}
+                  andamento={pedidos}
+                  concluidos={pedidosConcluidos}
+                  busca={busca}
+                  columnRefs={columnRefs}
+                  andamentoHeaderActions={
+                    <>
+                      <button className="btn-pausar-todos" onClick={pausarTodosPedidos}>
+                        <FiPause /> Pausar Todos
+                      </button>
+                      <button className="btn-retomar-todos" onClick={retomarTodosPedidos}>
+                        <FiPlay /> Retomar Todos
+                      </button>
+                    </>
+                  }
                   setPedidos={setPedidos}
                   setPedidosAndamento={setPedidosAndamento}
                   setPedidosConcluidos={setPedidosConcluidos}
+                  setMensagem={setMensagem}
+                  setMostrarModal={setMostrarModal}
+                  setPedidoSelecionado={setPedidoSelecionado}
                   setMostrarModalPesoVolume={setMostrarModalPesoVolume}
                   setPedidoParaConcluir={setPedidoParaConcluir}
+                  setPedidoParaEditar={setPedidoParaEditar}
+                  setNovoPedido={setNovoPedido}
+                  setMostrarFormulario={setMostrarFormulario}
                   moverParaAndamento={moverParaAndamento}
-                  formatDateToLocalISO={formatDateToLocalISO}
+                  pausarPedido={pausarPedido}
+                  retomarPedido={retomarPedido}
+                  formatarTempo={formatarTempo}
                 />
+              </main>
+
+              {mostrarFormulario && (
+                <div className="form-drawer-overlay" onClick={() => setMostrarFormulario(false)}>
+                  <div className="form-drawer" onClick={(e) => e.stopPropagation()}>
+                    <div className="form-drawer-header">
+                      <h2>{pedidoParaEditar ? 'Editar Pedido' : 'Adicionar Pedido Novo'}</h2>
+                      <button className="btn-fechar-drawer" onClick={() => setMostrarFormulario(false)} aria-label="Fechar">
+                        <FiX />
+                      </button>
+                    </div>
+                    <PedidoForm
+                      novoPedido={novoPedido}
+                      setNovoPedido={setNovoPedido}
+                      pedidoParaEditar={pedidoParaEditar}
+                      setPedidoParaEditar={setPedidoParaEditar}
+                      mostrarFormulario={mostrarFormulario} // Adicionada a prop mostrarFormulario
+                      setMostrarFormulario={setMostrarFormulario}
+                      setMensagem={setMensagem}
+                      carregarPedidos={carregarPedidos}
+                      setPedidos={setPedidos}
+                      setPedidosAndamento={setPedidosAndamento}
+                      setPedidosConcluidos={setPedidosConcluidos}
+                      setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+                      setPedidoParaConcluir={setPedidoParaConcluir}
+                      moverParaAndamento={moverParaAndamento}
+                      formatDateToLocalISO={formatDateToLocalISO}
+                    />
+                  </div>
+                </div>
               )}
-
-              <Busca
-                busca={busca}
-                setBusca={setBusca}
-                carregarPedidos={carregarPedidos}
-                todosPedidos={[...pedidos, ...pedidosAndamento, ...pedidosConcluidos]}
-                exportarPDF={exportarPDF}
-              />
-
-              <h2><FiClock /> Pedidos em Andamento</h2>
-              <PedidoTable
-                pedidos={pedidos}
-                tipo="andamento"
-                setPedidos={setPedidos}
-                setPedidosAndamento={setPedidosAndamento}
-                setPedidosConcluidos={setPedidosConcluidos}
-                setMensagem={setMensagem}
-                setMostrarModal={setMostrarModal}
-                setPedidoSelecionado={setPedidoSelecionado}
-                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-                setPedidoParaConcluir={setPedidoParaConcluir}
-                busca={busca}
-                carregarPedidos={carregarPedidos}
-                moverParaAndamento={moverParaAndamento}
-                pausarPedido={pausarPedido}
-                retomarPedido={retomarPedido}
-                formatarTempo={formatarTempo}
-              />
-
-              <h2><FiInbox /> Pedidos Novos</h2>
-              <PedidoTable
-                pedidos={pedidosAndamento}
-                tipo="novo"
-                setPedidos={setPedidos}
-                setPedidosAndamento={setPedidosAndamento}
-                setPedidosConcluidos={setPedidosConcluidos}
-                setMensagem={setMensagem}
-                setPedidoParaEditar={setPedidoParaEditar}
-                setNovoPedido={setNovoPedido}
-                setMostrarFormulario={setMostrarFormulario}
-                setMostrarModal={setMostrarModal}
-                setPedidoSelecionado={setPedidoSelecionado}
-                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-                setPedidoParaConcluir={setPedidoParaConcluir}
-                busca={busca}
-                carregarPedidos={carregarPedidos}
-                moverParaAndamento={moverParaAndamento}
-                formatarTempo={formatarTempo}
-                pausarPedido={pausarPedido}
-                retomarPedido={retomarPedido}
-              />
-
-              <h2><FiCheckCircle /> Pedidos Concluídos</h2>
-              <PedidoTable
-                pedidos={pedidosConcluidos}
-                tipo="concluido"
-                setPedidos={setPedidos}
-                setPedidosAndamento={setPedidosAndamento}
-                setPedidosConcluidos={setPedidosConcluidos}
-                setMensagem={setMensagem}
-                setPedidoParaEditar={setPedidoParaEditar}
-                setNovoPedido={setNovoPedido}
-                setMostrarFormulario={setMostrarFormulario}
-                setMostrarModal={setMostrarModal}
-                setPedidoSelecionado={setPedidoSelecionado}
-                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-                setPedidoParaConcluir={setPedidoParaConcluir}
-                busca={busca}
-                carregarPedidos={carregarPedidos}
-                formatarTempo={formatarTempo}
-                pausarPedido={pausarPedido}
-                retomarPedido={retomarPedido}
-              />
 
               {mostrarModal && (
                 <ModalObservacao

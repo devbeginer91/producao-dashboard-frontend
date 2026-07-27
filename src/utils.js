@@ -1,4 +1,13 @@
 // src/utils.js
+export const isPastDue = (previsaoEntrega, status) => {
+  if (!previsaoEntrega || status === 'concluido') return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(previsaoEntrega);
+  dueDate.setHours(0, 0, 0, 0);
+  return dueDate < today;
+};
+
 export const formatarDataHora = (data) => {
     if (!data || typeof data !== 'string' || data.includes('undefined')) {
       return 'Não informado';
