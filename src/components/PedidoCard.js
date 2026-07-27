@@ -43,9 +43,11 @@ const PedidoCard = ({
   moverParaAndamento,
   pausarPedido,
   retomarPedido,
-  formatarTempo,
 }) => {
   const [expandido, setExpandido] = useState(false);
+  const [obsPreview, setObsPreview] = useState(null);
+  const [obsPreviewLoading, setObsPreviewLoading] = useState(false);
+  const [showObsTooltip, setShowObsTooltip] = useState(false);
 
   const formatDateToLocalISO = (date) => {
     const d = date ? new Date(date) : new Date();
@@ -104,6 +106,26 @@ const PedidoCard = ({
     });
   };
 
+  const temObservacoes = (pedido.observacoesCount || 0) > 0;
+
+  const handleObsHover = () => {
+    setShowObsTooltip(true);
+    if (obsPreview === null && !obsPreviewLoading) {
+      setObsPreviewLoading(true);
+      api.get(`/historico-observacoes/${pedido.id}`)
+        .then((response) => {
+          const historico = Array.isArray(response.data) ? response.data : [];
+          setObsPreview(historico.map((obs) => ({
+            id: obs.id,
+            observacao: obs.observacao,
+            dataEdicao: obs.dataEdicao || obs.dataedicao,
+          })));
+        })
+        .catch(() => setObsPreview([]))
+        .finally(() => setObsPreviewLoading(false));
+    }
+  };
+
   return (
     <div className={`pedido-card ${atrasado ? 'atrasado' : ''}`}>
       <div className="pedido-card-header">
@@ -111,7 +133,43 @@ const PedidoCard = ({
           <span className="pedido-card-empresa">{pedido.empresa || 'Não informado'}</span>
           <span className="pedido-card-os">Nº OS {pedido.numeroOS || 'Não informado'}</span>
         </div>
-        {atrasado && <FiAlertTriangle className="atrasado-icon" title="Atrasado" />}
+        <div className="pedido-card-header-icons">
+          {atrasado && <FiAlertTriangle className="atrasado-icon" title="Atrasado" />}
+          {temObservacoes && (
+            <div
+              className="pedido-card-obs-wrapper"
+              onMouseEnter={handleObsHover}
+              onMouseLeave={() => setShowObsTooltip(false)}
+            >
+              <button
+                type="button"
+                className="pedido-card-obs-badge"
+                onClick={abrirModalObservacao}
+                aria-label="Ver observações"
+              >
+                <FiMessageSquare /> <span>{pedido.observacoesCount}</span>
+              </button>
+              {showObsTooltip && (
+                <div className="obs-tooltip">
+                  {obsPreviewLoading && <p className="obs-tooltip-status">Carregando observações...</p>}
+                  {!obsPreviewLoading && obsPreview && obsPreview.length === 0 && (
+                    <p className="obs-tooltip-status">Nenhuma observação encontrada.</p>
+                  )}
+                  {!obsPreviewLoading && obsPreview && obsPreview.length > 0 && (
+                    <ul>
+                      {[...obsPreview].reverse().slice(0, 5).map((obs) => (
+                        <li key={obs.id}>
+                          <span className="obs-tooltip-date">{formatarDataHora(obs.dataEdicao)}</span>
+                          <span className="obs-tooltip-text">{obs.observacao}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="pedido-card-meta">
@@ -138,15 +196,6 @@ const PedidoCard = ({
             <span className="pedido-card-meta-label">Conclusão</span>
             <span>{formatarDataHora(pedido.dataConclusao) || 'Não concluído'}</span>
           </div>
-        )}
-      </div>
-
-      <div className={`pedido-card-tempo ${tipo === 'andamento' && pedido.pausado === '1' ? 'pausado' : ''}`}>
-        <span>{formatarTempo(pedido.tempo || 0)}</span>
-        {tipo === 'andamento' && (
-          <button className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'} onClick={togglePausa}>
-            {pedido.pausado === '1' ? <><FiPlay /> Retomar</> : <><FiPause /> Pausar</>}
-          </button>
         )}
       </div>
 
@@ -200,6 +249,11 @@ const PedidoCard = ({
         )}
         {tipo === 'novo' && (
           <button className="btn-editar" onClick={editarPedidoNovo}><FiEdit2 /> Editar</button>
+        )}
+        {tipo === 'andamento' && (
+          <button className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'} onClick={togglePausa}>
+            {pedido.pausado === '1' ? <><FiPlay /> Retomar</> : <><FiPause /> Pausar</>}
+          </button>
         )}
         <button className="btn-observacao" onClick={abrirModalObservacao}><FiMessageSquare /> Obs</button>
         <button className="btn-excluir" onClick={excluirPedido}><FiTrash2 /> Excluir</button>

@@ -8,6 +8,15 @@ export const isPastDue = (previsaoEntrega, status) => {
   return dueDate < today;
 };
 
+export const filtrarPedidosPorBusca = (lista, busca) => {
+  if (!busca) return lista;
+  const termo = busca.toLowerCase();
+  return lista.filter((pedido) =>
+    pedido.empresa.toLowerCase().includes(termo) ||
+    pedido.numeroOS.toLowerCase().includes(termo)
+  );
+};
+
 export const formatarDataHora = (data) => {
     if (!data || typeof data !== 'string' || data.includes('undefined')) {
       return 'Não informado';

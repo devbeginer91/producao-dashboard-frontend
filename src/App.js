@@ -4,17 +4,12 @@ import debounce from 'lodash/debounce';
 import './App.css';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import PedidoForm from './components/pedidoForm';
-import PedidoBoard from './components/PedidoBoard';
-import Sidebar from './components/Sidebar';
-import StatsBar from './components/StatsBar';
-import ModalObservacao from './components/ModalObservacao';
-import ModalPesoVolume from './components/ModalPesoVolume';
-import Busca from './components/Busca';
+import Layout from './components/Layout';
+import DashboardPage from './components/DashboardPage';
+import PedidoListPage from './components/PedidoListPage';
 import Login from './components/Login';
 import api from './api';
 import { formatarDataHora } from './utils';
-import { FiMenu, FiPlus, FiPause, FiPlay, FiX } from 'react-icons/fi';
 
 // Função para formatar datas no formato YYYY-MM-DD HH:MM:SS com fuso horário America/Sao_Paulo (UTC-3)
 export const formatDateToLocalISO = (date, context = 'unknown') => {
@@ -92,10 +87,19 @@ function App() {
   const lastFetchTimestamp = useRef(0);
   const pollingIntervalRef = useRef(null);
   const recentlyUpdatedPedidos = useRef(new Map());
-  const columnRefs = useRef({ novo: null, andamento: null, concluido: null });
+  const columnRefs = useRef({ novo: null, andamento: null });
+  const pendingScrollTipo = useRef(null);
 
-  const scrollToColumn = (tipo) => {
+  const scrollToColumn = useCallback((tipo) => {
     columnRefs.current[tipo]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+  }, []);
+
+  const onNavigateAndamento = () => {
+    if (columnRefs.current.andamento) {
+      scrollToColumn('andamento');
+    } else {
+      pendingScrollTipo.current = 'andamento';
+    }
   };
 
   const parseDate = (dateStr) => {
@@ -350,49 +354,26 @@ function App() {
     }
   };
 
-  const pausarTodosPedidos = async () => {
-    if (pedidos.length === 0) {
-      setMensagem('Nenhum pedido em andamento para pausar.');
-      return;
-    }
-
-    try {
-      const promises = pedidos.map(pedido => {
-        if (pedido.pausado !== '1') {
-          return pausarPedido(pedido.id);
-        }
-        return Promise.resolve();
-      });
-      await Promise.all(promises);
-      setMensagem('Todos os pedidos em andamento foram pausados com sucesso.');
-    } catch (error) {
-      setMensagem('Erro ao pausar todos os pedidos: ' + (error.response?.data.message || error.message));
-    }
-  };
-
-  const retomarTodosPedidos = async () => {
-    if (pedidos.length === 0) {
-      setMensagem('Nenhum pedido em andamento para retomar.');
-      return;
-    }
-
-    try {
-      const promises = pedidos.map(pedido => {
-        if (pedido.pausado === '1') {
-          return retomarPedido(pedido.id);
-        }
-        return Promise.resolve();
-      });
-      await Promise.all(promises);
-      setMensagem('Todos os pedidos em andamento foram retomados com sucesso.');
-    } catch (error) {
-      setMensagem('Erro ao retomar todos os pedidos: ' + (error.response?.data.message || error.message));
-    }
-  };
-
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
+  };
+
+  const cardActionProps = {
+    setPedidos,
+    setPedidosAndamento,
+    setPedidosConcluidos,
+    setMensagem,
+    setMostrarModal,
+    setPedidoSelecionado,
+    setMostrarModalPesoVolume,
+    setPedidoParaConcluir,
+    setPedidoParaEditar,
+    setNovoPedido,
+    setMostrarFormulario,
+    moverParaAndamento,
+    pausarPedido,
+    retomarPedido,
   };
 
   return (
@@ -405,139 +386,106 @@ function App() {
             <Navigate to="/" />
           )
         } />
-        <Route path="/" element={
-          isAuthenticated ? (
-            <div className="app-shell">
-              <Sidebar
-                counts={{
+        <Route
+          element={
+            isAuthenticated ? (
+              <Layout
+                sidebarCounts={{
                   novo: pedidosAndamento.length,
                   andamento: pedidos.length,
                   concluido: pedidosConcluidos.length,
                 }}
-                onNavigate={scrollToColumn}
+                onNavigateAndamento={onNavigateAndamento}
                 onLogout={handleLogout}
-                isOpen={sidebarOpen}
-                onClose={() => setSidebarOpen(false)}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                mostrarFormulario={mostrarFormulario}
+                setMostrarFormulario={setMostrarFormulario}
+                novoPedido={novoPedido}
+                setNovoPedido={setNovoPedido}
+                pedidoParaEditar={pedidoParaEditar}
+                setPedidoParaEditar={setPedidoParaEditar}
+                setMensagem={setMensagem}
+                carregarPedidos={carregarPedidos}
+                setPedidos={setPedidos}
+                setPedidosAndamento={setPedidosAndamento}
+                setPedidosConcluidos={setPedidosConcluidos}
+                setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+                setPedidoParaConcluir={setPedidoParaConcluir}
+                moverParaAndamento={moverParaAndamento}
+                formatDateToLocalISO={formatDateToLocalISO}
+                mostrarModal={mostrarModal}
+                pedidoSelecionado={pedidoSelecionado}
+                observacao={observacao}
+                setObservacao={setObservacao}
+                setMostrarModal={setMostrarModal}
+                mostrarModalPesoVolume={mostrarModalPesoVolume}
+                peso={peso}
+                setPeso={setPeso}
+                volume={volume}
+                setVolume={setVolume}
               />
-
-              <main className="app-main">
-                <header className="topbar">
-                  <button className="btn-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
-                    <FiMenu />
-                  </button>
-                  <h1>Controle de Produção</h1>
-                  <button className="btn-adicionar-pedido" onClick={() => setMostrarFormulario(true)}>
-                    <FiPlus /> Adicionar Pedido
-                  </button>
-                </header>
-
-                {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
-                {isLoading && <p className="loading">Carregando pedidos...</p>}
-
-                <StatsBar novos={pedidosAndamento} andamento={pedidos} concluidos={pedidosConcluidos} />
-
-                <Busca
-                  busca={busca}
-                  setBusca={setBusca}
-                  carregarPedidos={carregarPedidos}
-                  todosPedidos={[...pedidos, ...pedidosAndamento, ...pedidosConcluidos]}
-                  exportarPDF={exportarPDF}
-                />
-
-                <PedidoBoard
-                  novos={pedidosAndamento}
-                  andamento={pedidos}
-                  concluidos={pedidosConcluidos}
-                  busca={busca}
-                  columnRefs={columnRefs}
-                  andamentoHeaderActions={
-                    <>
-                      <button className="btn-pausar-todos" onClick={pausarTodosPedidos}>
-                        <FiPause /> Pausar Todos
-                      </button>
-                      <button className="btn-retomar-todos" onClick={retomarTodosPedidos}>
-                        <FiPlay /> Retomar Todos
-                      </button>
-                    </>
-                  }
-                  setPedidos={setPedidos}
-                  setPedidosAndamento={setPedidosAndamento}
-                  setPedidosConcluidos={setPedidosConcluidos}
-                  setMensagem={setMensagem}
-                  setMostrarModal={setMostrarModal}
-                  setPedidoSelecionado={setPedidoSelecionado}
-                  setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-                  setPedidoParaConcluir={setPedidoParaConcluir}
-                  setPedidoParaEditar={setPedidoParaEditar}
-                  setNovoPedido={setNovoPedido}
-                  setMostrarFormulario={setMostrarFormulario}
-                  moverParaAndamento={moverParaAndamento}
-                  pausarPedido={pausarPedido}
-                  retomarPedido={retomarPedido}
-                  formatarTempo={formatarTempo}
-                />
-              </main>
-
-              {mostrarFormulario && (
-                <div className="form-drawer-overlay" onClick={() => setMostrarFormulario(false)}>
-                  <div className="form-drawer" onClick={(e) => e.stopPropagation()}>
-                    <div className="form-drawer-header">
-                      <h2>{pedidoParaEditar ? 'Editar Pedido' : 'Adicionar Pedido Novo'}</h2>
-                      <button className="btn-fechar-drawer" onClick={() => setMostrarFormulario(false)} aria-label="Fechar">
-                        <FiX />
-                      </button>
-                    </div>
-                    <PedidoForm
-                      novoPedido={novoPedido}
-                      setNovoPedido={setNovoPedido}
-                      pedidoParaEditar={pedidoParaEditar}
-                      setPedidoParaEditar={setPedidoParaEditar}
-                      mostrarFormulario={mostrarFormulario} // Adicionada a prop mostrarFormulario
-                      setMostrarFormulario={setMostrarFormulario}
-                      setMensagem={setMensagem}
-                      carregarPedidos={carregarPedidos}
-                      setPedidos={setPedidos}
-                      setPedidosAndamento={setPedidosAndamento}
-                      setPedidosConcluidos={setPedidosConcluidos}
-                      setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-                      setPedidoParaConcluir={setPedidoParaConcluir}
-                      moverParaAndamento={moverParaAndamento}
-                      formatDateToLocalISO={formatDateToLocalISO}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {mostrarModal && (
-                <ModalObservacao
-                  pedidoSelecionado={pedidoSelecionado}
-                  observacao={observacao}
-                  setObservacao={setObservacao}
-                  setMostrarModal={setMostrarModal}
-                  setMensagem={setMensagem}
-                />
-              )}
-
-              {mostrarModalPesoVolume && (
-                <ModalPesoVolume
-                  pedidoParaConcluir={pedidoParaConcluir}
-                  peso={peso}
-                  setPeso={setPeso}
-                  volume={volume}
-                  setVolume={setVolume}
-                  setMostrarModalPesoVolume={setMostrarModalPesoVolume}
-                  setPedidoParaConcluir={setPedidoParaConcluir}
-                  setPedidos={setPedidos}
-                  setPedidosConcluidos={setPedidosConcluidos}
-                  setMensagem={setMensagem}
-                  carregarPedidos={carregarPedidos}
-                />
-              )}
-            </div>
-          ) : (
-            <Navigate to="/login" />
-          )
-        } />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        >
+          <Route
+            path="/"
+            element={
+              <DashboardPage
+                mensagem={mensagem}
+                isLoading={isLoading}
+                novos={pedidosAndamento}
+                andamento={pedidos}
+                concluidos={pedidosConcluidos}
+                busca={busca}
+                setBusca={setBusca}
+                carregarPedidos={carregarPedidos}
+                exportarPDF={exportarPDF}
+                columnRefs={columnRefs}
+                pendingScrollTipo={pendingScrollTipo}
+                scrollToColumn={scrollToColumn}
+                setSidebarOpen={setSidebarOpen}
+                {...cardActionProps}
+              />
+            }
+          />
+          <Route
+            path="/pedidos/novos"
+            element={
+              <PedidoListPage
+                tipo="novo"
+                titulo="Pedidos Novos"
+                pedidos={pedidosAndamento}
+                busca={busca}
+                setBusca={setBusca}
+                carregarPedidos={carregarPedidos}
+                todosPedidos={[...pedidos, ...pedidosAndamento, ...pedidosConcluidos]}
+                exportarPDF={exportarPDF}
+                setSidebarOpen={setSidebarOpen}
+                {...cardActionProps}
+              />
+            }
+          />
+          <Route
+            path="/pedidos/concluidos"
+            element={
+              <PedidoListPage
+                tipo="concluido"
+                titulo="Pedidos Concluídos"
+                pedidos={pedidosConcluidos}
+                busca={busca}
+                setBusca={setBusca}
+                carregarPedidos={carregarPedidos}
+                todosPedidos={[...pedidos, ...pedidosAndamento, ...pedidosConcluidos]}
+                exportarPDF={exportarPDF}
+                setSidebarOpen={setSidebarOpen}
+                {...cardActionProps}
+              />
+            }
+          />
+        </Route>
       </Routes>
     </Router>
   );

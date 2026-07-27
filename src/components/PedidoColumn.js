@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
 import PedidoCard from './PedidoCard';
-
-const filtrarPedidos = (lista, busca) => {
-  if (!busca) return lista;
-  const termo = busca.toLowerCase();
-  return lista.filter((pedido) =>
-    pedido.empresa.toLowerCase().includes(termo) ||
-    pedido.numeroOS.toLowerCase().includes(termo)
-  );
-};
+import { filtrarPedidosPorBusca } from '../utils';
 
 const PedidoColumn = ({
   tipo,
@@ -16,7 +8,6 @@ const PedidoColumn = ({
   icon: Icon,
   pedidos,
   busca,
-  headerActions,
   columnRef,
   setPedidos,
   setPedidosAndamento,
@@ -39,7 +30,7 @@ const PedidoColumn = ({
     setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'));
   };
 
-  const listaFiltrada = filtrarPedidos(pedidos, busca);
+  const listaFiltrada = filtrarPedidosPorBusca(pedidos, busca);
 
   return (
     <section className={`board-column board-column-${tipo}`} ref={columnRef}>
@@ -54,7 +45,6 @@ const PedidoColumn = ({
               Previsão {sortOrder === 'desc' ? '↓' : '↑'}
             </button>
           )}
-          {headerActions}
         </div>
       </header>
       <div className="column-body">
