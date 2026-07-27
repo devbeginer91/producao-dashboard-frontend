@@ -7,6 +7,7 @@ import autoTable from 'jspdf-autotable';
 import Layout from './components/Layout';
 import DashboardPage from './components/DashboardPage';
 import PedidoListPage from './components/PedidoListPage';
+import ImportarChicotesPage from './components/ImportarChicotesPage';
 import Login from './components/Login';
 import api from './api';
 import { formatarDataHora } from './utils';
@@ -484,6 +485,10 @@ function App() {
                 {...cardActionProps}
               />
             }
+          />
+          <Route
+            path="/importar-chicotes"
+            element={<ImportarChicotesPage setSidebarOpen={setSidebarOpen} />}
           />
         </Route>
       </Routes>
