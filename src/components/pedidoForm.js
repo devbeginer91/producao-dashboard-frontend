@@ -205,7 +205,7 @@ const PedidoForm = ({
   const itens = Array.isArray(novoPedido.itens) ? novoPedido.itens : [{ codigoDesenho: '', quantidadePedido: '' }];
 
   const chicotesDoCliente = chicotes.filter(
-    (c) => c.cliente.trim().toUpperCase() === (novoPedido.empresa || '').trim().toUpperCase()
+    (c) => c.temEtapas && c.cliente.trim().toUpperCase() === (novoPedido.empresa || '').trim().toUpperCase()
   );
 
   return (
@@ -292,7 +292,7 @@ const PedidoForm = ({
         <div className="itens-form-header">
           <span>Código do Desenho</span>
           <span>Quantidade Pedida</span>
-          <span>Chicote (opcional)</span>
+          <span>Passo a passo (opcional)</span>
           <span aria-hidden="true"></span>
         </div>
         <div className="itens-form-list">

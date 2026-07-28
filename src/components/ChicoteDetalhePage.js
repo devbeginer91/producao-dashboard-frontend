@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiMenu, FiArrowLeft, FiSave, FiLink, FiX } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiSave, FiLink, FiX, FiEdit2, FiTrash2, FiPlus, FiFileText, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import api from '../api';
+
+const etapaVazia = { nome: '', setor: '', quemTexto: '', instrucoes: '', tempoIdeal: '' };
 
 const ChicoteDetalhePage = ({ setSidebarOpen }) => {
   const { id } = useParams();
@@ -12,6 +16,10 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
   const [form, setForm] = useState({ codigoItemCliente: '', codigoDca: '', tempoIdeal: '' });
   const [itensDisponiveis, setItensDisponiveis] = useState([]);
   const [itemParaVincular, setItemParaVincular] = useState('');
+  const [etapaEmEdicaoId, setEtapaEmEdicaoId] = useState(null);
+  const [formEtapa, setFormEtapa] = useState(etapaVazia);
+  const [mostrarFormNovaEtapa, setMostrarFormNovaEtapa] = useState(false);
+  const [novaEtapa, setNovaEtapa] = useState(etapaVazia);
 
   const carregar = () => {
     setCarregando(true);
@@ -34,7 +42,7 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
   }, [id]);
 
   useEffect(() => {
-    if (!chicote) return;
+    if (!chicote || chicote.etapas.length === 0) return;
     api.get('/itens-pedidos')
       .then((r) => {
         const disponiveis = r.data.filter(
@@ -78,6 +86,110 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
     } catch (error) {
       setMensagem('Erro ao desvincular: ' + (error.response?.data?.message || error.message));
     }
+  };
+
+  const iniciarEdicaoEtapa = (etapa) => {
+    setEtapaEmEdicaoId(etapa.id);
+    setFormEtapa({
+      nome: etapa.nome || '',
+      setor: etapa.setor || '',
+      quemTexto: etapa.quemTexto || '',
+      instrucoes: etapa.instrucoes || '',
+      tempoIdeal: etapa.tempoIdeal ?? '',
+    });
+  };
+
+  const cancelarEdicaoEtapa = () => {
+    setEtapaEmEdicaoId(null);
+    setFormEtapa(etapaVazia);
+  };
+
+  const salvarEdicaoEtapa = async (etapaId) => {
+    if (!formEtapa.nome.trim()) {
+      setMensagem('Erro: nome da etapa é obrigatório.');
+      return;
+    }
+    try {
+      await api.put(`/etapas-chicote/${etapaId}`, {
+        nome: formEtapa.nome,
+        setor: formEtapa.setor || null,
+        quemTexto: formEtapa.quemTexto || null,
+        instrucoes: formEtapa.instrucoes || null,
+        tempoIdeal: formEtapa.tempoIdeal === '' ? null : parseFloat(formEtapa.tempoIdeal),
+      });
+      cancelarEdicaoEtapa();
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao salvar etapa: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const moverEtapa = async (etapaId, direcao) => {
+    try {
+      await api.put(`/etapas-chicote/${etapaId}/mover`, { direcao });
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao mover etapa: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const removerEtapa = async (etapaId) => {
+    if (!window.confirm('Remover essa etapa do passo a passo? Essa ação não pode ser desfeita.')) return;
+    try {
+      await api.delete(`/etapas-chicote/${etapaId}`);
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao remover etapa: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const adicionarEtapa = async (e) => {
+    e.preventDefault();
+    if (!novaEtapa.nome.trim()) {
+      setMensagem('Erro: nome da etapa é obrigatório.');
+      return;
+    }
+    try {
+      await api.post(`/chicotes/${id}/etapas`, {
+        nome: novaEtapa.nome,
+        setor: novaEtapa.setor || null,
+        quemTexto: novaEtapa.quemTexto || null,
+        instrucoes: novaEtapa.instrucoes || null,
+        tempoIdeal: novaEtapa.tempoIdeal === '' ? null : parseFloat(novaEtapa.tempoIdeal),
+      });
+      setNovaEtapa(etapaVazia);
+      setMostrarFormNovaEtapa(false);
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao adicionar etapa: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const emitirPdfEtapas = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Ficha de Etapas', 14, 18);
+    doc.setFontSize(10);
+    doc.text(`Cliente: ${chicote.cliente || '—'}`, 14, 26);
+    doc.text(`Código item cliente: ${chicote.codigoItemCliente || '—'}`, 14, 32);
+    doc.text(`Código DCA: ${chicote.codigoDca || 'não informado'}`, 14, 38);
+
+    autoTable(doc, {
+      head: [['Ordem', 'Etapa', 'Setor', 'Quem executa', 'Instruções']],
+      body: chicote.etapas.map((e) => [
+        e.ordem,
+        e.nome,
+        e.setor || '—',
+        e.quemTexto || '—',
+        e.instrucoes || '',
+      ]),
+      startY: 44,
+      styles: { fontSize: 9, cellWidth: 'wrap' },
+      columnStyles: { 4: { cellWidth: 70 } },
+    });
+
+    const nomeArquivo = `ficha_etapas_${chicote.codigoItemCliente.replace(/[^a-zA-Z0-9-_]/g, '_')}.pdf`;
+    doc.save(nomeArquivo);
   };
 
   if (carregando) return <p className="loading">Carregando chicote...</p>;
@@ -125,24 +237,117 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
         <button type="submit" className="btn-submit"><FiSave /> Salvar</button>
       </form>
 
-      <h2 className="op-detalhe-titulo secao-titulo">Etapas</h2>
-      {chicote.etapas.length === 0 ? (
-        <p className="pedido-grid-empty">Nenhuma etapa cadastrada ainda.</p>
-      ) : (
+      <h2 className="op-detalhe-titulo secao-titulo">Passo a passo (etapas)</h2>
+      {chicote.etapas.length > 0 && (
+        <button type="button" className="btn-editar chicote-btn-pdf" onClick={emitirPdfEtapas}>
+          <FiFileText /> Emitir PDF
+        </button>
+      )}
+      {chicote.etapas.length === 0 && !mostrarFormNovaEtapa && (
+        <p className="pedido-grid-empty">Nenhuma etapa cadastrada ainda. Cadastre o passo a passo pra poder vincular pedidos a esse chicote.</p>
+      )}
+
+      {chicote.etapas.length > 0 && (
         <ol className="chicote-etapas-list">
-          {chicote.etapas.map((e) => (
+          {chicote.etapas.map((e, idx) => (
             <li key={e.id} className="chicote-etapa-item">
-              <span className="chicote-etapa-ordem">{e.ordem}</span>
-              <div>
-                <div className="chicote-etapa-nome">{e.nome}</div>
-                <div className="chicote-etapa-meta">
-                  {e.setor} · {e.quemTexto} {e.tempoIdeal ? `· meta ${e.tempoIdeal} min` : ''}
+              {etapaEmEdicaoId === e.id ? (
+                <div className="chicote-etapa-form">
+                  <div>
+                    <label>Nome da etapa</label>
+                    <input value={formEtapa.nome} onChange={(ev) => setFormEtapa({ ...formEtapa, nome: ev.target.value })} required />
+                  </div>
+                  <div>
+                    <label>Setor</label>
+                    <input value={formEtapa.setor} onChange={(ev) => setFormEtapa({ ...formEtapa, setor: ev.target.value })} />
+                  </div>
+                  <div>
+                    <label>Quem executa</label>
+                    <input value={formEtapa.quemTexto} onChange={(ev) => setFormEtapa({ ...formEtapa, quemTexto: ev.target.value })} />
+                  </div>
+                  <div>
+                    <label>Tempo ideal (min)</label>
+                    <input type="number" min="0" value={formEtapa.tempoIdeal} onChange={(ev) => setFormEtapa({ ...formEtapa, tempoIdeal: ev.target.value })} />
+                  </div>
+                  <div className="chicote-etapa-form-instrucoes">
+                    <label>Instruções</label>
+                    <textarea rows={3} value={formEtapa.instrucoes} onChange={(ev) => setFormEtapa({ ...formEtapa, instrucoes: ev.target.value })} />
+                  </div>
+                  <div className="chicote-etapa-form-acoes">
+                    <button type="button" className="btn-submit" onClick={() => salvarEdicaoEtapa(e.id)}><FiSave /> Salvar</button>
+                    <button type="button" className="btn-editar" onClick={cancelarEdicaoEtapa}><FiX /> Cancelar</button>
+                  </div>
                 </div>
-                {e.instrucoes && <div className="chicote-etapa-instrucoes">{e.instrucoes}</div>}
-              </div>
+              ) : (
+                <>
+                  <span className="chicote-etapa-ordem">{e.ordem}</span>
+                  <div className="chicote-etapa-conteudo">
+                    <div className="chicote-etapa-nome">{e.nome}</div>
+                    <div className="chicote-etapa-meta">
+                      {e.setor} · {e.quemTexto} {e.tempoIdeal ? `· meta ${e.tempoIdeal} min` : ''}
+                    </div>
+                    {e.instrucoes && <div className="chicote-etapa-instrucoes">{e.instrucoes}</div>}
+                  </div>
+                  <div className="chicote-etapa-acoes">
+                    <button
+                      type="button"
+                      className="btn-editar"
+                      onClick={() => moverEtapa(e.id, 'cima')}
+                      disabled={idx === 0}
+                      title="Mover para cima"
+                    >
+                      <FiArrowUp />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-editar"
+                      onClick={() => moverEtapa(e.id, 'baixo')}
+                      disabled={idx === chicote.etapas.length - 1}
+                      title="Mover para baixo"
+                    >
+                      <FiArrowDown />
+                    </button>
+                    <button type="button" className="btn-editar" onClick={() => iniciarEdicaoEtapa(e)}><FiEdit2 /></button>
+                    <button type="button" className="btn-excluir" onClick={() => removerEtapa(e.id)}><FiTrash2 /></button>
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ol>
+      )}
+
+      {mostrarFormNovaEtapa ? (
+        <form className="chicote-etapa-form chicote-etapa-form-nova" onSubmit={adicionarEtapa}>
+          <div>
+            <label>Nome da etapa</label>
+            <input value={novaEtapa.nome} onChange={(e) => setNovaEtapa({ ...novaEtapa, nome: e.target.value })} required autoFocus />
+          </div>
+          <div>
+            <label>Setor</label>
+            <input value={novaEtapa.setor} onChange={(e) => setNovaEtapa({ ...novaEtapa, setor: e.target.value })} />
+          </div>
+          <div>
+            <label>Quem executa</label>
+            <input value={novaEtapa.quemTexto} onChange={(e) => setNovaEtapa({ ...novaEtapa, quemTexto: e.target.value })} />
+          </div>
+          <div>
+            <label>Tempo ideal (min)</label>
+            <input type="number" min="0" value={novaEtapa.tempoIdeal} onChange={(e) => setNovaEtapa({ ...novaEtapa, tempoIdeal: e.target.value })} />
+          </div>
+          <div className="chicote-etapa-form-instrucoes">
+            <label>Instruções</label>
+            <textarea rows={3} value={novaEtapa.instrucoes} onChange={(e) => setNovaEtapa({ ...novaEtapa, instrucoes: e.target.value })} />
+          </div>
+          <div className="chicote-etapa-form-acoes">
+            <button type="submit" className="btn-submit"><FiSave /> Adicionar etapa</button>
+            <button type="button" className="btn-editar" onClick={() => { setMostrarFormNovaEtapa(false); setNovaEtapa(etapaVazia); }}><FiX /> Cancelar</button>
+          </div>
+        </form>
+      ) : (
+        <button type="button" className="btn-adicionar-pedido" onClick={() => setMostrarFormNovaEtapa(true)}>
+          <FiPlus /> Adicionar etapa
+        </button>
       )}
 
       <h2 className="op-detalhe-titulo secao-titulo">Itens de pedido vinculados</h2>
@@ -162,19 +367,23 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
         </div>
       )}
 
-      <div className="chicote-vincular-item">
-        <select value={itemParaVincular} onChange={(e) => setItemParaVincular(e.target.value)}>
-          <option value="">— selecionar item de pedido pra vincular —</option>
-          {itensDisponiveis.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.empresa} · OS {item.numeroOS} · {item.codigoDesenho}
-            </option>
-          ))}
-        </select>
-        <button type="button" className="btn-editar" onClick={vincularItem} disabled={!itemParaVincular}>
-          <FiLink /> Vincular
-        </button>
-      </div>
+      {chicote.etapas.length === 0 ? (
+        <p className="pedido-grid-empty">Cadastre o passo a passo desse chicote antes de vincular pedidos a ele.</p>
+      ) : (
+        <div className="chicote-vincular-item">
+          <select value={itemParaVincular} onChange={(e) => setItemParaVincular(e.target.value)}>
+            <option value="">— selecionar item de pedido pra vincular —</option>
+            {itensDisponiveis.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.empresa} · OS {item.numeroOS} · {item.codigoDesenho}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="btn-editar" onClick={vincularItem} disabled={!itemParaVincular}>
+            <FiLink /> Vincular
+          </button>
+        </div>
+      )}
     </>
   );
 };

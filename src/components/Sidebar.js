@@ -100,7 +100,7 @@ const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => 
         <nav className="sidebar-nav">
           <span className="sidebar-nav-title">Administração</span>
           <button className="sidebar-nav-item" onClick={irParaImportarChicotes}>
-            <FiUpload /> <span>Importar Chicotes</span>
+            <FiUpload /> <span>Importar Etapas do Processo</span>
           </button>
         </nav>
 

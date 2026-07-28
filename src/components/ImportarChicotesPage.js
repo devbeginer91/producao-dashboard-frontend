@@ -70,7 +70,7 @@ const ImportarChicotesPage = ({ setSidebarOpen }) => {
         <button className="btn-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
           <FiMenu />
         </button>
-        <h1>Importar Chicotes</h1>
+        <h1>Importar Etapas do Processo</h1>
       </header>
 
       {mensagem && <p className="erro">{mensagem}</p>}
