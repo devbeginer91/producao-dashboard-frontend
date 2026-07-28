@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiMenu, FiClipboard, FiArrowLeft, FiChevronRight, FiCheckCircle, FiRefreshCw, FiUser } from 'react-icons/fi';
+import { FiMenu, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiCheckCircle, FiRefreshCw, FiUser } from 'react-icons/fi';
 import api from '../api';
 
 const formatarCronometro = (segundos) => {
@@ -23,6 +23,7 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
   const [mensagem, setMensagem] = useState('');
   const [osSelecionadaId, setOsSelecionadaId] = useState(null);
   const [itemSelecionadoId, setItemSelecionadoId] = useState(null);
+  const [osExpandidas, setOsExpandidas] = useState({});
   const [, forcarTick] = useState(0);
   const referencias = useRef({});
 
@@ -95,6 +96,24 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
 
   const contarConcluidas = (item) => item.etapas.filter((e) => e.execucao?.status === 'concluido').length;
 
+  const itensComExecucaoAtiva = (os) => {
+    const grupos = [];
+    os.itens.forEach((item) => {
+      const ativas = item.etapas
+        .filter((e) => e.execucao?.status === 'em_andamento')
+        .map((e) => ({ key: e.execucao.id, etapaNome: e.nome, exec: e.execucao }));
+      if (ativas.length > 0) {
+        grupos.push({ itemId: item.id, itemCodigo: item.codigoDesenho, execucoes: ativas });
+      }
+    });
+    return grupos;
+  };
+
+  const toggleExpandirOs = (id, e) => {
+    e.stopPropagation();
+    setOsExpandidas((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   return (
     <div className="colaborador-page">
       <header className="topbar">
@@ -117,17 +136,47 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
       {/* Nível 1: OS priorizadas */}
       {!osAtual && ordens.length > 0 && (
         <div className="op-grid">
-          {ordens.map((os) => (
-            <button key={os.id} className="op-card op-card-clicavel" onClick={() => abrirOs(os.id)}>
-              <div className="op-card-header">
-                <span className="op-card-empresa">{os.empresa}</span>
-                <span className="op-card-os">OS {os.numeroOS}</span>
+          {ordens.map((os) => {
+            const grupos = itensComExecucaoAtiva(os);
+            const expandida = !!osExpandidas[os.id];
+            return (
+              <div key={os.id} className="op-card op-card-clicavel" onClick={() => abrirOs(os.id)}>
+                <div className="op-card-header">
+                  <span className="op-card-empresa">{os.empresa}</span>
+                  <span className="op-card-os">OS {os.numeroOS}</span>
+                </div>
+
+                {grupos.length > 0 && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="op-card-execucao-toggle" onClick={(e) => toggleExpandirOs(os.id, e)}>
+                      <FiZap /> {grupos.length} {grupos.length === 1 ? 'item' : 'itens'} em execução
+                      {expandida ? <FiChevronUp /> : <FiChevronDown />}
+                    </button>
+                    {expandida && (
+                      <div className="op-card-execucao-detalhe">
+                        {grupos.map((grupo) => (
+                          <div key={grupo.itemId} className="op-card-execucao-grupo">
+                            <div className="op-card-execucao-item-codigo">{grupo.itemCodigo}</div>
+                            {grupo.execucoes.map((ex) => (
+                              <div key={ex.key} className="op-card-execucao-linha">
+                                <span className="op-card-execucao-etapa">{ex.etapaNome}</span>
+                                <span className="op-card-execucao-colab"><FiUser /> {ex.exec.colaboradorNome}</span>
+                                <span className="op-card-execucao-tempo">{formatarCronometro(tempoAtualEtapa({ execucao: ex.exec }))}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <span className="op-card-itens-count">
+                  {os.itens.length} item(ns) <FiChevronRight />
+                </span>
               </div>
-              <span className="op-card-itens-count">
-                {os.itens.length} item(ns) <FiChevronRight />
-              </span>
-            </button>
-          ))}
+            );
+          })}
         </div>
       )}
 
