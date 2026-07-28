@@ -30,7 +30,7 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
             ativa = {
               execucaoId: etapa.minhaExecucao.id,
               baseSegundos: etapa.minhaExecucao.tempoAcumuladoBase,
-              capturadoEm: Date.now(),
+              referenciaInicio: new Date(etapa.minhaExecucao.referenciaInicio).getTime(),
             };
           }
         });
@@ -59,7 +59,7 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
     const exec = etapa.minhaExecucao;
     if (!exec) return 0;
     if (exec.status === 'em_andamento' && referenciaAtiva.current?.execucaoId === exec.id) {
-      const decorridoSeg = (Date.now() - referenciaAtiva.current.capturadoEm) / 1000;
+      const decorridoSeg = (Date.now() - referenciaAtiva.current.referenciaInicio) / 1000;
       return referenciaAtiva.current.baseSegundos + decorridoSeg;
     }
     return exec.tempoAcumulado ?? exec.tempoAcumuladoBase ?? 0;
