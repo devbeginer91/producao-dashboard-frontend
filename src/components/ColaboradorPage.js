@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiLogOut, FiPlay, FiPause, FiCheckCircle, FiClipboard } from 'react-icons/fi';
+import { FiLogOut, FiPlay, FiPause, FiCheckCircle, FiClipboard, FiArrowLeft, FiChevronRight } from 'react-icons/fi';
 import api from '../api';
 
 const formatarCronometro = (segundos) => {
@@ -15,7 +15,9 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
   const [ordens, setOrdens] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
-  const [etapaSelecionada, setEtapaSelecionada] = useState({});
+  const [osSelecionadaId, setOsSelecionadaId] = useState(null);
+  const [itemSelecionadoId, setItemSelecionadoId] = useState(null);
+  const [etapaSelecionadaId, setEtapaSelecionadaId] = useState(null);
   const [, forcarTick] = useState(0);
   const referenciaAtiva = useRef(null);
 
@@ -25,14 +27,16 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
       setOrdens(response.data);
       let ativa = null;
       response.data.forEach((ordem) => {
-        ordem.etapas.forEach((etapa) => {
-          if (etapa.minhaExecucao?.status === 'em_andamento') {
-            ativa = {
-              execucaoId: etapa.minhaExecucao.id,
-              baseSegundos: etapa.minhaExecucao.tempoAcumuladoBase,
-              referenciaInicio: new Date(etapa.minhaExecucao.referenciaInicio).getTime(),
-            };
-          }
+        ordem.itens.forEach((item) => {
+          item.etapas.forEach((etapa) => {
+            if (etapa.minhaExecucao?.status === 'em_andamento') {
+              ativa = {
+                execucaoId: etapa.minhaExecucao.id,
+                baseSegundos: etapa.minhaExecucao.tempoAcumuladoBase,
+                referenciaInicio: new Date(etapa.minhaExecucao.referenciaInicio).getTime(),
+              };
+            }
+          });
         });
       });
       referenciaAtiva.current = ativa;
@@ -74,11 +78,27 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
     }
   };
 
-  const iniciar = (ordem, etapa) =>
-    executar(() => api.post('/execucoes-etapa/iniciar', { itemPedidoId: ordem.id, etapaChicoteId: etapa.id, colaboradorId: colaborador.id }));
+  const iniciar = (item, etapa) =>
+    executar(() => api.post('/execucoes-etapa/iniciar', { itemPedidoId: item.id, etapaChicoteId: etapa.id, colaboradorId: colaborador.id }));
   const pausar = (execucaoId) => executar(() => api.put(`/execucoes-etapa/${execucaoId}/pausar`));
   const retomar = (execucaoId) => executar(() => api.put(`/execucoes-etapa/${execucaoId}/retomar`));
   const concluir = (execucaoId) => executar(() => api.put(`/execucoes-etapa/${execucaoId}/concluir`));
+
+  const abrirOs = (id) => {
+    setOsSelecionadaId(id);
+    setItemSelecionadoId(null);
+    setEtapaSelecionadaId(null);
+  };
+  const abrirItem = (id) => {
+    setItemSelecionadoId(id);
+    setEtapaSelecionadaId(null);
+  };
+
+  const osAtual = ordens.find((o) => o.id === osSelecionadaId);
+  const itemAtual = osAtual?.itens.find((i) => i.id === itemSelecionadoId);
+  const etapaAtual = itemAtual?.etapas.find((e) => e.id === etapaSelecionadaId);
+
+  const contarConcluidas = (item) => item.etapas.filter((e) => e.minhaExecucao?.status === 'concluido').length;
 
   return (
     <div className="colaborador-page">
@@ -103,67 +123,107 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
         </div>
       )}
 
-      <div className="op-grid">
-        {ordens.map((ordem) => {
-          const etapaAtualId = etapaSelecionada[ordem.id];
-          const etapaAtual = ordem.etapas.find((e) => e.id === etapaAtualId);
-          return (
-            <div key={ordem.id} className="op-card">
+      {/* Nível 1: lista de OS priorizadas, na ordem definida pelo PCP */}
+      {!osAtual && ordens.length > 0 && (
+        <div className="op-grid">
+          {ordens.map((os) => (
+            <button key={os.id} className="op-card op-card-clicavel" onClick={() => abrirOs(os.id)}>
               <div className="op-card-header">
-                <span className="op-card-empresa">{ordem.empresa}</span>
-                <span className="op-card-os">OS {ordem.numeroOS}</span>
+                <span className="op-card-empresa">{os.empresa}</span>
+                <span className="op-card-os">OS {os.numeroOS}</span>
               </div>
+              <span className="op-card-itens-count">
+                {os.itens.length} item(ns) <FiChevronRight />
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
-              <div className="op-etapas-tabs">
-                {ordem.etapas.map((etapa) => (
-                  <button
-                    key={etapa.id}
-                    className={`op-etapa-tab op-etapa-${etapa.minhaExecucao?.status || 'pendente'} ${etapaAtualId === etapa.id ? 'ativa' : ''}`}
-                    onClick={() => setEtapaSelecionada((prev) => ({ ...prev, [ordem.id]: etapa.id }))}
-                  >
-                    {etapa.ordem}. {etapa.nome} {etapa.minhaExecucao?.status === 'concluido' && <FiCheckCircle />}
-                  </button>
-                ))}
-              </div>
+      {/* Nível 2: itens da OS selecionada */}
+      {osAtual && !itemAtual && (
+        <div className="op-detalhe">
+          <button className="op-voltar" onClick={() => abrirOs(null)}>
+            <FiArrowLeft /> Voltar às OS
+          </button>
+          <h2 className="op-detalhe-titulo">{osAtual.empresa} — OS {osAtual.numeroOS}</h2>
 
-              {etapaAtual && (
-                <div className="op-etapa-painel">
-                  <p className="op-etapa-meta">{etapaAtual.setor} · {etapaAtual.quemTexto}</p>
-                  {etapaAtual.instrucoes && <p className="op-etapa-instrucoes">{etapaAtual.instrucoes}</p>}
-                  <div className="op-cronometro">{formatarCronometro(tempoAtualEtapa(etapaAtual))}</div>
-                  <div className="op-controles">
-                    {!etapaAtual.minhaExecucao && (
-                      <button className="btn-concluir" onClick={() => iniciar(ordem, etapaAtual)}>
-                        <FiPlay /> Início
-                      </button>
-                    )}
-                    {etapaAtual.minhaExecucao?.status === 'em_andamento' && (
-                      <button className="btn-pausar" onClick={() => pausar(etapaAtual.minhaExecucao.id)}>
-                        <FiPause /> Pausa
-                      </button>
-                    )}
-                    {etapaAtual.minhaExecucao?.status === 'pausado' && (
-                      <button className="btn-retomar" onClick={() => retomar(etapaAtual.minhaExecucao.id)}>
-                        <FiPlay /> Retomar
-                      </button>
-                    )}
-                    {etapaAtual.minhaExecucao && etapaAtual.minhaExecucao.status !== 'concluido' && (
-                      <button className="btn-excluir" onClick={() => concluir(etapaAtual.minhaExecucao.id)}>
-                        <FiCheckCircle /> Concluir
-                      </button>
-                    )}
-                    {etapaAtual.minhaExecucao?.status === 'concluido' && (
-                      <p className="op-etapa-concluida">
-                        <FiCheckCircle /> Etapa concluída
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
+          {osAtual.itens.length === 0 ? (
+            <p className="pedido-grid-empty">Nenhum item dessa OS tem chicote vinculado ainda.</p>
+          ) : (
+            <div className="op-itens-list">
+              {osAtual.itens.map((item) => (
+                <button key={item.id} className="op-item-row" onClick={() => abrirItem(item.id)}>
+                  <span className="op-item-codigo">{item.codigoDesenho}</span>
+                  <span className="op-item-progresso">
+                    {contarConcluidas(item)}/{item.etapas.length} etapas concluídas
+                  </span>
+                  <FiChevronRight />
+                </button>
+              ))}
             </div>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      )}
+
+      {/* Nível 3: etapas do item selecionado */}
+      {itemAtual && (
+        <div className="op-detalhe">
+          <button className="op-voltar" onClick={() => abrirItem(null)}>
+            <FiArrowLeft /> Voltar aos itens
+          </button>
+          <h2 className="op-detalhe-titulo">
+            {osAtual.empresa} — OS {osAtual.numeroOS} · {itemAtual.codigoDesenho}
+          </h2>
+
+          <div className="op-etapas-tabs">
+            {itemAtual.etapas.map((etapa) => (
+              <button
+                key={etapa.id}
+                className={`op-etapa-tab op-etapa-${etapa.minhaExecucao?.status || 'pendente'} ${etapaSelecionadaId === etapa.id ? 'ativa' : ''}`}
+                onClick={() => setEtapaSelecionadaId(etapa.id)}
+              >
+                {etapa.ordem}. {etapa.nome} {etapa.minhaExecucao?.status === 'concluido' && <FiCheckCircle />}
+              </button>
+            ))}
+          </div>
+
+          {etapaAtual && (
+            <div className="op-etapa-painel">
+              <p className="op-etapa-meta">{etapaAtual.setor} · {etapaAtual.quemTexto}</p>
+              {etapaAtual.instrucoes && <p className="op-etapa-instrucoes">{etapaAtual.instrucoes}</p>}
+              <div className="op-cronometro">{formatarCronometro(tempoAtualEtapa(etapaAtual))}</div>
+              <div className="op-controles">
+                {!etapaAtual.minhaExecucao && (
+                  <button className="btn-concluir" onClick={() => iniciar(itemAtual, etapaAtual)}>
+                    <FiPlay /> Início
+                  </button>
+                )}
+                {etapaAtual.minhaExecucao?.status === 'em_andamento' && (
+                  <button className="btn-pausar" onClick={() => pausar(etapaAtual.minhaExecucao.id)}>
+                    <FiPause /> Pausa
+                  </button>
+                )}
+                {etapaAtual.minhaExecucao?.status === 'pausado' && (
+                  <button className="btn-retomar" onClick={() => retomar(etapaAtual.minhaExecucao.id)}>
+                    <FiPlay /> Retomar
+                  </button>
+                )}
+                {etapaAtual.minhaExecucao && etapaAtual.minhaExecucao.status !== 'concluido' && (
+                  <button className="btn-excluir" onClick={() => concluir(etapaAtual.minhaExecucao.id)}>
+                    <FiCheckCircle /> Concluir
+                  </button>
+                )}
+                {etapaAtual.minhaExecucao?.status === 'concluido' && (
+                  <p className="op-etapa-concluida">
+                    <FiCheckCircle /> Etapa concluída
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

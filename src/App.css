@@ -1732,34 +1732,27 @@ body {
   border-color: transparent;
 }
 
-.pcp-row-chicote {
+.pcp-row-ordem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.pcp-row-chicote select {
-  padding: 8px 10px;
+.pcp-row-ordem label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.pcp-row-ordem input {
+  width: 64px;
+  padding: 7px 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 13px;
   font-family: inherit;
   background: var(--color-surface);
-}
-
-.pcp-sugestao {
-  font-size: 11px;
-  color: var(--color-accent);
-  font-style: italic;
-}
-
-.pcp-sem-sugestao {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--color-warning-dark);
 }
 
 /* Tela do colaborador */
@@ -1811,6 +1804,97 @@ body {
   font-size: 28px;
   color: var(--color-primary);
   letter-spacing: -0.02em;
+}
+
+.op-card-clicavel {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.op-card-clicavel:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.op-card-itens-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.op-detalhe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.op-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.op-voltar:hover {
+  text-decoration: underline;
+}
+
+.op-detalhe-titulo {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.op-itens-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.op-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: box-shadow 0.15s ease;
+}
+
+.op-item-row:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.op-item-codigo {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.op-item-progresso {
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  flex: 1;
+  text-align: right;
+  margin-right: var(--space-sm);
 }
 
 .op-etapas-tabs {

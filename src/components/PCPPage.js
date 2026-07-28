@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { FiMenu, FiLogOut, FiStar, FiSave, FiAlertTriangle } from 'react-icons/fi';
+import { FiMenu, FiStar } from 'react-icons/fi';
 import api from '../api';
 
 const PCPPage = ({ setSidebarOpen, pcpNome, onLogout }) => {
-  const [itens, setItens] = useState([]);
-  const [chicotes, setChicotes] = useState([]);
-  const [selecoes, setSelecoes] = useState({});
+  const [pedidos, setPedidos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
 
@@ -13,19 +11,18 @@ const PCPPage = ({ setSidebarOpen, pcpNome, onLogout }) => {
     setCarregando(true);
     setMensagem('');
     try {
-      const [itensResp, chicotesResp] = await Promise.all([
-        api.get('/itens-pedidos'),
-        api.get('/chicotes'),
-      ]);
-      setItens(itensResp.data);
-      setChicotes(chicotesResp.data);
-      const iniciais = {};
-      itensResp.data.forEach((item) => {
-        iniciais[item.id] = item.chicoteVinculado?.id || item.chicoteSugerido?.id || '';
-      });
-      setSelecoes(iniciais);
+      const response = await api.get('/pedidos');
+      const relevantes = response.data
+        .filter((p) => p.status === 'novo' || p.status === 'andamento')
+        .sort((a, b) => {
+          const oa = a.ordemPrioridade ?? Infinity;
+          const ob = b.ordemPrioridade ?? Infinity;
+          if (oa !== ob) return oa - ob;
+          return a.empresa.localeCompare(b.empresa);
+        });
+      setPedidos(relevantes);
     } catch (error) {
-      setMensagem('Erro ao carregar itens: ' + (error.response?.data?.message || error.message));
+      setMensagem('Erro ao carregar pedidos: ' + (error.response?.data?.message || error.message));
     } finally {
       setCarregando(false);
     }
@@ -35,28 +32,25 @@ const PCPPage = ({ setSidebarOpen, pcpNome, onLogout }) => {
     carregar();
   }, []);
 
-  const salvarVinculo = async (item) => {
-    const chicoteId = selecoes[item.id] ? parseInt(selecoes[item.id], 10) : null;
+  const alternarPrioridade = async (pedido) => {
     try {
-      await api.put(`/itens-pedidos/${item.id}/chicote`, { chicoteId });
-      setMensagem('Chicote vinculado com sucesso.');
-      carregar();
+      await api.put(`/pedidos/${pedido.id}/prioridade`, { prioritario: !pedido.prioritario });
+      await carregar();
     } catch (error) {
-      setMensagem('Erro ao vincular chicote: ' + (error.response?.data?.message || error.message));
+      setMensagem('Erro: ' + (error.response?.data?.message || error.message));
     }
   };
 
-  const alternarPrioridade = async (item) => {
+  const salvarOrdem = async (pedido, valor) => {
+    const ordemPrioridade = valor === '' ? null : parseInt(valor, 10);
+    if (ordemPrioridade === pedido.ordemPrioridade) return;
     try {
-      await api.put(`/itens-pedidos/${item.id}/prioridade`, { prioritario: !item.prioritario });
-      setItens((prev) => prev.map((i) => (i.id === item.id ? { ...i, prioritario: !i.prioritario } : i)));
+      await api.put(`/pedidos/${pedido.id}/ordem-prioridade`, { ordemPrioridade });
+      await carregar();
     } catch (error) {
-      setMensagem('Erro ao atualizar prioridade: ' + (error.response?.data?.message || error.message));
+      setMensagem('Erro: ' + (error.response?.data?.message || error.message));
     }
   };
-
-  const opcoesChicote = (item) =>
-    chicotes.filter((c) => c.cliente.trim().toUpperCase() === (item.empresa || '').trim().toUpperCase());
 
   return (
     <>
@@ -69,69 +63,47 @@ const PCPPage = ({ setSidebarOpen, pcpNome, onLogout }) => {
         <h1>Priorizar Produção</h1>
         {onLogout && (
           <button className="btn-editar" onClick={onLogout}>
-            <FiLogOut /> Sair{pcpNome ? ` (${pcpNome})` : ''}
+            Sair{pcpNome ? ` (${pcpNome})` : ''}
           </button>
         )}
       </header>
 
-      {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
-      {carregando && <p className="loading">Carregando itens...</p>}
-
-      {!carregando && itens.length === 0 && (
-        <p className="pedido-grid-empty">Nenhum item de pedido novo ou em andamento no momento.</p>
+      {mensagem && <p className="erro">{mensagem}</p>}
+      {carregando && <p className="loading">Carregando pedidos...</p>}
+      {!carregando && pedidos.length === 0 && (
+        <p className="pedido-grid-empty">Nenhum pedido novo ou em andamento no momento.</p>
       )}
 
       <div className="pcp-list">
-        {itens.map((item) => {
-          const semChicoteDisponivel = opcoesChicote(item).length === 0;
-          return (
-            <div key={item.id} className={`pcp-row ${item.prioritario ? 'pcp-row-prioritario' : ''}`}>
-              <div className="pcp-row-info">
-                <span className="pcp-row-empresa">{item.empresa}</span>
-                <span className="pcp-row-os">OS {item.numeroOS}</span>
-                <span className="pcp-row-codigo">Cód. {item.codigoDesenho}</span>
-                <span className={`pcp-status pcp-status-${item.status}`}>{item.status}</span>
-              </div>
-
-              <div className="pcp-row-chicote">
-                <select
-                  value={selecoes[item.id] || ''}
-                  onChange={(e) => setSelecoes((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                >
-                  <option value="">— sem chicote vinculado —</option>
-                  {opcoesChicote(item).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.codigoItemCliente} {c.codigoDca ? `(DCA ${c.codigoDca})` : ''}
-                    </option>
-                  ))}
-                </select>
-                {!item.chicoteVinculado && item.chicoteSugerido && (
-                  <span className="pcp-sugestao">sugerido automaticamente</span>
-                )}
-                {!item.chicoteVinculado && !item.chicoteSugerido && !semChicoteDisponivel && (
-                  <span className="pcp-sem-sugestao"><FiAlertTriangle /> sem sugestão automática — selecione manualmente</span>
-                )}
-                {semChicoteDisponivel && (
-                  <span className="pcp-sem-sugestao"><FiAlertTriangle /> nenhum chicote cadastrado para este cliente</span>
-                )}
-                <button
-                  className="btn-editar"
-                  onClick={() => salvarVinculo(item)}
-                  disabled={(selecoes[item.id] || '') === (item.chicoteVinculado?.id || '')}
-                >
-                  <FiSave /> Salvar
-                </button>
-              </div>
-
-              <button
-                className={item.prioritario ? 'btn-concluir' : 'btn-observacao'}
-                onClick={() => alternarPrioridade(item)}
-              >
-                <FiStar /> {item.prioritario ? 'Prioridade ativa' : 'Marcar prioridade'}
-              </button>
+        {pedidos.map((pedido) => (
+          <div key={pedido.id} className={`pcp-row ${pedido.prioritario ? 'pcp-row-prioritario' : ''}`}>
+            <div className="pcp-row-info">
+              <span className="pcp-row-empresa">{pedido.empresa}</span>
+              <span className="pcp-row-os">OS {pedido.numeroOS}</span>
+              <span className={`pcp-status pcp-status-${pedido.status}`}>{pedido.status}</span>
             </div>
-          );
-        })}
+
+            {pedido.prioritario && (
+              <div className="pcp-row-ordem">
+                <label htmlFor={`ordem-${pedido.id}`}>Ordem</label>
+                <input
+                  id={`ordem-${pedido.id}`}
+                  type="number"
+                  min="1"
+                  defaultValue={pedido.ordemPrioridade ?? ''}
+                  onBlur={(e) => salvarOrdem(pedido, e.target.value)}
+                />
+              </div>
+            )}
+
+            <button
+              className={pedido.prioritario ? 'btn-concluir' : 'btn-observacao'}
+              onClick={() => alternarPrioridade(pedido)}
+            >
+              <FiStar /> {pedido.prioritario ? 'Prioridade ativa' : 'Marcar prioridade'}
+            </button>
+          </div>
+        ))}
       </div>
     </>
   );
