@@ -11,6 +11,28 @@ const formatarCronometro = (segundos) => {
   return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
 };
 
+const agruparPorOs = (execucoes) => {
+  const porOs = new Map();
+  execucoes.forEach((exec) => {
+    const chaveOs = `${exec.empresa}__${exec.numeroOS}`;
+    if (!porOs.has(chaveOs)) {
+      porOs.set(chaveOs, { empresa: exec.empresa, numeroOS: exec.numeroOS, itens: new Map() });
+    }
+    const os = porOs.get(chaveOs);
+    if (!os.itens.has(exec.codigoDesenho)) {
+      os.itens.set(exec.codigoDesenho, []);
+    }
+    os.itens.get(exec.codigoDesenho).push(exec);
+  });
+  return Array.from(porOs.values()).map((os) => ({
+    ...os,
+    itens: Array.from(os.itens.entries()).map(([codigoDesenho, execs]) => ({
+      codigoDesenho,
+      execucoes: [...execs].sort((a, b) => a.etapaOrdem - b.etapaOrdem),
+    })),
+  }));
+};
+
 const ExecucoesAtivasPanel = () => {
   const [execucoes, setExecucoes] = useState([]);
   const [carregado, setCarregado] = useState(false);
@@ -53,22 +75,30 @@ const ExecucoesAtivasPanel = () => {
 
   if (!carregado || execucoes.length === 0) return null;
 
+  const ordens = agruparPorOs(execucoes);
+
   return (
     <div className="execucoes-ativas-panel">
       <h2 className="secao-titulo"><FiActivity /> Em Execução Agora</h2>
       <div className="execucoes-ativas-grid">
-        {execucoes.map((exec) => (
-          <div key={exec.id} className="execucao-ativa-card">
+        {ordens.map((os) => (
+          <div key={`${os.empresa}__${os.numeroOS}`} className="execucao-ativa-card">
             <div className="execucao-ativa-header">
-              <span className="execucao-ativa-empresa">{exec.empresa}</span>
-              <span className="execucao-ativa-os">OS {exec.numeroOS}</span>
+              <span className="execucao-ativa-empresa">{os.empresa}</span>
+              <span className="execucao-ativa-os">OS {os.numeroOS}</span>
             </div>
-            <div className="execucao-ativa-item">{exec.codigoDesenho}</div>
-            <div className="execucao-ativa-etapa">{exec.etapaOrdem}. {exec.etapaNome}</div>
-            <div className="execucao-ativa-rodape">
-              <span className="execucao-ativa-colaborador"><FiUser /> {exec.colaboradorNome}</span>
-              <span className="execucao-ativa-tempo">{formatarCronometro(tempoAtual(exec))}</span>
-            </div>
+            {os.itens.map((item) => (
+              <div key={item.codigoDesenho} className="execucao-ativa-item-grupo">
+                <div className="execucao-ativa-item">{item.codigoDesenho}</div>
+                {item.execucoes.map((exec) => (
+                  <div key={exec.id} className="execucao-ativa-etapa-linha">
+                    <span className="execucao-ativa-etapa">{exec.etapaOrdem}. {exec.etapaNome}</span>
+                    <span className="execucao-ativa-colaborador"><FiUser /> {exec.colaboradorNome}</span>
+                    <span className="execucao-ativa-tempo">{formatarCronometro(tempoAtual(exec))}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         ))}
       </div>
