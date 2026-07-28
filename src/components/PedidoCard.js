@@ -9,10 +9,9 @@ import {
   FiMessageSquare,
   FiChevronDown,
   FiChevronUp,
-  FiPause,
-  FiPlay,
   FiAlertTriangle,
   FiPackage,
+  FiStar,
 } from 'react-icons/fi';
 
 const formatarData = (data) => {
@@ -41,8 +40,6 @@ const PedidoCard = ({
   setNovoPedido,
   setMostrarFormulario,
   moverParaAndamento,
-  pausarPedido,
-  retomarPedido,
 }) => {
   const [expandido, setExpandido] = useState(false);
   const [obsPreview, setObsPreview] = useState(null);
@@ -99,13 +96,6 @@ const PedidoCard = ({
     setMostrarModal(true);
   };
 
-  const togglePausa = () => {
-    const acao = pedido.pausado === '1' ? retomarPedido : pausarPedido;
-    acao(pedido.id).catch((error) => {
-      setMensagem(`Erro ao ${pedido.pausado === '1' ? 'retomar' : 'pausar'} pedido: ` + (error.response ? error.response.data.message : error.message));
-    });
-  };
-
   const temObservacoes = (pedido.observacoesCount || 0) > 0;
 
   const handleObsHover = () => {
@@ -134,6 +124,11 @@ const PedidoCard = ({
           <span className="pedido-card-os">Nº OS {pedido.numeroOS || 'Não informado'}</span>
         </div>
         <div className="pedido-card-header-icons">
+          {tipo === 'andamento' && pedido.prioritario && (
+            <span className="pedido-card-prioridade-badge" title="Prioridade de produção">
+              <FiStar /> {pedido.ordemPrioridade != null ? `#${pedido.ordemPrioridade}` : 'Prioritário'}
+            </span>
+          )}
           {atrasado && <FiAlertTriangle className="atrasado-icon" title="Atrasado" />}
           {temObservacoes && (
             <div
@@ -249,11 +244,6 @@ const PedidoCard = ({
         )}
         {tipo === 'novo' && (
           <button className="btn-editar" onClick={editarPedidoNovo}><FiEdit2 /> Editar</button>
-        )}
-        {tipo === 'andamento' && (
-          <button className={pedido.pausado === '1' ? 'btn-retomar' : 'btn-pausar'} onClick={togglePausa}>
-            {pedido.pausado === '1' ? <><FiPlay /> Retomar</> : <><FiPause /> Pausar</>}
-          </button>
         )}
         <button className="btn-observacao" onClick={abrirModalObservacao}><FiMessageSquare /> Obs</button>
         <button className="btn-excluir" onClick={excluirPedido}><FiTrash2 /> Excluir</button>

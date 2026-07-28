@@ -8,7 +8,11 @@ import Layout from './components/Layout';
 import DashboardPage from './components/DashboardPage';
 import PedidoListPage from './components/PedidoListPage';
 import ImportarChicotesPage from './components/ImportarChicotesPage';
+import ClientesChicotesPage from './components/ClientesChicotesPage';
+import ChicotesClientePage from './components/ChicotesClientePage';
+import ChicoteDetalhePage from './components/ChicoteDetalhePage';
 import PCPPage from './components/PCPPage';
+import AcompanhamentoProducaoPage from './components/AcompanhamentoProducaoPage';
 import ColaboradorPage from './components/ColaboradorPage';
 import Login from './components/Login';
 import LoginPCP from './components/LoginPCP';
@@ -337,59 +341,6 @@ function App() {
     }
   };
 
-  const pausarPedido = async (id) => {
-    const pedido = pedidos.find((p) => p.id === id);
-    if (!pedido) {
-      setMensagem('Erro: Pedido não encontrado.');
-      return;
-    }
-    const dataPausada = formatDateToLocalISO(new Date(), 'pausarPedido');
-    const dataInicioPausa = formatDateToLocalISO(new Date(), 'inicioPausa');
-    const tempoAtual = pedido.tempo || calcularTempo(pedido.inicio, dataPausada);
-    const pedidoPausado = {
-      ...pedido,
-      pausado: '1',
-      tempoPausado: tempoAtual,
-      dataPausada,
-      dataInicioPausa,
-      tempo: tempoAtual,
-    };
-    try {
-      await api.put(`/pedidos/${id}`, pedidoPausado);
-      setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoPausado : p)));
-      setMensagem('Pedido pausado com sucesso.');
-      carregarPedidos();
-    } catch (error) {
-      setMensagem('Erro ao pausar pedido: ' + (error.response?.data.message || error.message));
-    }
-  };
-
-  const retomarPedido = async (id) => {
-    const pedido = pedidos.find((p) => p.id === id);
-    if (!pedido) {
-      setMensagem('Erro: Pedido não encontrado.');
-      return;
-    }
-    const dataRetomada = formatDateToLocalISO(new Date(), 'retomarPedido');
-    const tempoPausadoAnterior = Number(pedido.tempoPausado) || pedido.tempo || 0;
-    const pedidoRetomado = {
-      ...pedido,
-      pausado: '0',
-      dataPausada: dataRetomada,
-      dataInicioPausa: null,
-      tempoPausado: tempoPausadoAnterior,
-      tempo: tempoPausadoAnterior,
-    };
-    try {
-      await api.put(`/pedidos/${id}`, pedidoRetomado);
-      setPedidos((prev) => prev.map((p) => (p.id === id ? pedidoRetomado : p)));
-      setMensagem('Pedido retomado com sucesso.');
-      carregarPedidos();
-    } catch (error) {
-      setMensagem('Erro ao retomar pedido: ' + (error.response?.data.message || error.message));
-    }
-  };
-
   const handleLogout = () => {
     setAuth(null);
   };
@@ -407,8 +358,6 @@ function App() {
     setNovoPedido,
     setMostrarFormulario,
     moverParaAndamento,
-    pausarPedido,
-    retomarPedido,
   };
 
   return (
@@ -562,6 +511,22 @@ function App() {
           <Route
             path="/priorizar-producao"
             element={<PCPPage setSidebarOpen={setSidebarOpen} />}
+          />
+          <Route
+            path="/chicotes-eletricos"
+            element={<ClientesChicotesPage setSidebarOpen={setSidebarOpen} />}
+          />
+          <Route
+            path="/chicotes-eletricos/:cliente"
+            element={<ChicotesClientePage setSidebarOpen={setSidebarOpen} />}
+          />
+          <Route
+            path="/chicotes-eletricos/chicote/:id"
+            element={<ChicoteDetalhePage setSidebarOpen={setSidebarOpen} />}
+          />
+          <Route
+            path="/acompanhamento-producao"
+            element={<AcompanhamentoProducaoPage setSidebarOpen={setSidebarOpen} />}
           />
         </Route>
       </Routes>

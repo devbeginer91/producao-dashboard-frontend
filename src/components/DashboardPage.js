@@ -3,6 +3,7 @@ import { FiMenu, FiPlus } from 'react-icons/fi';
 import StatsBar from './StatsBar';
 import Busca from './Busca';
 import PedidoBoard from './PedidoBoard';
+import ExecucoesAtivasPanel from './ExecucoesAtivasPanel';
 
 const DashboardPage = ({
   mensagem,
@@ -45,6 +46,8 @@ const DashboardPage = ({
       {isLoading && <p className="loading">Carregando pedidos...</p>}
 
       <StatsBar novos={novos} andamento={andamento} concluidos={concluidos} />
+
+      <ExecucoesAtivasPanel />
 
       <Busca
         busca={busca}

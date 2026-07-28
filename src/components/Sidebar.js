@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiLogOut, FiX } from 'react-icons/fi';
+import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX } from 'react-icons/fi';
 
 const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -33,6 +33,16 @@ const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => 
 
   const irParaPriorizarProducao = () => {
     navigate('/priorizar-producao');
+    onClose();
+  };
+
+  const irParaChicotesEletricos = () => {
+    navigate('/chicotes-eletricos');
+    onClose();
+  };
+
+  const irParaAcompanhamentoProducao = () => {
+    navigate('/acompanhamento-producao');
     onClose();
   };
 
@@ -78,6 +88,12 @@ const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => 
           <span className="sidebar-nav-title">Produção</span>
           <button className="sidebar-nav-item" onClick={irParaPriorizarProducao}>
             <FiStar /> <span>Priorizar Produção</span>
+          </button>
+          <button className="sidebar-nav-item" onClick={irParaChicotesEletricos}>
+            <FiZap /> <span>Chicotes Elétricos</span>
+          </button>
+          <button className="sidebar-nav-item" onClick={irParaAcompanhamentoProducao}>
+            <FiActivity /> <span>Acompanhar Produção</span>
           </button>
         </nav>
 

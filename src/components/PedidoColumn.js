@@ -30,7 +30,14 @@ const PedidoColumn = ({
     setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'));
   };
 
-  const listaFiltrada = filtrarPedidosPorBusca(pedidos, busca);
+  const listaFiltradaBusca = filtrarPedidosPorBusca(pedidos, busca);
+  const listaFiltrada = tipo === 'andamento'
+    ? [...listaFiltradaBusca].sort((a, b) => {
+        const chaveA = a.prioritario ? (a.ordemPrioridade ?? 0) : Infinity;
+        const chaveB = b.prioritario ? (b.ordemPrioridade ?? 0) : Infinity;
+        return chaveA - chaveB;
+      })
+    : listaFiltradaBusca;
 
   return (
     <section className={`board-column board-column-${tipo}`} ref={columnRef}>

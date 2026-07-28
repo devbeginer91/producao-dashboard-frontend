@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { formatDateToLocalISO } from '../App'; // Mantido como prop
 import { formatarDataHora } from '../utils'; // Importando do utils.js
@@ -20,6 +20,12 @@ const PedidoForm = ({
   moverParaAndamento,
   formatDateToLocalISO, // Recebendo como prop
 }) => {
+  const [chicotes, setChicotes] = useState([]);
+
+  useEffect(() => {
+    api.get('/chicotes').then((response) => setChicotes(response.data)).catch(() => setChicotes([]));
+  }, []);
+
   useEffect(() => {
     if (pedidoParaEditar) {
       console.log('Carregando pedido para edição:', pedidoParaEditar);
@@ -198,6 +204,10 @@ const PedidoForm = ({
 
   const itens = Array.isArray(novoPedido.itens) ? novoPedido.itens : [{ codigoDesenho: '', quantidadePedido: '' }];
 
+  const chicotesDoCliente = chicotes.filter(
+    (c) => c.cliente.trim().toUpperCase() === (novoPedido.empresa || '').trim().toUpperCase()
+  );
+
   return (
     <form onSubmit={handleSubmit} className="formulario">
       <div>
@@ -282,6 +292,7 @@ const PedidoForm = ({
         <div className="itens-form-header">
           <span>Código do Desenho</span>
           <span>Quantidade Pedida</span>
+          <span>Chicote (opcional)</span>
           <span aria-hidden="true"></span>
         </div>
         <div className="itens-form-list">
@@ -309,6 +320,19 @@ const PedidoForm = ({
                 min="0"
                 required
               />
+              <label htmlFor={`chicote-${index}`} className="sr-only">Chicote</label>
+              <select
+                id={`chicote-${index}`}
+                value={item.chicoteId || ''}
+                onChange={(e) => atualizarItem(index, 'chicoteId', e.target.value ? parseInt(e.target.value, 10) : null)}
+              >
+                <option value="">— nenhum —</option>
+                {chicotesDoCliente.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.codigoItemCliente} {c.codigoDca ? `(DCA ${c.codigoDca})` : ''}
+                  </option>
+                ))}
+              </select>
               {itens.length > 1 && (
                 <button
                   type="button"
