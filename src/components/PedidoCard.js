@@ -11,6 +11,7 @@ import {
   FiAlertTriangle,
   FiPackage,
   FiStar,
+  FiClock,
 } from 'react-icons/fi';
 
 const formatarData = (data) => {
@@ -22,6 +23,15 @@ const formatarData = (data) => {
     return 'Não informado';
   }
   return parsedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const formatarCronometro = (segundos) => {
+  const totalSegundos = Math.max(0, Math.round(segundos));
+  const h = Math.floor(totalSegundos / 3600);
+  const m = Math.floor((totalSegundos % 3600) / 60);
+  const s = totalSegundos % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
 };
 
 const PedidoCard = ({
@@ -43,6 +53,7 @@ const PedidoCard = ({
   const [obsPreview, setObsPreview] = useState(null);
   const [obsPreviewLoading, setObsPreviewLoading] = useState(false);
   const [showObsTooltip, setShowObsTooltip] = useState(false);
+  const [itemTemposAbertos, setItemTemposAbertos] = useState({});
 
   const formatDateToLocalISO = (date) => {
     const d = date ? new Date(date) : new Date();
@@ -67,7 +78,17 @@ const PedidoCard = ({
     }
   };
 
+  const temItemEmExecucao = (pedido.itens || []).some((item) => item.producao?.temExecucaoAtiva);
+
+  const confirmarSeEmExecucao = () => {
+    if (!temItemEmExecucao) return true;
+    return window.confirm(
+      'Este pedido tem etapa(s) de produção em execução no momento. Deseja continuar mesmo assim?'
+    );
+  };
+
   const concluirPedido = () => {
+    if (!confirmarSeEmExecucao()) return;
     const inicioValido = pedido.inicio && !pedido.inicio.includes('undefined')
       ? formatDateToLocalISO(pedido.inicio)
       : formatDateToLocalISO(new Date());
@@ -76,11 +97,16 @@ const PedidoCard = ({
   };
 
   const editarQuantidadeEntregue = () => {
+    if (!confirmarSeEmExecucao()) return;
     const inicioValido = pedido.inicio && !pedido.inicio.includes('undefined')
       ? formatDateToLocalISO(pedido.inicio)
       : formatDateToLocalISO(new Date());
     setPedidoParaConcluir({ ...pedido, inicio: inicioValido, itemParaEditar: true });
     setMostrarModalPesoVolume(true);
+  };
+
+  const toggleItemTempos = (idx) => {
+    setItemTemposAbertos((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
 
   const editarPedidoNovo = () => {
@@ -204,6 +230,7 @@ const PedidoCard = ({
               <th>Pedido</th>
               <th>Entregue</th>
               <th>Saldo</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -212,18 +239,57 @@ const PedidoCard = ({
                 const qtdPedido = parseInt(item.quantidadePedido, 10) || 0;
                 const qtdEntregue = parseInt(item.quantidadeEntregue, 10) || 0;
                 const saldo = qtdPedido - qtdEntregue;
+                const producao = item.producao;
+                const temposAberto = !!itemTemposAbertos[idx];
                 return (
-                  <tr key={idx}>
-                    <td>{item.codigoDesenho || 'Não informado'}</td>
-                    <td>{qtdPedido}</td>
-                    <td>{qtdEntregue}</td>
-                    <td>{isNaN(saldo) ? '0' : saldo}</td>
-                  </tr>
+                  <React.Fragment key={idx}>
+                    <tr>
+                      <td>{item.codigoDesenho || 'Não informado'}</td>
+                      <td>{qtdPedido}</td>
+                      <td>{qtdEntregue}</td>
+                      <td>{isNaN(saldo) ? '0' : saldo}</td>
+                      <td>
+                        {producao && producao.totalEtapas > 0 && (
+                          <button
+                            type="button"
+                            className="btn-item-tempos"
+                            onClick={() => toggleItemTempos(idx)}
+                            title="Ver tempos de produção"
+                          >
+                            <FiClock /> {temposAberto ? <FiChevronUp /> : <FiChevronDown />}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                    {producao && producao.totalEtapas > 0 && temposAberto && (
+                      <tr className="item-tempos-row">
+                        <td colSpan="5">
+                          {producao.etapasConcluidas.length > 0 ? (
+                            <ul className="item-tempos-lista">
+                              {producao.etapasConcluidas.map((e, i) => (
+                                <li key={i}>
+                                  <span className="item-tempos-etapa-nome">{e.nome}</span>
+                                  <span className="item-tempos-etapa-colab">{e.colaboradores.join(', ')}</span>
+                                  <span className="item-tempos-etapa-tempo">{formatarCronometro(e.tempoSegundos)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="item-tempos-vazio">Nenhuma etapa concluída ainda.</p>
+                          )}
+                          <div className="item-tempos-total">
+                            <span>Total por peça ({producao.etapasConcluidas.length}/{producao.totalEtapas} etapas concluídas)</span>
+                            <strong>{producao.tempoTotalReal != null ? formatarCronometro(producao.tempoTotalReal) : '—'}</strong>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })
             ) : (
               <tr>
-                <td colSpan="4">Nenhum item encontrado</td>
+                <td colSpan="5">Nenhum item encontrado</td>
               </tr>
             )}
           </tbody>

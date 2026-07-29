@@ -24,6 +24,7 @@ const Layout = ({
   setPedidosAndamento,
   setPedidosConcluidos,
   setMostrarModalPesoVolume,
+  pedidoParaConcluir,
   setPedidoParaConcluir,
   formatDateToLocalISO,
   mostrarModal,

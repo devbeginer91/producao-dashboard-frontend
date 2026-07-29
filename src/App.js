@@ -399,6 +399,7 @@ function App() {
                 setPedidosAndamento={setPedidosAndamento}
                 setPedidosConcluidos={setPedidosConcluidos}
                 setMostrarModalPesoVolume={setMostrarModalPesoVolume}
+                pedidoParaConcluir={pedidoParaConcluir}
                 setPedidoParaConcluir={setPedidoParaConcluir}
                 formatDateToLocalISO={formatDateToLocalISO}
                 mostrarModal={mostrarModal}
