@@ -108,6 +108,8 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
 
   const contarConcluidas = (item) => item.etapas.filter((e) => e.execucaoAtual?.status === 'concluido').length;
 
+  const temExecucaoAtiva = (item) => item.etapas.some((e) => e.execucaoAtual?.status === 'em_andamento');
+
   const itensComExecucaoAtiva = (os) => {
     const grupos = [];
     os.itens.forEach((item) => {
@@ -211,8 +213,25 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
           ) : (
             <div className="op-itens-list">
               {osAtual.itens.map((item) => (
-                <button key={item.id} className="op-item-row" onClick={() => abrirItem(item.id)}>
+                <button
+                  key={item.id}
+                  className={`op-item-row ${temExecucaoAtiva(item) ? 'op-item-row-ativo' : ''}`}
+                  onClick={() => abrirItem(item.id)}
+                >
                   <span className="op-item-codigo">{item.codigoDesenho}</span>
+                  <span className="op-item-info">
+                    {item.quantidadePedido != null && (
+                      <span className="op-item-info-badge">Qtd {item.quantidadePedido}</span>
+                    )}
+                    {item.tempoIdeal != null && (
+                      <span className="op-item-info-badge">Meta {item.tempoIdeal} min</span>
+                    )}
+                    {item.tempoTotalReal != null && (
+                      <span className="op-item-info-badge op-item-info-badge-total">
+                        Total {formatarCronometro(item.tempoTotalReal)}
+                      </span>
+                    )}
+                  </span>
                   <span className="op-item-progresso">
                     {contarConcluidas(item)}/{item.etapas.length} etapas concluídas
                   </span>
