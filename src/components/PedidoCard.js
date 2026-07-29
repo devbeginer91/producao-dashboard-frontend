@@ -3,7 +3,6 @@ import api from '../api';
 import { formatarDataHora, isPastDue } from '../utils';
 import {
   FiCheckCircle,
-  FiArrowRightCircle,
   FiEdit2,
   FiTrash2,
   FiMessageSquare,
@@ -39,7 +38,6 @@ const PedidoCard = ({
   setPedidoParaEditar,
   setNovoPedido,
   setMostrarFormulario,
-  moverParaAndamento,
 }) => {
   const [expandido, setExpandido] = useState(false);
   const [obsPreview, setObsPreview] = useState(null);
@@ -233,9 +231,6 @@ const PedidoCard = ({
       )}
 
       <div className="pedido-card-actions">
-        {tipo === 'novo' && (
-          <button className="btn-mover" onClick={() => moverParaAndamento(pedido.id)}><FiArrowRightCircle /> Andamento</button>
-        )}
         {tipo === 'andamento' && (
           <button className="btn-concluir" onClick={concluirPedido}><FiCheckCircle /> Concluir</button>
         )}

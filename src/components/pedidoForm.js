@@ -17,7 +17,6 @@ const PedidoForm = ({
   setPedidosConcluidos,
   setMostrarModalPesoVolume,
   setPedidoParaConcluir,
-  moverParaAndamento,
   formatDateToLocalISO, // Recebendo como prop
 }) => {
   const [chicotes, setChicotes] = useState([]);
@@ -273,18 +272,17 @@ const PedidoForm = ({
         <select
           id="status"
           value={novoPedido.status}
-          onChange={(e) => {
-            const novoStatus = e.target.value;
-            setNovoPedido({ ...novoPedido, status: novoStatus });
-            if (pedidoParaEditar && moverParaAndamento && novoStatus === 'andamento') {
-              moverParaAndamento(pedidoParaEditar.id);
-            }
-          }}
+          onChange={(e) => setNovoPedido({ ...novoPedido, status: e.target.value })}
         >
           <option value="novo">Novo</option>
-          <option value="andamento">Em Andamento</option>
+          <option value="andamento" disabled={pedidoParaEditar?.status !== 'andamento'}>Em Andamento</option>
           <option value="concluido">Concluído</option>
         </select>
+        {pedidoParaEditar?.status === 'novo' && (
+          <p className="campo-ajuda">
+            Pedidos novos passam para "Em Andamento" automaticamente quando um colaborador inicia a primeira etapa.
+          </p>
+        )}
       </div>
 
       <div className="itens-form">

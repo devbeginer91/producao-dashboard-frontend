@@ -311,36 +311,6 @@ function App() {
     doc.save('pedidos_controle_producao.pdf');
   };
 
-  const moverParaAndamento = async (id) => {
-    const pedido = [...pedidos, ...pedidosAndamento, ...pedidosConcluidos].find((p) => p.id === id);
-    if (pedido) {
-      const novoInicio = formatDateToLocalISO(new Date(), 'moverParaAndamento');
-      const pedidoAtualizado = {
-        ...pedido,
-        status: 'andamento',
-        inicio: novoInicio,
-        tempo: 0,
-        tempoPausado: 0,
-        dataPausada: null,
-        dataInicioPausa: null,
-        pausado: '0'
-      };
-      try {
-        const resposta = await api.put(`/pedidos/${id}`, pedidoAtualizado);
-        await api.post('/enviar-email', { pedido: resposta.data, observacao: '' });
-        const pedidoMovido = { ...resposta.data, tempo: 0 };
-        setPedidosAndamento((prev) => prev.filter((p) => p.id !== id));
-        setPedidos((prev) => [...prev.filter((p) => p.id !== id), pedidoMovido]);
-        setPedidosConcluidos((prev) => prev.filter((p) => p.id !== id));
-        setMensagem('Pedido movido para "Em Andamento" e e-mail enviado.');
-        carregarPedidos();
-      } catch (error) {
-        setMensagem('Erro ao mover pedido: ' + (error.response ? error.response.data.message : error.message));
-        carregarPedidos();
-      }
-    }
-  };
-
   const handleLogout = () => {
     setAuth(null);
   };
@@ -357,7 +327,6 @@ function App() {
     setPedidoParaEditar,
     setNovoPedido,
     setMostrarFormulario,
-    moverParaAndamento,
   };
 
   return (
@@ -431,7 +400,6 @@ function App() {
                 setPedidosConcluidos={setPedidosConcluidos}
                 setMostrarModalPesoVolume={setMostrarModalPesoVolume}
                 setPedidoParaConcluir={setPedidoParaConcluir}
-                moverParaAndamento={moverParaAndamento}
                 formatDateToLocalISO={formatDateToLocalISO}
                 mostrarModal={mostrarModal}
                 pedidoSelecionado={pedidoSelecionado}

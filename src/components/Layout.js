@@ -25,7 +25,6 @@ const Layout = ({
   setPedidosConcluidos,
   setMostrarModalPesoVolume,
   setPedidoParaConcluir,
-  moverParaAndamento,
   formatDateToLocalISO,
   mostrarModal,
   pedidoSelecionado,
@@ -75,7 +74,6 @@ const Layout = ({
               setPedidosConcluidos={setPedidosConcluidos}
               setMostrarModalPesoVolume={setMostrarModalPesoVolume}
               setPedidoParaConcluir={setPedidoParaConcluir}
-              moverParaAndamento={moverParaAndamento}
               formatDateToLocalISO={formatDateToLocalISO}
             />
           </div>
