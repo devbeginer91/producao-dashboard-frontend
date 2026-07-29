@@ -36,12 +36,14 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
       response.data.forEach((ordem) => {
         ordem.itens.forEach((item) => {
           item.etapas.forEach((etapa) => {
-            if (etapa.execucaoAtual?.status === 'em_andamento') {
-              mapa[etapa.execucaoAtual.id] = {
-                baseSegundos: etapa.execucaoAtual.tempoAcumuladoBase,
-                referenciaInicio: new Date(etapa.execucaoAtual.referenciaInicio).getTime(),
-              };
-            }
+            etapa.execucoes.forEach((exec) => {
+              if (exec.status === 'em_andamento') {
+                mapa[exec.id] = {
+                  baseSegundos: exec.tempoAcumuladoBase,
+                  referenciaInicio: new Date(exec.referenciaInicio).getTime(),
+                };
+              }
+            });
           });
         });
       });
@@ -75,7 +77,7 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
     return exec.tempoAcumulado ?? 0;
   };
 
-  const tempoAtualEtapa = (etapa) => tempoDeExecucao(etapa.execucaoAtual);
+  const tempoAtualEtapa = (etapa) => tempoDeExecucao(etapa.minhaExecucao || etapa.execucaoAtual);
 
   const executar = async (chamada) => {
     try {
@@ -106,16 +108,19 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
   const itemAtual = osAtual?.itens.find((i) => i.id === itemSelecionadoId);
   const etapaAtual = itemAtual?.etapas.find((e) => e.id === etapaSelecionadaId);
 
-  const contarConcluidas = (item) => item.etapas.filter((e) => e.execucaoAtual?.status === 'concluido').length;
+  const contarConcluidas = (item) => item.etapas.filter((e) => e.concluida).length;
 
-  const temExecucaoAtiva = (item) => item.etapas.some((e) => e.execucaoAtual?.status === 'em_andamento');
+  const temExecucaoAtiva = (item) => item.etapas.some((e) => e.execucoes.some((ex) => ex.status === 'em_andamento'));
 
   const itensComExecucaoAtiva = (os) => {
     const grupos = [];
     os.itens.forEach((item) => {
-      const ativas = item.etapas
-        .filter((e) => e.execucaoAtual?.status === 'em_andamento')
-        .map((e) => ({ key: e.execucaoAtual.id, etapaNome: e.nome, exec: e.execucaoAtual }));
+      const ativas = [];
+      item.etapas.forEach((e) => {
+        e.execucoes
+          .filter((ex) => ex.status === 'em_andamento')
+          .forEach((ex) => ativas.push({ key: ex.id, etapaNome: e.nome, exec: ex }));
+      });
       if (ativas.length > 0) {
         grupos.push({ itemId: item.id, itemCodigo: item.codigoDesenho, execucoes: ativas });
       }
@@ -127,8 +132,6 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
     e.stopPropagation();
     setOsExpandidas((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
-  const ehMinhaExecucao = (exec) => !exec || exec.colaboradorId === colaborador.id;
 
   return (
     <div className="colaborador-page">
@@ -271,39 +274,41 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
               {etapaAtual.instrucoes && <p className="op-etapa-instrucoes">{etapaAtual.instrucoes}</p>}
               <div className="op-cronometro">{formatarCronometro(tempoAtualEtapa(etapaAtual))}</div>
 
-              {!ehMinhaExecucao(etapaAtual.execucaoAtual) ? (
-                <p className="op-etapa-outro-colaborador">
-                  <FiUser /> {etapaAtual.execucaoAtual.colaboradorNome} — {statusLabel[etapaAtual.execucaoAtual.status]}
-                </p>
-              ) : (
-                <div className="op-controles">
-                  {!etapaAtual.minhaExecucao && (
-                    <button className="btn-concluir" onClick={() => iniciar(itemAtual, etapaAtual)}>
-                      <FiPlay /> Início
-                    </button>
-                  )}
-                  {etapaAtual.minhaExecucao?.status === 'em_andamento' && (
-                    <button className="btn-pausar" onClick={() => pausar(etapaAtual.minhaExecucao.id)}>
-                      <FiPause /> Pausa
-                    </button>
-                  )}
-                  {etapaAtual.minhaExecucao?.status === 'pausado' && (
-                    <button className="btn-retomar" onClick={() => retomar(etapaAtual.minhaExecucao.id)}>
-                      <FiPlay /> Retomar
-                    </button>
-                  )}
-                  {etapaAtual.minhaExecucao && etapaAtual.minhaExecucao.status !== 'concluido' && (
-                    <button className="btn-excluir" onClick={() => concluir(etapaAtual.minhaExecucao.id)}>
-                      <FiCheckCircle /> Concluir
-                    </button>
-                  )}
-                  {etapaAtual.minhaExecucao?.status === 'concluido' && (
-                    <p className="op-etapa-concluida">
-                      <FiCheckCircle /> Etapa concluída
-                    </p>
-                  )}
-                </div>
-              )}
+              <div className="op-controles">
+                {!etapaAtual.minhaExecucao && (
+                  <button className="btn-concluir" onClick={() => iniciar(itemAtual, etapaAtual)}>
+                    <FiPlay /> Início
+                  </button>
+                )}
+                {etapaAtual.minhaExecucao?.status === 'em_andamento' && (
+                  <button className="btn-pausar" onClick={() => pausar(etapaAtual.minhaExecucao.id)}>
+                    <FiPause /> Pausa
+                  </button>
+                )}
+                {etapaAtual.minhaExecucao?.status === 'pausado' && (
+                  <button className="btn-retomar" onClick={() => retomar(etapaAtual.minhaExecucao.id)}>
+                    <FiPlay /> Retomar
+                  </button>
+                )}
+                {etapaAtual.minhaExecucao && etapaAtual.minhaExecucao.status !== 'concluido' && (
+                  <button className="btn-excluir" onClick={() => concluir(etapaAtual.minhaExecucao.id)}>
+                    <FiCheckCircle /> Concluir
+                  </button>
+                )}
+                {etapaAtual.minhaExecucao?.status === 'concluido' && (
+                  <p className="op-etapa-concluida">
+                    <FiCheckCircle /> Etapa concluída
+                  </p>
+                )}
+              </div>
+
+              {etapaAtual.execucoes
+                .filter((ex) => ex.colaboradorId !== colaborador.id)
+                .map((ex) => (
+                  <p key={ex.id} className="op-etapa-outro-colaborador">
+                    <FiUser /> Também executado por {ex.colaboradorNome} — {statusLabel[ex.status]} · {formatarCronometro(tempoDeExecucao(ex))}
+                  </p>
+                ))}
             </div>
           )}
         </div>

@@ -35,12 +35,14 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
       response.data.forEach((ordem) => {
         ordem.itens.forEach((item) => {
           item.etapas.forEach((etapa) => {
-            if (etapa.execucao?.status === 'em_andamento') {
-              mapa[etapa.execucao.id] = {
-                baseSegundos: etapa.execucao.tempoAcumuladoBase,
-                referenciaInicio: new Date(etapa.execucao.referenciaInicio).getTime(),
-              };
-            }
+            etapa.execucoes.forEach((exec) => {
+              if (exec.status === 'em_andamento') {
+                mapa[exec.id] = {
+                  baseSegundos: exec.tempoAcumuladoBase,
+                  referenciaInicio: new Date(exec.referenciaInicio).getTime(),
+                };
+              }
+            });
           });
         });
       });
@@ -64,8 +66,7 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
     return () => clearInterval(t);
   }, []);
 
-  const tempoAtualEtapa = (etapa) => {
-    const exec = etapa.execucao;
+  const tempoDeExecucao = (exec) => {
     if (!exec) return 0;
     if (exec.status === 'em_andamento') {
       const ref = referencias.current[exec.id];
@@ -94,14 +95,17 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
   const osAtual = ordens.find((o) => o.id === osSelecionadaId);
   const itemAtual = osAtual?.itens.find((i) => i.id === itemSelecionadoId);
 
-  const contarConcluidas = (item) => item.etapas.filter((e) => e.execucao?.status === 'concluido').length;
+  const contarConcluidas = (item) => item.etapas.filter((e) => e.concluida).length;
 
   const itensComExecucaoAtiva = (os) => {
     const grupos = [];
     os.itens.forEach((item) => {
-      const ativas = item.etapas
-        .filter((e) => e.execucao?.status === 'em_andamento')
-        .map((e) => ({ key: e.execucao.id, etapaNome: e.nome, exec: e.execucao }));
+      const ativas = [];
+      item.etapas.forEach((e) => {
+        e.execucoes
+          .filter((ex) => ex.status === 'em_andamento')
+          .forEach((ex) => ativas.push({ key: ex.id, etapaNome: e.nome, exec: ex }));
+      });
       if (ativas.length > 0) {
         grupos.push({ itemId: item.id, itemCodigo: item.codigoDesenho, execucoes: ativas });
       }
@@ -114,7 +118,7 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
     setOsExpandidas((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const temExecucaoAtiva = (item) => item.etapas.some((e) => e.execucao?.status === 'em_andamento');
+  const temExecucaoAtiva = (item) => item.etapas.some((e) => e.execucoes.some((ex) => ex.status === 'em_andamento'));
 
   return (
     <div className="colaborador-page">
@@ -163,7 +167,7 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
                               <div key={ex.key} className="op-card-execucao-linha">
                                 <span className="op-card-execucao-etapa">{ex.etapaNome}</span>
                                 <span className="op-card-execucao-colab"><FiUser /> {ex.exec.colaboradorNome}</span>
-                                <span className="op-card-execucao-tempo">{formatarCronometro(tempoAtualEtapa({ execucao: ex.exec }))}</span>
+                                <span className="op-card-execucao-tempo">{formatarCronometro(tempoDeExecucao(ex.exec))}</span>
                               </div>
                             ))}
                           </div>
@@ -236,34 +240,37 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
           </h2>
 
           <div className="monitor-etapas-list">
-            {itemAtual.etapas.map((etapa) => (
-              <div key={etapa.id} className={`monitor-etapa-item op-etapa-${etapa.execucao?.status || 'pendente'}`}>
-                <div className="monitor-etapa-info">
-                  <span className="monitor-etapa-nome">{etapa.ordem}. {etapa.nome}</span>
-                  <span className="monitor-etapa-status">
-                    {etapa.execucao ? (
-                      <>
-                        {statusLabel[etapa.execucao.status] || etapa.execucao.status}
-                        {etapa.execucao.colaboradorNome && (
-                          <> · <FiUser /> {etapa.execucao.colaboradorNome}</>
+            {itemAtual.etapas.map((etapa) =>
+              etapa.execucoes.length === 0 ? (
+                <div key={etapa.id} className="monitor-etapa-item op-etapa-pendente">
+                  <div className="monitor-etapa-info">
+                    <span className="monitor-etapa-nome">{etapa.ordem}. {etapa.nome}</span>
+                    <span className="monitor-etapa-status">Não iniciado</span>
+                  </div>
+                </div>
+              ) : (
+                etapa.execucoes.map((ex) => (
+                  <div key={ex.id} className={`monitor-etapa-item op-etapa-${ex.status}`}>
+                    <div className="monitor-etapa-info">
+                      <span className="monitor-etapa-nome">{etapa.ordem}. {etapa.nome}</span>
+                      <span className="monitor-etapa-status">
+                        {statusLabel[ex.status] || ex.status}
+                        {ex.colaboradorNome && (
+                          <> · <FiUser /> {ex.colaboradorNome}</>
                         )}
-                        {etapa.execucao.status === 'concluido' && <> <FiCheckCircle /></>}
-                      </>
-                    ) : (
-                      'Não iniciado'
-                    )}
-                  </span>
-                </div>
-                <div className="monitor-etapa-acoes">
-                  <span className="monitor-etapa-tempo">{formatarCronometro(tempoAtualEtapa(etapa))}</span>
-                  {etapa.execucao && (
-                    <button className="btn-excluir" onClick={() => zerarTempo(etapa.execucao.id)}>
-                      <FiRefreshCw /> Zerar
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                        {ex.status === 'concluido' && <> <FiCheckCircle /></>}
+                      </span>
+                    </div>
+                    <div className="monitor-etapa-acoes">
+                      <span className="monitor-etapa-tempo">{formatarCronometro(tempoDeExecucao(ex))}</span>
+                      <button className="btn-excluir" onClick={() => zerarTempo(ex.id)}>
+                        <FiRefreshCw /> Zerar
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )
+            )}
           </div>
         </div>
       )}
