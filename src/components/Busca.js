@@ -1,14 +1,41 @@
-import React from 'react';
-import { FiSearch, FiDownload } from 'react-icons/fi';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FiSearch, FiDownload, FiZap } from 'react-icons/fi';
+import api from '../api';
 
 const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) => {
+  const [chicotes, setChicotes] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get('/chicotes').then((r) => setChicotes(r.data)).catch(() => setChicotes([]));
+  }, []);
+
   const filtrarPedidos = (lista) => {
-    if (!busca) return lista;
+    if (!busca) return [];
     return lista.filter((pedido) =>
       pedido.empresa.toLowerCase().includes(busca.toLowerCase()) ||
       pedido.numeroOS.toLowerCase().includes(busca.toLowerCase())
     );
   };
+
+  const filtrarChicotes = (lista) => {
+    if (!busca) return [];
+    const termo = busca.toLowerCase();
+    return lista.filter((c) =>
+      c.cliente.toLowerCase().includes(termo) ||
+      c.codigoItemCliente.toLowerCase().includes(termo) ||
+      (c.codigoDca || '').toLowerCase().includes(termo)
+    );
+  };
+
+  const irParaChicote = (id) => {
+    navigate(`/chicotes-eletricos/chicote/${id}`);
+    setBusca('');
+  };
+
+  const pedidosEncontrados = filtrarPedidos(todosPedidos);
+  const chicotesEncontrados = filtrarChicotes(chicotes);
 
   return (
     <div className="busca">
@@ -19,7 +46,7 @@ const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) 
             type="text"
             id="buscaInput"
             name="buscaInput"
-            placeholder="Buscar por Empresa ou Nº OS"
+            placeholder="Buscar por Empresa, Nº OS ou Chicote"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
@@ -28,14 +55,21 @@ const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) 
       </div>
       {busca && (
         <ul className="lista-suspensa">
-          {filtrarPedidos(todosPedidos).length > 0 ? (
-            filtrarPedidos(todosPedidos).map((pedido) => (
-              <li key={pedido.id}>
-                {pedido.empresa} - {pedido.numeroOS} ({pedido.status})
-              </li>
-            ))
+          {pedidosEncontrados.length === 0 && chicotesEncontrados.length === 0 ? (
+            <li>Nenhum resultado encontrado</li>
           ) : (
-            <li>Nenhum pedido encontrado</li>
+            <>
+              {pedidosEncontrados.map((pedido) => (
+                <li key={`pedido-${pedido.id}`}>
+                  {pedido.empresa} - {pedido.numeroOS} ({pedido.status})
+                </li>
+              ))}
+              {chicotesEncontrados.map((c) => (
+                <li key={`chicote-${c.id}`} className="lista-suspensa-chicote" onClick={() => irParaChicote(c.id)}>
+                  <FiZap /> {c.cliente} · {c.codigoItemCliente}{c.codigoDca ? ` (DCA ${c.codigoDca})` : ''}
+                </li>
+              ))}
+            </>
           )}
         </ul>
       )}
