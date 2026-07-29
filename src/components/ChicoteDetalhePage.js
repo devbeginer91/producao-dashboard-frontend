@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiMenu, FiArrowLeft, FiSave, FiLink, FiX, FiEdit2, FiTrash2, FiPlus, FiFileText, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiSave, FiLink, FiX, FiEdit2, FiTrash2, FiPlus, FiFileText, FiArrowUp, FiArrowDown, FiRefreshCw } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import api from '../api';
@@ -20,6 +20,7 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
   const [formEtapa, setFormEtapa] = useState(etapaVazia);
   const [mostrarFormNovaEtapa, setMostrarFormNovaEtapa] = useState(false);
   const [novaEtapa, setNovaEtapa] = useState(etapaVazia);
+  const [calculandoMedia, setCalculandoMedia] = useState(false);
 
   const carregar = () => {
     setCarregando(true);
@@ -65,6 +66,21 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
       carregar();
     } catch (error) {
       setMensagem('Erro ao salvar: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const calcularMediaTempos = async () => {
+    if (!window.confirm('Calcular a média de tempo com base nas últimas execuções concluídas? Isso vai substituir o "Tempo cadastrado" atual do chicote e o tempo ideal de cada etapa.')) return;
+    setCalculandoMedia(true);
+    try {
+      const response = await api.post(`/chicotes/${id}/calcular-media-tempos`);
+      const os = response.data.pedidos.map((p) => `${p.empresa} OS ${p.numeroOS}`).join(', ');
+      setMensagem(`Média atualizada com base em ${response.data.execucoesUsadas} execução(ões): ${os}.`);
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao calcular média: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setCalculandoMedia(false);
     }
   };
 
@@ -235,6 +251,9 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
           />
         </div>
         <button type="submit" className="btn-submit"><FiSave /> Salvar</button>
+        <button type="button" className="btn-editar" onClick={calcularMediaTempos} disabled={calculandoMedia}>
+          <FiRefreshCw /> {calculandoMedia ? 'Calculando...' : 'Autorizar Média de Tempos'}
+        </button>
       </form>
 
       <h2 className="op-detalhe-titulo secao-titulo">Passo a passo (etapas)</h2>
