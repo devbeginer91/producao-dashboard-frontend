@@ -124,7 +124,7 @@ const PedidoCard = ({
           <span className="pedido-card-os">Nº OS {pedido.numeroOS || 'Não informado'}</span>
         </div>
         <div className="pedido-card-header-icons">
-          {tipo === 'andamento' && pedido.prioritario && (
+          {(tipo === 'andamento' || tipo === 'novo') && pedido.prioritario && (
             <span className="pedido-card-prioridade-badge" title="Prioridade de produção">
               <FiStar /> {pedido.ordemPrioridade != null ? `#${pedido.ordemPrioridade}` : 'Prioritário'}
             </span>

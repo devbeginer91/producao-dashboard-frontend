@@ -31,7 +31,7 @@ const PedidoColumn = ({
   };
 
   const listaFiltradaBusca = filtrarPedidosPorBusca(pedidos, busca);
-  const listaFiltrada = tipo === 'andamento'
+  const listaFiltrada = (tipo === 'andamento' || tipo === 'novo')
     ? [...listaFiltradaBusca].sort((a, b) => {
         const chaveA = a.prioritario ? (a.ordemPrioridade ?? 0) : Infinity;
         const chaveB = b.prioritario ? (b.ordemPrioridade ?? 0) : Infinity;
