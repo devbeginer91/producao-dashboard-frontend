@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMenu, FiPlus, FiDollarSign, FiChevronRight } from 'react-icons/fi';
+import { FiMenu, FiPlus, FiDollarSign, FiChevronRight, FiSearch } from 'react-icons/fi';
 import api from '../api';
 
 const formatarMoeda = (valor) =>
@@ -10,6 +10,7 @@ const FinanceiroPage = ({ setSidebarOpen, mostrarFormulario, setMostrarFormulari
   const [resumo, setResumo] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
+  const [busca, setBusca] = useState('');
   const navigate = useNavigate();
 
   const carregar = () => {
@@ -31,6 +32,11 @@ const FinanceiroPage = ({ setSidebarOpen, mostrarFormulario, setMostrarFormulari
     }
     // eslint-disable-next-line
   }, [mostrarFormulario]);
+
+  const termo = busca.trim().toLowerCase();
+  const clientesFiltrados = resumo
+    ? resumo.clientes.filter((c) => c.empresa.toLowerCase().includes(termo))
+    : [];
 
   return (
     <>
@@ -63,25 +69,43 @@ const FinanceiroPage = ({ setSidebarOpen, mostrarFormulario, setMostrarFormulari
 
           {resumo.clientes.length === 0 ? (
             <p className="pedido-grid-empty">
-              Nenhum pedido com valor unitário cadastrado ainda. Use "Cadastrar Pedido" pra começar.
+              Nenhum pedido cadastrado ainda. Use "Cadastrar Pedido" pra começar.
             </p>
           ) : (
-            <div className="op-grid">
-              {resumo.clientes.map((c) => (
-                <button
-                  key={c.empresa}
-                  className="op-card op-card-clicavel"
-                  onClick={() => navigate(`/financeiro/${encodeURIComponent(c.empresa)}`)}
-                >
-                  <div className="op-card-header">
-                    <span className="op-card-empresa">{c.empresa}</span>
-                  </div>
-                  <span className="op-card-itens-count">
-                    {formatarMoeda(c.valorEmAberto)} em aberto <FiChevronRight />
-                  </span>
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="busca">
+                <div className="busca-input-wrapper">
+                  <FiSearch className="busca-icon" />
+                  <input
+                    type="text"
+                    placeholder="Buscar cliente"
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {clientesFiltrados.length === 0 ? (
+                <p className="pedido-grid-empty">Nenhum cliente encontrado pra essa busca.</p>
+              ) : (
+                <div className="op-grid">
+                  {clientesFiltrados.map((c) => (
+                    <button
+                      key={c.empresa}
+                      className="op-card op-card-clicavel"
+                      onClick={() => navigate(`/financeiro/${encodeURIComponent(c.empresa)}`)}
+                    >
+                      <div className="op-card-header">
+                        <span className="op-card-empresa">{c.empresa}</span>
+                      </div>
+                      <span className="op-card-itens-count">
+                        {formatarMoeda(c.valorEmAberto)} em aberto <FiChevronRight />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </>
       )}
