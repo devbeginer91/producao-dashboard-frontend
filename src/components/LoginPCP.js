@@ -15,7 +15,7 @@ const LoginPCP = ({ onLogin }) => {
     try {
       const response = await api.post('/pcp/login', { username, senha });
       onLogin({ tipo: 'pcp', ...response.data });
-      navigate('/pcp');
+      navigate('/priorizar-producao');
     } catch (err) {
       setError(err.response?.data?.message || 'Usuário ou senha incorretos');
     }

@@ -29,7 +29,7 @@ import { formatarDataHora } from './utils';
 const homeFor = (auth) => {
   if (!auth) return '/login';
   if (auth.tipo === 'admin') return '/';
-  if (auth.tipo === 'pcp') return '/pcp';
+  if (auth.tipo === 'pcp') return '/priorizar-producao';
   if (auth.tipo === 'colaborador') return '/colaborador';
   return '/login';
 };
@@ -80,7 +80,10 @@ function App() {
     }
     return null;
   });
-  const isAuthenticated = auth?.tipo === 'admin';
+  // "admin" e "pcp" acessam o mesmo Layout/Sidebar; Importar Arquivos e Financeiro
+  // ficam restritos a admin (ver rotas abaixo e a prop isAdmin no Sidebar).
+  const isAuthenticated = auth?.tipo === 'admin' || auth?.tipo === 'pcp';
+  const isAdmin = auth?.tipo === 'admin';
 
   useEffect(() => {
     if (auth) {
@@ -365,13 +368,7 @@ function App() {
             <Navigate to={homeFor(auth)} />
           )
         } />
-        <Route path="/pcp" element={
-          auth?.tipo === 'pcp' ? (
-            <PCPPage pcpNome={auth.nome} onLogout={handleLogout} />
-          ) : (
-            <Navigate to="/login-pcp" />
-          )
-        } />
+        <Route path="/pcp" element={<Navigate to={homeFor(auth)} />} />
         <Route path="/colaborador" element={
           auth?.tipo === 'colaborador' ? (
             <ColaboradorPage colaborador={auth} onLogout={handleLogout} />
@@ -383,6 +380,7 @@ function App() {
           element={
             isAuthenticated ? (
               <Layout
+                isAdmin={isAdmin}
                 sidebarCounts={{
                   novo: pedidosAndamento.length,
                   andamento: pedidos.length,
@@ -480,7 +478,7 @@ function App() {
           />
           <Route
             path="/importar-chicotes"
-            element={<ImportarChicotesPage setSidebarOpen={setSidebarOpen} />}
+            element={isAdmin ? <ImportarChicotesPage setSidebarOpen={setSidebarOpen} /> : <Navigate to="/" />}
           />
           <Route
             path="/priorizar-producao"
@@ -558,29 +556,37 @@ function App() {
           <Route
             path="/financeiro"
             element={
-              <FinanceiroPage
-                setSidebarOpen={setSidebarOpen}
-                mostrarFormulario={mostrarFormulario}
-                setMostrarFormulario={setMostrarFormulario}
-              />
+              isAdmin ? (
+                <FinanceiroPage
+                  setSidebarOpen={setSidebarOpen}
+                  mostrarFormulario={mostrarFormulario}
+                  setMostrarFormulario={setMostrarFormulario}
+                />
+              ) : (
+                <Navigate to="/" />
+              )
             }
           />
           <Route
             path="/financeiro/:cliente"
             element={
-              <FinanceiroClientePage
-                setSidebarOpen={setSidebarOpen}
-                mostrarFormulario={mostrarFormulario}
-                setMostrarFormulario={setMostrarFormulario}
-                setNovoPedido={setNovoPedido}
-                setPedidoParaEditar={setPedidoParaEditar}
-                formatDateToLocalISO={formatDateToLocalISO}
-              />
+              isAdmin ? (
+                <FinanceiroClientePage
+                  setSidebarOpen={setSidebarOpen}
+                  mostrarFormulario={mostrarFormulario}
+                  setMostrarFormulario={setMostrarFormulario}
+                  setNovoPedido={setNovoPedido}
+                  setPedidoParaEditar={setPedidoParaEditar}
+                  formatDateToLocalISO={formatDateToLocalISO}
+                />
+              ) : (
+                <Navigate to="/" />
+              )
             }
           />
           <Route
             path="/financeiro-relatorio"
-            element={<FinanceiroRelatorioPage setSidebarOpen={setSidebarOpen} />}
+            element={isAdmin ? <FinanceiroRelatorioPage setSidebarOpen={setSidebarOpen} /> : <Navigate to="/" />}
           />
         </Route>
       </Routes>

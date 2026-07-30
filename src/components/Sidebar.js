@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX, FiUsers, FiTrendingUp, FiDollarSign, FiBarChart2 } from 'react-icons/fi';
 
-const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => {
+const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const irParaHome = () => {
@@ -117,15 +117,17 @@ const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => 
           </button>
         </nav>
 
-        <nav className="sidebar-nav">
-          <span className="sidebar-nav-title">Financeiro</span>
-          <button className="sidebar-nav-item" onClick={irParaFinanceiro}>
-            <FiDollarSign /> <span>Financeiro</span>
-          </button>
-          <button className="sidebar-nav-item" onClick={irParaRelatorioFaturamento}>
-            <FiBarChart2 /> <span>Relatório de Faturamento</span>
-          </button>
-        </nav>
+        {isAdmin && (
+          <nav className="sidebar-nav">
+            <span className="sidebar-nav-title">Financeiro</span>
+            <button className="sidebar-nav-item" onClick={irParaFinanceiro}>
+              <FiDollarSign /> <span>Financeiro</span>
+            </button>
+            <button className="sidebar-nav-item" onClick={irParaRelatorioFaturamento}>
+              <FiBarChart2 /> <span>Relatório de Faturamento</span>
+            </button>
+          </nav>
+        )}
 
         <nav className="sidebar-nav">
           <span className="sidebar-nav-title">Relatórios</span>
@@ -137,12 +139,14 @@ const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => 
           </button>
         </nav>
 
-        <nav className="sidebar-nav">
-          <span className="sidebar-nav-title">Administração</span>
-          <button className="sidebar-nav-item" onClick={irParaImportarChicotes}>
-            <FiUpload /> <span>Importar Arquivos</span>
-          </button>
-        </nav>
+        {isAdmin && (
+          <nav className="sidebar-nav">
+            <span className="sidebar-nav-title">Administração</span>
+            <button className="sidebar-nav-item" onClick={irParaImportarChicotes}>
+              <FiUpload /> <span>Importar Arquivos</span>
+            </button>
+          </nav>
+        )}
 
         <div className="sidebar-footer">
           <button

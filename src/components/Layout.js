@@ -7,6 +7,7 @@ import ModalObservacao from './ModalObservacao';
 import ModalPesoVolume from './ModalPesoVolume';
 
 const Layout = ({
+  isAdmin,
   sidebarCounts,
   onNavigateAndamento,
   onLogout,
@@ -41,6 +42,7 @@ const Layout = ({
   return (
     <div className="app-shell">
       <Sidebar
+        isAdmin={isAdmin}
         counts={sidebarCounts}
         onNavigateAndamento={onNavigateAndamento}
         onLogout={onLogout}
