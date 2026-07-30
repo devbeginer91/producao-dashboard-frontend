@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiMenu, FiArrowLeft, FiSave, FiLink, FiX, FiEdit2, FiTrash2, FiPlus, FiFileText, FiArrowUp, FiArrowDown, FiRefreshCw } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiSave, FiLink, FiX, FiEdit2, FiTrash2, FiPlus, FiFileText, FiArrowUp, FiArrowDown, FiRefreshCw, FiFile, FiDownload } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import api from '../api';
 
 const etapaVazia = { nome: '', setor: '', quemTexto: '', instrucoes: '', tempoIdeal: '' };
+
+const formatarTamanho = (bytes) => {
+  if (!bytes && bytes !== 0) return '—';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const ChicoteDetalhePage = ({ setSidebarOpen }) => {
   const { id } = useParams();
@@ -16,6 +23,8 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
   const [form, setForm] = useState({ codigoItemCliente: '', codigoDca: '', tempoIdeal: '' });
   const [itensDisponiveis, setItensDisponiveis] = useState([]);
   const [itemParaVincular, setItemParaVincular] = useState('');
+  const [desenhosDisponiveis, setDesenhosDisponiveis] = useState([]);
+  const [desenhoParaVincular, setDesenhoParaVincular] = useState('');
   const [etapaEmEdicaoId, setEtapaEmEdicaoId] = useState(null);
   const [formEtapa, setFormEtapa] = useState(etapaVazia);
   const [mostrarFormNovaEtapa, setMostrarFormNovaEtapa] = useState(false);
@@ -52,6 +61,13 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
         setItensDisponiveis(disponiveis);
       })
       .catch(() => setItensDisponiveis([]));
+  }, [chicote]);
+
+  useEffect(() => {
+    if (!chicote) return;
+    api.get('/desenhos', { params: { cliente: chicote.cliente, vinculado: false } })
+      .then((r) => setDesenhosDisponiveis(r.data))
+      .catch(() => setDesenhosDisponiveis([]));
   }, [chicote]);
 
   const salvarChicote = async (e) => {
@@ -101,6 +117,26 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
       carregar();
     } catch (error) {
       setMensagem('Erro ao desvincular: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const vincularDesenho = async () => {
+    if (!desenhoParaVincular) return;
+    try {
+      await api.put(`/desenhos/${desenhoParaVincular}/vincular`, { chicoteId: parseInt(id, 10) });
+      setDesenhoParaVincular('');
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao vincular desenho: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const desvincularDesenho = async (desenhoId) => {
+    try {
+      await api.put(`/desenhos/${desenhoId}/vincular`, { chicoteId: null });
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao desvincular desenho: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -399,6 +435,52 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
             ))}
           </select>
           <button type="button" className="btn-editar" onClick={vincularItem} disabled={!itemParaVincular}>
+            <FiLink /> Vincular
+          </button>
+        </div>
+      )}
+
+      <h2 className="op-detalhe-titulo secao-titulo">Desenhos técnicos</h2>
+      {chicote.desenhos.length === 0 ? (
+        <p className="pedido-grid-empty">Nenhum desenho vinculado ainda.</p>
+      ) : (
+        <div className="op-itens-list">
+          {chicote.desenhos.map((d) => (
+            <div key={d.id} className="op-item-row op-item-row-estatico">
+              <span className="op-item-codigo">
+                <FiFile /> {d.nomeArquivo} <span className="chicote-desenho-tamanho">({formatarTamanho(d.tamanho)})</span>
+              </span>
+              <a
+                className="btn-editar"
+                href={`${api.defaults.baseURL}/desenhos/${d.id}/arquivo`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FiDownload /> Baixar
+              </a>
+              <button type="button" className="btn-excluir" onClick={() => desvincularDesenho(d.id)}>
+                <FiX /> Desvincular
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {desenhosDisponiveis.length === 0 ? (
+        <p className="pedido-grid-empty">
+          Nenhum desenho importado de {chicote.cliente} sem vínculo no momento. Importe desenhos em "Importar Arquivos".
+        </p>
+      ) : (
+        <div className="chicote-vincular-item">
+          <select value={desenhoParaVincular} onChange={(e) => setDesenhoParaVincular(e.target.value)}>
+            <option value="">— selecionar desenho importado pra vincular —</option>
+            {desenhosDisponiveis.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nomeArquivo} ({d.codigoArquivo})
+              </option>
+            ))}
+          </select>
+          <button type="button" className="btn-editar" onClick={vincularDesenho} disabled={!desenhoParaVincular}>
             <FiLink /> Vincular
           </button>
         </div>

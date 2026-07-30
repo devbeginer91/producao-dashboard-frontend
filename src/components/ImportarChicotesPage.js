@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { FiMenu, FiUpload, FiAlertTriangle, FiCheckCircle, FiXCircle, FiRefreshCw } from 'react-icons/fi';
+import { FiMenu, FiUpload, FiAlertTriangle, FiCheckCircle, FiXCircle, FiRefreshCw, FiFile, FiLink } from 'react-icons/fi';
 import api from '../api';
 
-const ImportarChicotesPage = ({ setSidebarOpen }) => {
+const ImportarEtapasTab = () => {
   const [arquivosSelecionados, setArquivosSelecionados] = useState([]);
   const [resultados, setResultados] = useState(null);
   const [analisando, setAnalisando] = useState(false);
@@ -66,13 +66,6 @@ const ImportarChicotesPage = ({ setSidebarOpen }) => {
 
   return (
     <>
-      <header className="topbar">
-        <button className="btn-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
-          <FiMenu />
-        </button>
-        <h1>Importar Etapas do Processo</h1>
-      </header>
-
       {mensagem && <p className="erro">{mensagem}</p>}
 
       <div className="import-uploader">
@@ -172,6 +165,139 @@ const ImportarChicotesPage = ({ setSidebarOpen }) => {
           </div>
         </>
       )}
+    </>
+  );
+};
+
+const ImportarDesenhosTab = () => {
+  const [arquivoZip, setArquivoZip] = useState(null);
+  const [importando, setImportando] = useState(false);
+  const [resultado, setResultado] = useState(null);
+  const [mensagem, setMensagem] = useState('');
+
+  const handleSelecionarZip = (e) => {
+    setArquivoZip(e.target.files?.[0] || null);
+    setResultado(null);
+    setMensagem('');
+  };
+
+  const importarZip = async () => {
+    if (!arquivoZip) {
+      setMensagem('Selecione um arquivo .zip.');
+      return;
+    }
+    setImportando(true);
+    setMensagem('');
+    try {
+      const formData = new FormData();
+      formData.append('arquivo', arquivoZip);
+      const response = await api.post('/desenhos/importar-zip', formData);
+      setResultado(response.data);
+    } catch (error) {
+      setMensagem('Erro ao importar desenhos: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setImportando(false);
+    }
+  };
+
+  return (
+    <>
+      {mensagem && <p className="erro">{mensagem}</p>}
+
+      <p className="import-desenhos-instrucoes">
+        Envie um arquivo <strong>.zip</strong> contendo uma pasta pra cada cliente, e dentro de
+        cada pasta os desenhos daquele cliente. Cada desenho é vinculado automaticamente ao
+        chicote cujo código do item bate com o nome do arquivo (sem a extensão). Desenhos sem
+        chicote correspondente ficam salvos sem vínculo — dá pra vincular manualmente depois,
+        dentro da página do chicote em "Chicotes Elétricos".
+      </p>
+
+      <div className="import-uploader">
+        <input
+          type="file"
+          accept=".zip"
+          onChange={handleSelecionarZip}
+          id="import-zip-input"
+        />
+        <label htmlFor="import-zip-input" className="btn-editar">
+          <FiUpload /> {arquivoZip ? arquivoZip.name : 'Escolher arquivo .zip'}
+        </label>
+        <button className="btn-adicionar-pedido" onClick={importarZip} disabled={importando}>
+          {importando ? 'Importando...' : 'Importar desenhos'}
+        </button>
+      </div>
+
+      {resultado && (
+        <>
+          <div className="stats-bar">
+            <div className="stat-card">
+              <span className="stat-icon stat-icon-accent"><FiFile /></span>
+              <div className="stat-card-body">
+                <span className="stat-value">{resultado.importados}</span>
+                <span className="stat-label">Arquivos importados</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <span className="stat-icon stat-icon-success"><FiLink /></span>
+              <div className="stat-card-body">
+                <span className="stat-value">{resultado.vinculados}</span>
+                <span className="stat-label">Vinculados automaticamente</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <span className="stat-icon stat-icon-warning"><FiAlertTriangle /></span>
+              <div className="stat-card-body">
+                <span className="stat-value">{resultado.semVinculo}</span>
+                <span className="stat-label">Sem vínculo (vincular manualmente)</span>
+              </div>
+            </div>
+          </div>
+
+          {resultado.arquivosSemVinculo.length > 0 && (
+            <div className="import-review" style={{ margin: 0, marginBottom: 'var(--space-lg)' }}>
+              <div className="import-review-title">Arquivos sem chicote correspondente</div>
+              {resultado.arquivosSemVinculo.map((a, i) => (
+                <div key={i}>{a.cliente} — <code>{a.arquivo}</code></div>
+              ))}
+            </div>
+          )}
+
+          {resultado.ignorados.length > 0 && (
+            <div className="import-review" style={{ margin: 0 }}>
+              <div className="import-review-title">Arquivos ignorados</div>
+              {resultado.ignorados.map((ig, i) => (
+                <div key={i}><code>{ig.arquivo}</code> — {ig.motivo}</div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+};
+
+const ImportarChicotesPage = ({ setSidebarOpen }) => {
+  const [aba, setAba] = useState('etapas');
+
+  return (
+    <>
+      <header className="topbar">
+        <button className="btn-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
+          <FiMenu />
+        </button>
+        <h1>Importar Arquivos</h1>
+      </header>
+
+      <div className="subtabs">
+        <button className={`subtab ${aba === 'etapas' ? 'subtab-ativa' : ''}`} onClick={() => setAba('etapas')}>
+          Importar Etapas
+        </button>
+        <button className={`subtab ${aba === 'desenhos' ? 'subtab-ativa' : ''}`} onClick={() => setAba('desenhos')}>
+          Importar Desenhos
+        </button>
+      </div>
+
+      {aba === 'etapas' ? <ImportarEtapasTab /> : <ImportarDesenhosTab />}
     </>
   );
 };

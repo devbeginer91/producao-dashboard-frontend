@@ -274,6 +274,11 @@ body {
   color: var(--color-danger);
 }
 
+.stat-icon-warning {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--color-warning-dark);
+}
+
 .stat-card-body {
   display: flex;
   flex-direction: column;
@@ -1285,6 +1290,41 @@ body {
 }
 
 /* Importação de chicotes */
+.subtabs {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.subtab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 4px;
+  margin-bottom: -1px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.subtab:hover {
+  color: var(--color-text);
+}
+
+.subtab-ativa {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.import-desenhos-instrucoes {
+  color: var(--color-text-muted);
+  font-size: 13.5px;
+  max-width: 640px;
+  margin-bottom: var(--space-lg);
+}
+
 .import-uploader {
   display: flex;
   align-items: center;
@@ -2150,6 +2190,12 @@ body {
 .op-item-codigo {
   font-weight: 700;
   font-size: 14px;
+}
+
+.chicote-desenho-tamanho {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  font-size: 12px;
 }
 
 .op-item-info {
