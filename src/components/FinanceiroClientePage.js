@@ -105,8 +105,15 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
     });
   });
 
-  const itensAberto = linhas.filter((l) => !l.faturado);
-  const itensFaturados = linhas.filter((l) => l.faturado);
+  const porOSDecrescente = (a, b) => {
+    const osA = parseInt(a.numeroOS, 10);
+    const osB = parseInt(b.numeroOS, 10);
+    if (!isNaN(osA) && !isNaN(osB) && osA !== osB) return osB - osA;
+    return String(b.numeroOS).localeCompare(String(a.numeroOS));
+  };
+
+  const itensAberto = linhas.filter((l) => !l.faturado).sort(porOSDecrescente);
+  const itensFaturados = linhas.filter((l) => l.faturado).sort(porOSDecrescente);
   const valorEmAberto = itensAberto.reduce(
     (soma, item) => soma + (item.valorUnitario != null ? item.valorUnitario * (item.quantidadePedido || 0) : 0),
     0

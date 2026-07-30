@@ -2031,6 +2031,63 @@ body {
   box-shadow: var(--shadow-md);
 }
 
+.financeiro-btn-ocultar {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.financeiro-btn-ocultar:hover {
+  color: var(--color-danger);
+}
+
+.financeiro-ocultos {
+  margin-top: var(--space-lg);
+}
+
+.financeiro-ocultos-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.financeiro-ocultos-toggle:hover {
+  color: var(--color-primary);
+}
+
+.financeiro-ocultos-lista {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 480px;
+}
+
+.financeiro-ocultos-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px var(--space-md);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .op-card-itens-count {
   display: flex;
   align-items: center;
