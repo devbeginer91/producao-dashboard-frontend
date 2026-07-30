@@ -1140,7 +1140,7 @@ body {
 .itens-form .itens-form-header,
 .itens-form .item-form-row {
   display: grid;
-  grid-template-columns: 1fr 110px 1fr 40px;
+  grid-template-columns: 1fr 110px 130px 1fr 40px;
   align-items: center;
   gap: var(--space-sm);
 }
@@ -1152,6 +1152,14 @@ body {
   font-size: 14px;
   font-family: inherit;
   background: var(--color-surface);
+}
+
+.item-codigo-wrapper {
+  position: relative;
+}
+
+.item-codigo-sugestoes {
+  max-height: 160px;
 }
 
 .itens-form-header {
@@ -1585,15 +1593,20 @@ body {
     grid-template-areas:
       "codigo remover"
       "qtd remover"
+      "valor remover"
       "chicote remover";
   }
 
-  .item-form-row input[id^="codigoDesenho-"] {
+  .item-form-row .item-codigo-wrapper {
     grid-area: codigo;
   }
 
   .item-form-row input[id^="quantidadePedido-"] {
     grid-area: qtd;
+  }
+
+  .item-form-row input[id^="valorUnitario-"] {
+    grid-area: valor;
   }
 
   .item-form-row select[id^="chicote-"] {
@@ -2605,4 +2618,112 @@ body {
 
 .chicote-btn-pdf {
   margin-top: var(--space-sm);
+}
+
+/* Relatórios de tempos (por colaborador / por chicote) */
+.tabela-itens-row-clicavel {
+  cursor: pointer;
+}
+
+.tabela-itens-row-clicavel:hover {
+  background: var(--color-accent-light);
+}
+
+.tabela-itens-tempo {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-weight: 700;
+}
+
+.ranking-primeiro-icon {
+  color: #d97706;
+}
+
+.relatorio-media-destaque {
+  font-size: 14px;
+  margin: 0 0 var(--space-md);
+}
+
+.relatorio-media-destaque strong {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  color: var(--color-accent);
+  font-size: 16px;
+}
+
+.relatorio-referencia-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-md);
+  max-width: 340px;
+}
+
+.relatorio-referencia-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.relatorio-referencia-valor {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 22px;
+  color: var(--color-accent);
+}
+
+.relatorio-referencia-tolerancia {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.classificacao-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.classificacao-acima {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--color-danger-dark);
+}
+
+.classificacao-abaixo {
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--color-success-dark);
+}
+
+.classificacao-dentro {
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--color-text-muted);
+}
+
+/* Financeiro: página de cliente */
+.financeiro-item-pronto {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.financeiro-alerta-icon {
+  color: var(--color-accent);
+}
+
+.financeiro-btn-faturar {
+  white-space: nowrap;
+}
+
+.financeiro-sem-entrega {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.financeiro-faturado-icon {
+  color: var(--color-success);
+  vertical-align: middle;
+  margin-right: 4px;
 }

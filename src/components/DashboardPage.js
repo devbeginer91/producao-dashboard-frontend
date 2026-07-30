@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { FiMenu, FiPlus } from 'react-icons/fi';
+import { FiMenu } from 'react-icons/fi';
 import StatsBar from './StatsBar';
 import Busca from './Busca';
 import PedidoBoard from './PedidoBoard';
@@ -18,7 +18,6 @@ const DashboardPage = ({
   columnRefs,
   pendingScrollTipo,
   scrollToColumn,
-  setMostrarFormulario,
   setSidebarOpen,
   ...boardProps
 }) => {
@@ -37,9 +36,6 @@ const DashboardPage = ({
           <FiMenu />
         </button>
         <h1>Controle de Produção</h1>
-        <button className="btn-adicionar-pedido" onClick={() => setMostrarFormulario(true)}>
-          <FiPlus /> Adicionar Pedido
-        </button>
       </header>
 
       {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
@@ -62,7 +58,6 @@ const DashboardPage = ({
         andamento={andamento}
         busca={busca}
         columnRefs={columnRefs}
-        setMostrarFormulario={setMostrarFormulario}
         {...boardProps}
       />
     </>

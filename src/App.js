@@ -13,6 +13,11 @@ import ChicotesClientePage from './components/ChicotesClientePage';
 import ChicoteDetalhePage from './components/ChicoteDetalhePage';
 import PCPPage from './components/PCPPage';
 import AcompanhamentoProducaoPage from './components/AcompanhamentoProducaoPage';
+import RelatorioColaboradorChicotePage from './components/RelatorioColaboradorChicotePage';
+import RelatorioChicoteDetalhePage from './components/RelatorioChicoteDetalhePage';
+import FinanceiroPage from './components/FinanceiroPage';
+import FinanceiroClientePage from './components/FinanceiroClientePage';
+import FinanceiroRelatorioPage from './components/FinanceiroRelatorioPage';
 import ColaboradorPage from './components/ColaboradorPage';
 import Login from './components/Login';
 import LoginPCP from './components/LoginPCP';
@@ -496,6 +501,83 @@ function App() {
           <Route
             path="/acompanhamento-producao"
             element={<AcompanhamentoProducaoPage setSidebarOpen={setSidebarOpen} />}
+          />
+          <Route
+            path="/relatorios/colaboradores"
+            element={
+              <ClientesChicotesPage
+                setSidebarOpen={setSidebarOpen}
+                titulo="Tempos por Colaborador"
+                baseRoute="/relatorios/colaboradores"
+                mostrarBuscaChicote
+                destinoBuscaChicote={(id) => `/relatorios/colaboradores/chicote/${id}`}
+              />
+            }
+          />
+          <Route
+            path="/relatorios/colaboradores/:cliente"
+            element={
+              <ChicotesClientePage
+                setSidebarOpen={setSidebarOpen}
+                voltarRoute="/relatorios/colaboradores"
+                destinoChicote={(id) => `/relatorios/colaboradores/chicote/${id}`}
+              />
+            }
+          />
+          <Route
+            path="/relatorios/colaboradores/chicote/:chicoteId"
+            element={<RelatorioColaboradorChicotePage setSidebarOpen={setSidebarOpen} />}
+          />
+          <Route
+            path="/relatorios/chicotes"
+            element={
+              <ClientesChicotesPage
+                setSidebarOpen={setSidebarOpen}
+                titulo="Tempos por Chicote"
+                baseRoute="/relatorios/chicotes"
+                mostrarBuscaChicote
+                destinoBuscaChicote={(id) => `/relatorios/chicotes/chicote/${id}`}
+                mostrarPdfPorCliente
+              />
+            }
+          />
+          <Route
+            path="/relatorios/chicotes/:cliente"
+            element={
+              <ChicotesClientePage
+                setSidebarOpen={setSidebarOpen}
+                voltarRoute="/relatorios/chicotes"
+                destinoChicote={(id) => `/relatorios/chicotes/chicote/${id}`}
+              />
+            }
+          />
+          <Route
+            path="/relatorios/chicotes/chicote/:chicoteId"
+            element={<RelatorioChicoteDetalhePage setSidebarOpen={setSidebarOpen} />}
+          />
+          <Route
+            path="/financeiro"
+            element={
+              <FinanceiroPage
+                setSidebarOpen={setSidebarOpen}
+                setMostrarFormulario={setMostrarFormulario}
+              />
+            }
+          />
+          <Route
+            path="/financeiro/:cliente"
+            element={
+              <FinanceiroClientePage
+                setSidebarOpen={setSidebarOpen}
+                setMostrarFormulario={setMostrarFormulario}
+                setNovoPedido={setNovoPedido}
+                formatDateToLocalISO={formatDateToLocalISO}
+              />
+            }
+          />
+          <Route
+            path="/financeiro-relatorio"
+            element={<FinanceiroRelatorioPage setSidebarOpen={setSidebarOpen} />}
           />
         </Route>
       </Routes>

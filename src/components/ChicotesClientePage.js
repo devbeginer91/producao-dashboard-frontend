@@ -3,7 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FiMenu, FiArrowLeft, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
 import api from '../api';
 
-const ChicotesClientePage = ({ setSidebarOpen }) => {
+const ChicotesClientePage = ({
+  setSidebarOpen,
+  voltarRoute = '/chicotes-eletricos',
+  destinoChicote = (id) => `/chicotes-eletricos/chicote/${id}`,
+}) => {
   const { cliente } = useParams();
   const navigate = useNavigate();
   const [chicotes, setChicotes] = useState([]);
@@ -27,7 +31,7 @@ const ChicotesClientePage = ({ setSidebarOpen }) => {
         <h1>{cliente}</h1>
       </header>
 
-      <button className="op-voltar" onClick={() => navigate('/chicotes-eletricos')}>
+      <button className="op-voltar" onClick={() => navigate(voltarRoute)}>
         <FiArrowLeft /> Voltar aos clientes
       </button>
 
@@ -36,7 +40,7 @@ const ChicotesClientePage = ({ setSidebarOpen }) => {
 
       <div className="op-itens-list chicotes-list">
         {chicotes.map((c) => (
-          <button key={c.id} className="op-item-row" onClick={() => navigate(`/chicotes-eletricos/chicote/${c.id}`)}>
+          <button key={c.id} className="op-item-row" onClick={() => navigate(destinoChicote(c.id))}>
             <span className="op-item-codigo">{c.codigoItemCliente}</span>
             <span className="chicote-dca">{c.codigoDca ? `DCA ${c.codigoDca}` : '—'}</span>
             <span className="chicote-tempo">{c.tempoIdeal ? `${c.tempoIdeal} min cadastrado` : 'sem tempo cadastrado'}</span>

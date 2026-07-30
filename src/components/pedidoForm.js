@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { formatDateToLocalISO } from '../App'; // Mantido como prop
 import { formatarDataHora } from '../utils'; // Importando do utils.js
-import { FiPlus, FiTrash2, FiSave, FiX } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiSave, FiX, FiZap } from 'react-icons/fi';
 
 const PedidoForm = ({
   novoPedido,
@@ -20,6 +20,7 @@ const PedidoForm = ({
   formatDateToLocalISO, // Recebendo como prop
 }) => {
   const [chicotes, setChicotes] = useState([]);
+  const [sugestaoAtivaIndex, setSugestaoAtivaIndex] = useState(null);
 
   useEffect(() => {
     api.get('/chicotes').then((response) => setChicotes(response.data)).catch(() => setChicotes([]));
@@ -207,6 +208,25 @@ const PedidoForm = ({
     (c) => c.temEtapas && c.cliente.trim().toUpperCase() === (novoPedido.empresa || '').trim().toUpperCase()
   );
 
+  const todosChicotesDoCliente = chicotes.filter(
+    (c) => c.cliente.trim().toUpperCase() === (novoPedido.empresa || '').trim().toUpperCase()
+  );
+
+  const sugestoesPara = (index) => {
+    const termo = (itens[index]?.codigoDesenho || '').trim().toLowerCase();
+    if (!termo) return [];
+    return todosChicotesDoCliente
+      .filter((c) => c.codigoItemCliente.toLowerCase().includes(termo))
+      .slice(0, 8);
+  };
+
+  const selecionarSugestao = (index, chicote) => {
+    const itensAtuais = Array.isArray(novoPedido.itens) ? [...novoPedido.itens] : [];
+    itensAtuais[index] = { ...itensAtuais[index], codigoDesenho: chicote.codigoItemCliente, chicoteId: chicote.id };
+    setNovoPedido({ ...novoPedido, itens: itensAtuais });
+    setSugestaoAtivaIndex(null);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="formulario">
       <div>
@@ -268,6 +288,18 @@ const PedidoForm = ({
         />
       </div>
       <div>
+        <label htmlFor="ocCliente">OC do Cliente</label>
+        <input
+          type="text"
+          id="ocCliente"
+          value={novoPedido.ocCliente || ''}
+          onChange={(e) => setNovoPedido({ ...novoPedido, ocCliente: e.target.value })}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
+        />
+      </div>
+      <div>
         <label htmlFor="status">Status</label>
         <select
           id="status"
@@ -290,24 +322,43 @@ const PedidoForm = ({
         <div className="itens-form-header">
           <span>Código do Desenho</span>
           <span>Quantidade Pedida</span>
+          <span>Valor Unitário</span>
           <span>Passo a passo (opcional)</span>
           <span aria-hidden="true"></span>
         </div>
         <div className="itens-form-list">
           {itens.map((item, index) => (
             <div key={index} className="item-form-row">
-              <label htmlFor={`codigoDesenho-${index}`} className="sr-only">Código do Desenho *</label>
-              <input
-                type="text"
-                id={`codigoDesenho-${index}`}
-                placeholder="Código do Desenho"
-                value={item.codigoDesenho}
-                onChange={(e) => atualizarItem(index, 'codigoDesenho', e.target.value)}
-                required
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck="false"
-              />
+              <div className="item-codigo-wrapper">
+                <label htmlFor={`codigoDesenho-${index}`} className="sr-only">Código do Desenho *</label>
+                <input
+                  type="text"
+                  id={`codigoDesenho-${index}`}
+                  placeholder="Código do Desenho"
+                  value={item.codigoDesenho}
+                  onChange={(e) => atualizarItem(index, 'codigoDesenho', e.target.value)}
+                  onFocus={() => setSugestaoAtivaIndex(index)}
+                  onBlur={() => setTimeout(() => setSugestaoAtivaIndex(null), 150)}
+                  required
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                />
+                {sugestaoAtivaIndex === index && sugestoesPara(index).length > 0 && (
+                  <ul className="lista-suspensa item-codigo-sugestoes">
+                    {sugestoesPara(index).map((c) => (
+                      <li
+                        key={c.id}
+                        className="lista-suspensa-chicote"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => selecionarSugestao(index, c)}
+                      >
+                        <FiZap /> {c.codigoItemCliente}{c.codigoDca ? ` (DCA ${c.codigoDca})` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <label htmlFor={`quantidadePedido-${index}`} className="sr-only">Quantidade Pedida *</label>
               <input
                 type="number"
@@ -317,6 +368,16 @@ const PedidoForm = ({
                 onChange={(e) => atualizarItem(index, 'quantidadePedido', e.target.value)}
                 min="0"
                 required
+              />
+              <label htmlFor={`valorUnitario-${index}`} className="sr-only">Valor Unitário</label>
+              <input
+                type="number"
+                id={`valorUnitario-${index}`}
+                placeholder="Valor Unit. (R$)"
+                value={item.valorUnitario ?? ''}
+                onChange={(e) => atualizarItem(index, 'valorUnitario', e.target.value)}
+                min="0"
+                step="0.01"
               />
               <label htmlFor={`chicote-${index}`} className="sr-only">Chicote</label>
               <select

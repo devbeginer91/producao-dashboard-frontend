@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX } from 'react-icons/fi';
+import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX, FiUsers, FiTrendingUp, FiDollarSign, FiBarChart2 } from 'react-icons/fi';
 
 const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -43,6 +43,26 @@ const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => 
 
   const irParaAcompanhamentoProducao = () => {
     navigate('/acompanhamento-producao');
+    onClose();
+  };
+
+  const irParaRelatorioColaboradores = () => {
+    navigate('/relatorios/colaboradores');
+    onClose();
+  };
+
+  const irParaRelatorioChicotes = () => {
+    navigate('/relatorios/chicotes');
+    onClose();
+  };
+
+  const irParaFinanceiro = () => {
+    navigate('/financeiro');
+    onClose();
+  };
+
+  const irParaRelatorioFaturamento = () => {
+    navigate('/financeiro-relatorio');
     onClose();
   };
 
@@ -94,6 +114,26 @@ const Sidebar = ({ counts, onNavigateAndamento, onLogout, isOpen, onClose }) => 
           </button>
           <button className="sidebar-nav-item" onClick={irParaAcompanhamentoProducao}>
             <FiActivity /> <span>Acompanhar Produção</span>
+          </button>
+        </nav>
+
+        <nav className="sidebar-nav">
+          <span className="sidebar-nav-title">Financeiro</span>
+          <button className="sidebar-nav-item" onClick={irParaFinanceiro}>
+            <FiDollarSign /> <span>Financeiro</span>
+          </button>
+          <button className="sidebar-nav-item" onClick={irParaRelatorioFaturamento}>
+            <FiBarChart2 /> <span>Relatório de Faturamento</span>
+          </button>
+        </nav>
+
+        <nav className="sidebar-nav">
+          <span className="sidebar-nav-title">Relatórios</span>
+          <button className="sidebar-nav-item" onClick={irParaRelatorioColaboradores}>
+            <FiUsers /> <span>Tempos por Colaborador</span>
+          </button>
+          <button className="sidebar-nav-item" onClick={irParaRelatorioChicotes}>
+            <FiTrendingUp /> <span>Tempos por Chicote</span>
           </button>
         </nav>
 
