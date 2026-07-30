@@ -3,6 +3,7 @@ import api from '../api';
 import { formatarDataHora, isPastDue } from '../utils';
 import {
   FiCheckCircle,
+  FiEdit2,
   FiTrash2,
   FiMessageSquare,
   FiChevronDown,
@@ -44,6 +45,9 @@ const PedidoCard = ({
   setPedidoSelecionado,
   setMostrarModalPesoVolume,
   setPedidoParaConcluir,
+  setPedidoParaEditar,
+  setNovoPedido,
+  setMostrarFormulario,
 }) => {
   const [expandido, setExpandido] = useState(false);
   const [obsPreview, setObsPreview] = useState(null);
@@ -103,6 +107,12 @@ const PedidoCard = ({
 
   const toggleItemTempos = (idx) => {
     setItemTemposAbertos((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const editarPedidoNovo = () => {
+    setPedidoParaEditar(pedido);
+    setNovoPedido({ ...pedido, itens: pedido.itens || [{ codigoDesenho: '', quantidadePedido: '' }] });
+    setMostrarFormulario(true);
   };
 
   const abrirModalObservacao = () => {
@@ -298,6 +308,9 @@ const PedidoCard = ({
         )}
         {tipo === 'andamento' && (
           <button className="btn-editar" onClick={editarQuantidadeEntregue}><FiPackage /> Entregas</button>
+        )}
+        {tipo === 'novo' && (
+          <button className="btn-editar" onClick={editarPedidoNovo}><FiEdit2 /> Editar</button>
         )}
         <button className="btn-observacao" onClick={abrirModalObservacao}><FiMessageSquare /> Obs</button>
         <button className="btn-excluir" onClick={excluirPedido}><FiTrash2 /> Excluir</button>
