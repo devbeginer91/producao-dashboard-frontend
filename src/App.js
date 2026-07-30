@@ -560,6 +560,7 @@ function App() {
             element={
               <FinanceiroPage
                 setSidebarOpen={setSidebarOpen}
+                mostrarFormulario={mostrarFormulario}
                 setMostrarFormulario={setMostrarFormulario}
               />
             }
@@ -569,8 +570,10 @@ function App() {
             element={
               <FinanceiroClientePage
                 setSidebarOpen={setSidebarOpen}
+                mostrarFormulario={mostrarFormulario}
                 setMostrarFormulario={setMostrarFormulario}
                 setNovoPedido={setNovoPedido}
+                setPedidoParaEditar={setPedidoParaEditar}
                 formatDateToLocalISO={formatDateToLocalISO}
               />
             }

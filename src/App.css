@@ -2722,6 +2722,17 @@ body {
   font-style: italic;
 }
 
+.financeiro-acoes-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.financeiro-btn-editar {
+  padding: 8px 10px;
+}
+
 .financeiro-faturado-icon {
   color: var(--color-success);
   vertical-align: middle;

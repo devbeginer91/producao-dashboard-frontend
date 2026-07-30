@@ -6,18 +6,31 @@ import api from '../api';
 const formatarMoeda = (valor) =>
   (Number(valor) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-const FinanceiroPage = ({ setSidebarOpen, setMostrarFormulario }) => {
+const FinanceiroPage = ({ setSidebarOpen, mostrarFormulario, setMostrarFormulario }) => {
   const [resumo, setResumo] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const carregar = () => {
     api.get('/financeiro/resumo')
       .then((r) => setResumo(r.data))
       .catch((e) => setMensagem('Erro ao carregar resumo financeiro: ' + (e.response?.data?.message || e.message)))
       .finally(() => setCarregando(false));
+  };
+
+  useEffect(() => {
+    carregar();
+    // eslint-disable-next-line
   }, []);
+
+  // Recarrega ao fechar o drawer de Cadastrar/Editar Pedido, pra refletir o que acabou de ser salvo.
+  useEffect(() => {
+    if (!mostrarFormulario) {
+      carregar();
+    }
+    // eslint-disable-next-line
+  }, [mostrarFormulario]);
 
   return (
     <>

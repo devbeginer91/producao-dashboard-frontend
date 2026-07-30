@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiMenu, FiArrowLeft, FiPlus, FiCheckCircle, FiZap, FiDollarSign } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiPlus, FiCheckCircle, FiZap, FiDollarSign, FiEdit2 } from 'react-icons/fi';
 import api from '../api';
 import { formatarDataHora } from '../utils';
 
@@ -18,7 +18,7 @@ const formatarData = (data) => {
 const formatarMoeda = (valor) =>
   (Number(valor) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-const FinanceiroClientePage = ({ setSidebarOpen, setMostrarFormulario, setNovoPedido, formatDateToLocalISO }) => {
+const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFormulario, setNovoPedido, setPedidoParaEditar, formatDateToLocalISO }) => {
   const { cliente } = useParams();
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
@@ -38,6 +38,15 @@ const FinanceiroClientePage = ({ setSidebarOpen, setMostrarFormulario, setNovoPe
     carregar();
     // eslint-disable-next-line
   }, [cliente]);
+
+  // O formulário de pedido (Cadastrar/Editar) vive fora dessa página; ao fechar o drawer,
+  // recarrega pra refletir o que acabou de ser salvo (a OS pode já existir, ter sido editada, etc).
+  useEffect(() => {
+    if (!mostrarFormulario) {
+      carregar();
+    }
+    // eslint-disable-next-line
+  }, [mostrarFormulario]);
 
   const cadastrarPedido = () => {
     const inicioInicial = formatDateToLocalISO(new Date(), 'financeiro cadastrar pedido');
@@ -67,11 +76,24 @@ const FinanceiroClientePage = ({ setSidebarOpen, setMostrarFormulario, setNovoPe
     }
   };
 
-  // Achata pedidos -> itens (só itens com valor unitário cadastrado), carregando os dados do pedido junto.
+  const editarPedido = (pedidoId) => {
+    const pedido = pedidos.find((p) => p.id === pedidoId);
+    if (!pedido) return;
+    setPedidoParaEditar(pedido);
+    setNovoPedido({
+      ...pedido,
+      itens: (pedido.itens || []).map((item) => ({
+        ...item,
+        quantidadePedido: item.quantidadePedido != null ? item.quantidadePedido.toString() : '',
+      })),
+    });
+    setMostrarFormulario(true);
+  };
+
+  // Achata pedidos -> itens (todos, com ou sem valor cadastrado), carregando os dados do pedido junto.
   const linhas = [];
   pedidos.forEach((pedido) => {
     (pedido.itens || []).forEach((item) => {
-      if (item.valorUnitario == null) return;
       linhas.push({
         ...item,
         pedidoId: pedido.id,
@@ -85,7 +107,10 @@ const FinanceiroClientePage = ({ setSidebarOpen, setMostrarFormulario, setNovoPe
 
   const itensAberto = linhas.filter((l) => !l.faturado);
   const itensFaturados = linhas.filter((l) => l.faturado);
-  const valorEmAberto = itensAberto.reduce((soma, item) => soma + item.valorUnitario * (item.quantidadePedido || 0), 0);
+  const valorEmAberto = itensAberto.reduce(
+    (soma, item) => soma + (item.valorUnitario != null ? item.valorUnitario * (item.quantidadePedido || 0) : 0),
+    0
+  );
 
   return (
     <>
@@ -122,7 +147,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, setMostrarFormulario, setNovoPe
 
           <h2 className="op-detalhe-titulo secao-titulo">Itens em Aberto</h2>
           {itensAberto.length === 0 ? (
-            <p className="pedido-grid-empty">Nenhum item em aberto com valor cadastrado.</p>
+            <p className="pedido-grid-empty">Nenhum item em aberto pra esse cliente.</p>
           ) : (
             <table className="tabela-itens">
               <thead>
@@ -141,7 +166,8 @@ const FinanceiroClientePage = ({ setSidebarOpen, setMostrarFormulario, setNovoPe
               </thead>
               <tbody>
                 {itensAberto.map((item) => {
-                  const prontoParaFaturar = (item.quantidadeEntregue || 0) > 0;
+                  const temValor = item.valorUnitario != null;
+                  const prontoParaFaturar = temValor && (item.quantidadeEntregue || 0) > 0;
                   const saldo = (item.quantidadePedido || 0) - (item.quantidadeEntregue || 0);
                   return (
                     <tr key={item.id} className={prontoParaFaturar ? 'financeiro-item-pronto' : ''}>
@@ -150,11 +176,19 @@ const FinanceiroClientePage = ({ setSidebarOpen, setMostrarFormulario, setNovoPe
                       <td>{item.numeroOS}</td>
                       <td>{item.codigoDesenho}</td>
                       <td>{item.quantidadePedido}</td>
-                      <td>{formatarMoeda(item.valorUnitario)}</td>
-                      <td>{formatarMoeda(item.valorUnitario * (item.quantidadePedido || 0))}</td>
+                      <td>{temValor ? formatarMoeda(item.valorUnitario) : '—'}</td>
+                      <td>{temValor ? formatarMoeda(item.valorUnitario * (item.quantidadePedido || 0)) : '—'}</td>
                       <td>{saldo}</td>
                       <td>{formatarData(item.previsaoEntrega)}</td>
-                      <td>
+                      <td className="financeiro-acoes-cell">
+                        <button
+                          type="button"
+                          className="btn-editar financeiro-btn-editar"
+                          onClick={() => editarPedido(item.pedidoId)}
+                          title="Editar pedido (OC, valores, itens)"
+                        >
+                          <FiEdit2 />
+                        </button>
                         {prontoParaFaturar ? (
                           <button
                             type="button"
@@ -165,6 +199,8 @@ const FinanceiroClientePage = ({ setSidebarOpen, setMostrarFormulario, setNovoPe
                           >
                             <FiZap className="financeiro-alerta-icon" /> Faturado
                           </button>
+                        ) : !temValor ? (
+                          <span className="financeiro-sem-entrega">Sem valor cadastrado</span>
                         ) : (
                           <span className="financeiro-sem-entrega">Aguardando entrega</span>
                         )}
