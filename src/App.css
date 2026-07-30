@@ -1817,6 +1817,31 @@ body {
 }
 
 /* Tela do PCP */
+.pcp-cliente-grupo {
+  margin-bottom: var(--space-lg);
+}
+
+.pcp-cliente-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 var(--space-sm);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pcp-cliente-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
 .pcp-list {
   display: flex;
   flex-direction: column;
