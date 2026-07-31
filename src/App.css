@@ -2249,6 +2249,31 @@ body {
   font-size: 14px;
 }
 
+.pcp-usuario-row {
+  cursor: default;
+}
+
+.usuario-colaborador-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.usuario-colaborador-acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.usuario-colaborador-historico {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  overflow-x: auto;
+}
+
 .chicote-desenho-tamanho {
   font-weight: 400;
   color: var(--color-text-muted);
@@ -2416,6 +2441,22 @@ body {
 .chicote-status-alerta {
   background: rgba(217, 119, 6, 0.12);
   color: var(--color-warning-dark);
+}
+
+.chicote-status-execucoes {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.chicote-status-sem-execucoes {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.chicote-row-com-execucoes {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
 }
 
 .chicote-dados-form {

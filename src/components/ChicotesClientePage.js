@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiMenu, FiArrowLeft, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiCheckCircle, FiAlertTriangle, FiClock } from 'react-icons/fi';
 import api from '../api';
 
 const ChicotesClientePage = ({
   setSidebarOpen,
   voltarRoute = '/chicotes-eletricos',
   destinoChicote = (id) => `/chicotes-eletricos/chicote/${id}`,
+  mostrarTemExecucoes = false,
 }) => {
   const { cliente } = useParams();
   const navigate = useNavigate();
@@ -17,9 +18,15 @@ const ChicotesClientePage = ({
   useEffect(() => {
     setCarregando(true);
     api.get('/chicotes', { params: { cliente } })
-      .then((r) => setChicotes(r.data))
+      .then((r) => {
+        const dados = mostrarTemExecucoes
+          ? [...r.data].sort((a, b) => (b.totalExecucoes || 0) - (a.totalExecucoes || 0))
+          : r.data;
+        setChicotes(dados);
+      })
       .catch((e) => setMensagem('Erro: ' + (e.response?.data?.message || e.message)))
       .finally(() => setCarregando(false));
+    // eslint-disable-next-line
   }, [cliente]);
 
   return (
@@ -40,7 +47,11 @@ const ChicotesClientePage = ({
 
       <div className="op-itens-list chicotes-list">
         {chicotes.map((c) => (
-          <button key={c.id} className="op-item-row" onClick={() => navigate(destinoChicote(c.id))}>
+          <button
+            key={c.id}
+            className={`op-item-row ${mostrarTemExecucoes && c.totalExecucoes > 0 ? 'chicote-row-com-execucoes' : ''}`}
+            onClick={() => navigate(destinoChicote(c.id))}
+          >
             <span className="op-item-codigo">{c.codigoItemCliente}</span>
             <span className="chicote-dca">{c.codigoDca ? `DCA ${c.codigoDca}` : '—'}</span>
             <span className="chicote-tempo">{c.tempoIdeal ? `${c.tempoIdeal} min cadastrado` : 'sem tempo cadastrado'}</span>
@@ -48,6 +59,15 @@ const ChicotesClientePage = ({
               <span className="chicote-status chicote-status-ok"><FiCheckCircle /> com etapas</span>
             ) : (
               <span className="chicote-status chicote-status-alerta"><FiAlertTriangle /> sem etapas</span>
+            )}
+            {mostrarTemExecucoes && (
+              c.totalExecucoes > 0 ? (
+                <span className="chicote-status chicote-status-execucoes">
+                  <FiClock /> {c.totalExecucoes} execuç{c.totalExecucoes === 1 ? 'ão' : 'ões'} registrada{c.totalExecucoes === 1 ? '' : 's'}
+                </span>
+              ) : (
+                <span className="chicote-status chicote-status-sem-execucoes"><FiClock /> sem registros de tempo</span>
+              )
             )}
           </button>
         ))}

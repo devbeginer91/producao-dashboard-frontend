@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { formatDateToLocalISO } from '../App'; // Mantido como prop
 import { formatarDataHora } from '../utils'; // Importando do utils.js
-import { FiPlus, FiTrash2, FiSave, FiX, FiZap } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiSave, FiX, FiZap, FiBriefcase } from 'react-icons/fi';
+
+const removerAcentos = (str) => (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const chaveComparacaoEmpresa = (str) => removerAcentos(str).trim().toUpperCase();
 
 const PedidoForm = ({
   novoPedido,
@@ -21,9 +24,12 @@ const PedidoForm = ({
 }) => {
   const [chicotes, setChicotes] = useState([]);
   const [sugestaoAtivaIndex, setSugestaoAtivaIndex] = useState(null);
+  const [empresasExistentes, setEmpresasExistentes] = useState([]);
+  const [sugestaoEmpresaAberta, setSugestaoEmpresaAberta] = useState(false);
 
   useEffect(() => {
     api.get('/chicotes').then((response) => setChicotes(response.data)).catch(() => setChicotes([]));
+    api.get('/pedidos/empresas').then((response) => setEmpresasExistentes(response.data)).catch(() => setEmpresasExistentes([]));
   }, []);
 
   useEffect(() => {
@@ -227,20 +233,49 @@ const PedidoForm = ({
     setSugestaoAtivaIndex(null);
   };
 
+  const sugestoesEmpresa = (() => {
+    const termo = chaveComparacaoEmpresa(novoPedido.empresa || '');
+    if (!termo) return [];
+    return empresasExistentes
+      .filter((e) => chaveComparacaoEmpresa(e).includes(termo) && chaveComparacaoEmpresa(e) !== termo)
+      .slice(0, 8);
+  })();
+
+  const selecionarEmpresa = (empresa) => {
+    setNovoPedido({ ...novoPedido, empresa });
+    setSugestaoEmpresaAberta(false);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="formulario">
-      <div>
+      <div className="item-codigo-wrapper">
         <label htmlFor="empresa">Empresa *</label>
         <input
           type="text"
           id="empresa"
           value={novoPedido.empresa}
           onChange={(e) => setNovoPedido({ ...novoPedido, empresa: e.target.value })}
+          onFocus={() => setSugestaoEmpresaAberta(true)}
+          onBlur={() => setTimeout(() => setSugestaoEmpresaAberta(false), 150)}
           required
           autoComplete="off"
           autoCorrect="off"
           spellCheck="false"
         />
+        {sugestaoEmpresaAberta && sugestoesEmpresa.length > 0 && (
+          <ul className="lista-suspensa item-codigo-sugestoes">
+            {sugestoesEmpresa.map((empresa) => (
+              <li
+                key={empresa}
+                className="lista-suspensa-chicote"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => selecionarEmpresa(empresa)}
+              >
+                <FiBriefcase /> {empresa}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       <div>
         <label htmlFor="numeroOS">Número da OS *</label>

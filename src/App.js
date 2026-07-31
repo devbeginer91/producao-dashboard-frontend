@@ -8,6 +8,7 @@ import Layout from './components/Layout';
 import DashboardPage from './components/DashboardPage';
 import PedidoListPage from './components/PedidoListPage';
 import ImportarChicotesPage from './components/ImportarChicotesPage';
+import UsuariosPage from './components/UsuariosPage';
 import ClientesChicotesPage from './components/ClientesChicotesPage';
 import ChicotesClientePage from './components/ChicotesClientePage';
 import ChicoteDetalhePage from './components/ChicoteDetalhePage';
@@ -481,6 +482,10 @@ function App() {
             element={isAdmin ? <ImportarChicotesPage setSidebarOpen={setSidebarOpen} /> : <Navigate to="/" />}
           />
           <Route
+            path="/usuarios"
+            element={isAdmin ? <UsuariosPage setSidebarOpen={setSidebarOpen} /> : <Navigate to="/" />}
+          />
+          <Route
             path="/priorizar-producao"
             element={<PCPPage setSidebarOpen={setSidebarOpen} />}
           />
@@ -519,6 +524,7 @@ function App() {
                 setSidebarOpen={setSidebarOpen}
                 voltarRoute="/relatorios/colaboradores"
                 destinoChicote={(id) => `/relatorios/colaboradores/chicote/${id}`}
+                mostrarTemExecucoes
               />
             }
           />
@@ -546,6 +552,7 @@ function App() {
                 setSidebarOpen={setSidebarOpen}
                 voltarRoute="/relatorios/chicotes"
                 destinoChicote={(id) => `/relatorios/chicotes/chicote/${id}`}
+                mostrarTemExecucoes
               />
             }
           />

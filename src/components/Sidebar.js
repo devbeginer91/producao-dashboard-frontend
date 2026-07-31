@@ -31,6 +31,11 @@ const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, isOpen, onClo
     onClose();
   };
 
+  const irParaUsuarios = () => {
+    navigate('/usuarios');
+    onClose();
+  };
+
   const irParaPriorizarProducao = () => {
     navigate('/priorizar-producao');
     onClose();
@@ -144,6 +149,9 @@ const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, isOpen, onClo
             <span className="sidebar-nav-title">Administração</span>
             <button className="sidebar-nav-item" onClick={irParaImportarChicotes}>
               <FiUpload /> <span>Importar Arquivos</span>
+            </button>
+            <button className="sidebar-nav-item" onClick={irParaUsuarios}>
+              <FiUsers /> <span>Criar Usuários</span>
             </button>
           </nav>
         )}
