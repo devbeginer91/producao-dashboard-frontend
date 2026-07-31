@@ -13,6 +13,7 @@ import ClientesChicotesPage from './components/ClientesChicotesPage';
 import ChicotesClientePage from './components/ChicotesClientePage';
 import ChicoteDetalhePage from './components/ChicoteDetalhePage';
 import PCPPage from './components/PCPPage';
+import AvisosSeraoPage from './components/AvisosSeraoPage';
 import AcompanhamentoProducaoPage from './components/AcompanhamentoProducaoPage';
 import RelatorioColaboradorChicotePage from './components/RelatorioColaboradorChicotePage';
 import RelatorioChicoteDetalhePage from './components/RelatorioChicoteDetalhePage';
@@ -488,6 +489,10 @@ function App() {
           <Route
             path="/priorizar-producao"
             element={<PCPPage setSidebarOpen={setSidebarOpen} />}
+          />
+          <Route
+            path="/avisos-serao"
+            element={<AvisosSeraoPage setSidebarOpen={setSidebarOpen} />}
           />
           <Route
             path="/chicotes-eletricos"

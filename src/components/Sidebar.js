@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX, FiUsers, FiTrendingUp, FiDollarSign, FiBarChart2 } from 'react-icons/fi';
+import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX, FiUsers, FiTrendingUp, FiDollarSign, FiBarChart2, FiAlertCircle } from 'react-icons/fi';
 
 const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -38,6 +38,11 @@ const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, isOpen, onClo
 
   const irParaPriorizarProducao = () => {
     navigate('/priorizar-producao');
+    onClose();
+  };
+
+  const irParaAvisosSerao = () => {
+    navigate('/avisos-serao');
     onClose();
   };
 
@@ -119,6 +124,9 @@ const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, isOpen, onClo
           </button>
           <button className="sidebar-nav-item" onClick={irParaAcompanhamentoProducao}>
             <FiActivity /> <span>Acompanhar Produção</span>
+          </button>
+          <button className="sidebar-nav-item" onClick={irParaAvisosSerao}>
+            <FiAlertCircle /> <span>Avisos de Serão</span>
           </button>
         </nav>
 

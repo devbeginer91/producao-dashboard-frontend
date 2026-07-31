@@ -1,6 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiLogOut, FiPlay, FiPause, FiCheckCircle, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiUser } from 'react-icons/fi';
+import { FiLogOut, FiPlay, FiPause, FiCheckCircle, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiUser, FiAlertCircle, FiLock } from 'react-icons/fi';
 import api from '../api';
+import { RESPOSTA_LABELS } from './AvisosSeraoPage';
+
+const formatarDataSerao = (data) => {
+  const parsedDate = new Date(`${data}T00:00:00`);
+  if (isNaN(parsedDate)) return data;
+  return parsedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const formatarHorarioLimite = (data) => {
+  const parsedDate = new Date(data);
+  if (isNaN(parsedDate)) return '—';
+  return parsedDate.toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 const formatarCronometro = (segundos) => {
   const totalSegundos = Math.max(0, Math.round(segundos));
@@ -27,6 +46,8 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
   const [osExpandidas, setOsExpandidas] = useState({});
   const [, forcarTick] = useState(0);
   const referencias = useRef({});
+  const [avisosSerao, setAvisosSerao] = useState([]);
+  const [respondendoSerao, setRespondendoSerao] = useState(null);
 
   const carregar = async () => {
     try {
@@ -61,6 +82,31 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
     return () => clearInterval(poll);
     // eslint-disable-next-line
   }, []);
+
+  const carregarAvisosSerao = () => {
+    api.get('/avisos-serao-ativos', { params: { colaboradorId: colaborador.id } })
+      .then((r) => setAvisosSerao(r.data))
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    carregarAvisosSerao();
+    const poll = setInterval(carregarAvisosSerao, 30000);
+    return () => clearInterval(poll);
+    // eslint-disable-next-line
+  }, []);
+
+  const responderSerao = async (avisoId, resposta) => {
+    setRespondendoSerao(avisoId);
+    try {
+      await api.put(`/avisos-serao/${avisoId}/resposta`, { colaboradorId: colaborador.id, resposta });
+      carregarAvisosSerao();
+    } catch (error) {
+      setMensagem(error.response?.data?.message || error.message);
+    } finally {
+      setRespondendoSerao(null);
+    }
+  };
 
   useEffect(() => {
     const t = setInterval(() => forcarTick((v) => v + 1), 1000);
@@ -145,6 +191,33 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
       <p className="colaborador-saudacao">
         {colaborador?.nome} — matrícula {colaborador?.matricula} — {colaborador?.setor}
       </p>
+
+      {avisosSerao.map((aviso) => (
+        <div key={aviso.id} className="serao-aviso-card">
+          <div className="serao-aviso-header">
+            <FiAlertCircle />
+            <span>Serão convocado para {formatarDataSerao(aviso.data)}</span>
+          </div>
+          <p className="serao-aviso-prazo">
+            {aviso.expirado
+              ? <><FiLock /> Prazo pra responder encerrado.</>
+              : `Responda até ${formatarHorarioLimite(aviso.horarioLimite)}. Você pode mudar sua resposta quantas vezes quiser até lá.`}
+          </p>
+          <div className="serao-aviso-opcoes">
+            {Object.entries(RESPOSTA_LABELS).map(([chave, label]) => (
+              <button
+                key={chave}
+                type="button"
+                className={`serao-opcao-botao ${aviso.respostaAtual === chave ? 'serao-opcao-selecionada' : ''}`}
+                disabled={aviso.expirado || respondendoSerao === aviso.id}
+                onClick={() => responderSerao(aviso.id, chave)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
 
       {mensagem && <p className="erro">{mensagem}</p>}
       {carregando && <p className="loading">Carregando ordens...</p>}
