@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import PedidoForm from './pedidoForm';
 import ModalObservacao from './ModalObservacao';
 import ModalPesoVolume from './ModalPesoVolume';
+import NotificacoesSino from './NotificacoesSino';
 
 const Layout = ({
   isAdmin,
@@ -49,6 +50,8 @@ const Layout = ({
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
+
+      <NotificacoesSino />
 
       <main className="app-main">
         <Outlet />
