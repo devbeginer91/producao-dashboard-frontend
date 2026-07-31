@@ -91,7 +91,7 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
 
   useEffect(() => {
     carregarAvisosSerao();
-    const poll = setInterval(carregarAvisosSerao, 30000);
+    const poll = setInterval(carregarAvisosSerao, 8000);
     return () => clearInterval(poll);
     // eslint-disable-next-line
   }, []);
@@ -102,7 +102,14 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
       await api.put(`/avisos-serao/${avisoId}/resposta`, { colaboradorId: colaborador.id, resposta });
       carregarAvisosSerao();
     } catch (error) {
-      setMensagem(error.response?.data?.message || error.message);
+      if (error.response?.status === 404 && error.response?.data?.message === 'Aviso não encontrado') {
+        setMensagem('Esse aviso de serão não está mais disponível.');
+      } else {
+        setMensagem(error.response?.data?.message || error.message);
+      }
+      // Se o aviso não existe mais (ex: admin encerrou entre o carregamento e o
+      // clique), a resposta falha com 404 — recarrega pra tirar o aviso "fantasma" da tela.
+      carregarAvisosSerao();
     } finally {
       setRespondendoSerao(null);
     }
