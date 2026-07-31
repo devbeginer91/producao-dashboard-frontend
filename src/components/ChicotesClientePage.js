@@ -32,9 +32,11 @@ const ChicotesClientePage = ({
   return (
     <>
       <header className="topbar">
-        <button className="btn-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
-          <FiMenu />
-        </button>
+        {setSidebarOpen && (
+          <button className="btn-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
+            <FiMenu />
+          </button>
+        )}
         <h1>{cliente}</h1>
       </header>
 

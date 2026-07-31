@@ -14,7 +14,11 @@ const formatarTamanho = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const ChicoteDetalhePage = ({ setSidebarOpen }) => {
+const ChicoteDetalhePage = ({
+  setSidebarOpen,
+  voltarRoute = (cliente) => `/chicotes-eletricos/${encodeURIComponent(cliente)}`,
+  somenteLeitura = false,
+}) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [chicote, setChicote] = useState(null);
@@ -52,7 +56,7 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
   }, [id]);
 
   useEffect(() => {
-    if (!chicote || chicote.etapas.length === 0) return;
+    if (somenteLeitura || !chicote || chicote.etapas.length === 0) return;
     api.get('/itens-pedidos')
       .then((r) => {
         const disponiveis = r.data.filter(
@@ -64,7 +68,7 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
   }, [chicote]);
 
   useEffect(() => {
-    if (!chicote) return;
+    if (somenteLeitura || !chicote) return;
     api.get('/desenhos', { params: { cliente: chicote.cliente, vinculado: false } })
       .then((r) => setDesenhosDisponiveis(r.data))
       .catch(() => setDesenhosDisponiveis([]));
@@ -250,47 +254,66 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
   return (
     <>
       <header className="topbar">
-        <button className="btn-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
-          <FiMenu />
-        </button>
+        {setSidebarOpen && (
+          <button className="btn-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
+            <FiMenu />
+          </button>
+        )}
         <h1>{chicote.cliente} — {chicote.codigoItemCliente}</h1>
       </header>
 
-      <button className="op-voltar" onClick={() => navigate(`/chicotes-eletricos/${encodeURIComponent(chicote.cliente)}`)}>
+      <button className="op-voltar" onClick={() => navigate(voltarRoute(chicote.cliente))}>
         <FiArrowLeft /> Voltar aos chicotes de {chicote.cliente}
       </button>
 
       {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
 
-      <form className="chicote-dados-form" onSubmit={salvarChicote}>
-        <div>
-          <label htmlFor="chicote-codigo">Código do item cliente</label>
-          <input
-            id="chicote-codigo"
-            value={form.codigoItemCliente}
-            onChange={(e) => setForm({ ...form, codigoItemCliente: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="chicote-dca">Código DCA</label>
-          <input id="chicote-dca" value={form.codigoDca} onChange={(e) => setForm({ ...form, codigoDca: e.target.value })} />
-        </div>
-        <div>
-          <label htmlFor="chicote-tempo">Tempo cadastrado (min)</label>
-          <input
-            id="chicote-tempo"
-            type="number"
-            min="0"
-            value={form.tempoIdeal}
-            onChange={(e) => setForm({ ...form, tempoIdeal: e.target.value })}
-          />
-        </div>
-        <button type="submit" className="btn-submit"><FiSave /> Salvar</button>
-        <button type="button" className="btn-editar" onClick={calcularMediaTempos} disabled={calculandoMedia}>
-          <FiRefreshCw /> {calculandoMedia ? 'Calculando...' : 'Autorizar Média de Tempos'}
-        </button>
-      </form>
+      {somenteLeitura ? (
+        <dl className="chicote-dados-leitura">
+          <div>
+            <dt>Código do item cliente</dt>
+            <dd>{chicote.codigoItemCliente}</dd>
+          </div>
+          <div>
+            <dt>Código DCA</dt>
+            <dd>{chicote.codigoDca || '—'}</dd>
+          </div>
+          <div>
+            <dt>Tempo cadastrado</dt>
+            <dd>{chicote.tempoIdeal != null ? `${chicote.tempoIdeal} min` : 'não cadastrado'}</dd>
+          </div>
+        </dl>
+      ) : (
+        <form className="chicote-dados-form" onSubmit={salvarChicote}>
+          <div>
+            <label htmlFor="chicote-codigo">Código do item cliente</label>
+            <input
+              id="chicote-codigo"
+              value={form.codigoItemCliente}
+              onChange={(e) => setForm({ ...form, codigoItemCliente: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="chicote-dca">Código DCA</label>
+            <input id="chicote-dca" value={form.codigoDca} onChange={(e) => setForm({ ...form, codigoDca: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="chicote-tempo">Tempo cadastrado (min)</label>
+            <input
+              id="chicote-tempo"
+              type="number"
+              min="0"
+              value={form.tempoIdeal}
+              onChange={(e) => setForm({ ...form, tempoIdeal: e.target.value })}
+            />
+          </div>
+          <button type="submit" className="btn-submit"><FiSave /> Salvar</button>
+          <button type="button" className="btn-editar" onClick={calcularMediaTempos} disabled={calculandoMedia}>
+            <FiRefreshCw /> {calculandoMedia ? 'Calculando...' : 'Autorizar Média de Tempos'}
+          </button>
+        </form>
+      )}
 
       <h2 className="op-detalhe-titulo secao-titulo">Passo a passo (etapas)</h2>
       {chicote.etapas.length > 0 && (
@@ -343,28 +366,30 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
                     </div>
                     {e.instrucoes && <div className="chicote-etapa-instrucoes">{e.instrucoes}</div>}
                   </div>
-                  <div className="chicote-etapa-acoes">
-                    <button
-                      type="button"
-                      className="btn-editar"
-                      onClick={() => moverEtapa(e.id, 'cima')}
-                      disabled={idx === 0}
-                      title="Mover para cima"
-                    >
-                      <FiArrowUp />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-editar"
-                      onClick={() => moverEtapa(e.id, 'baixo')}
-                      disabled={idx === chicote.etapas.length - 1}
-                      title="Mover para baixo"
-                    >
-                      <FiArrowDown />
-                    </button>
-                    <button type="button" className="btn-editar" onClick={() => iniciarEdicaoEtapa(e)}><FiEdit2 /></button>
-                    <button type="button" className="btn-excluir" onClick={() => removerEtapa(e.id)}><FiTrash2 /></button>
-                  </div>
+                  {!somenteLeitura && (
+                    <div className="chicote-etapa-acoes">
+                      <button
+                        type="button"
+                        className="btn-editar"
+                        onClick={() => moverEtapa(e.id, 'cima')}
+                        disabled={idx === 0}
+                        title="Mover para cima"
+                      >
+                        <FiArrowUp />
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-editar"
+                        onClick={() => moverEtapa(e.id, 'baixo')}
+                        disabled={idx === chicote.etapas.length - 1}
+                        title="Mover para baixo"
+                      >
+                        <FiArrowDown />
+                      </button>
+                      <button type="button" className="btn-editar" onClick={() => iniciarEdicaoEtapa(e)}><FiEdit2 /></button>
+                      <button type="button" className="btn-excluir" onClick={() => removerEtapa(e.id)}><FiTrash2 /></button>
+                    </div>
+                  )}
                 </>
               )}
             </li>
@@ -372,7 +397,7 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
         </ol>
       )}
 
-      {mostrarFormNovaEtapa ? (
+      {!somenteLeitura && (mostrarFormNovaEtapa ? (
         <form className="chicote-etapa-form chicote-etapa-form-nova" onSubmit={adicionarEtapa}>
           <div>
             <label>Nome da etapa</label>
@@ -403,7 +428,7 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
         <button type="button" className="btn-adicionar-pedido" onClick={() => setMostrarFormNovaEtapa(true)}>
           <FiPlus /> Adicionar etapa
         </button>
-      )}
+      ))}
 
       <h2 className="op-detalhe-titulo secao-titulo">Itens de pedido vinculados</h2>
       {chicote.itensVinculados.length === 0 ? (
@@ -414,15 +439,17 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
             <div key={item.id} className="op-item-row op-item-row-estatico">
               <span className="op-item-codigo">{item.empresa} · OS {item.numeroOS} · {item.codigoDesenho}</span>
               <span className={`pcp-status pcp-status-${item.status}`}>{item.status}</span>
-              <button type="button" className="btn-excluir" onClick={() => desvincularItem(item.id)}>
-                <FiX /> Desvincular
-              </button>
+              {!somenteLeitura && (
+                <button type="button" className="btn-excluir" onClick={() => desvincularItem(item.id)}>
+                  <FiX /> Desvincular
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
 
-      {chicote.etapas.length === 0 ? (
+      {!somenteLeitura && (chicote.etapas.length === 0 ? (
         <p className="pedido-grid-empty">Cadastre o passo a passo desse chicote antes de vincular pedidos a ele.</p>
       ) : (
         <div className="chicote-vincular-item">
@@ -438,7 +465,7 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
             <FiLink /> Vincular
           </button>
         </div>
-      )}
+      ))}
 
       <h2 className="op-detalhe-titulo secao-titulo">Desenhos técnicos</h2>
       {chicote.desenhos.length === 0 ? (
@@ -458,15 +485,17 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
               >
                 <FiDownload /> Baixar
               </a>
-              <button type="button" className="btn-excluir" onClick={() => desvincularDesenho(d.id)}>
-                <FiX /> Desvincular
-              </button>
+              {!somenteLeitura && (
+                <button type="button" className="btn-excluir" onClick={() => desvincularDesenho(d.id)}>
+                  <FiX /> Desvincular
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
 
-      {desenhosDisponiveis.length === 0 ? (
+      {!somenteLeitura && (desenhosDisponiveis.length === 0 ? (
         <p className="pedido-grid-empty">
           Nenhum desenho importado de {chicote.cliente} sem vínculo no momento. Importe desenhos em "Importar Arquivos".
         </p>
@@ -484,7 +513,7 @@ const ChicoteDetalhePage = ({ setSidebarOpen }) => {
             <FiLink /> Vincular
           </button>
         </div>
-      )}
+      ))}
     </>
   );
 };

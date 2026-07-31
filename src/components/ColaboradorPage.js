@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiLogOut, FiPlay, FiPause, FiCheckCircle, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiUser, FiAlertCircle, FiLock } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiLogOut, FiPlay, FiPause, FiCheckCircle, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiUser, FiAlertCircle, FiLock, FiMessageSquare } from 'react-icons/fi';
 import api from '../api';
 import { RESPOSTA_LABELS } from './AvisosSeraoPage';
+import ModalObservacao from './ModalObservacao';
 
 const formatarDataSerao = (data) => {
   const parsedDate = new Date(`${data}T00:00:00`);
@@ -48,6 +50,10 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
   const referencias = useRef({});
   const [avisosSerao, setAvisosSerao] = useState([]);
   const [respondendoSerao, setRespondendoSerao] = useState(null);
+  const [mostrarModalObs, setMostrarModalObs] = useState(false);
+  const [pedidoParaObs, setPedidoParaObs] = useState(null);
+  const [observacaoTexto, setObservacaoTexto] = useState('');
+  const navigate = useNavigate();
 
   const carregar = async () => {
     try {
@@ -186,13 +192,30 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
     setOsExpandidas((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const abrirObservacoes = async (os, e) => {
+    e.stopPropagation();
+    try {
+      const response = await api.get('/pedidos', { params: { id: os.id } });
+      setPedidoParaObs(response.data[0] || os);
+    } catch (error) {
+      setPedidoParaObs(os);
+    }
+    setObservacaoTexto('');
+    setMostrarModalObs(true);
+  };
+
   return (
     <div className="colaborador-page">
       <header className="topbar">
         <h1>Ordens de Produção</h1>
-        <button className="btn-editar" onClick={onLogout}>
-          <FiLogOut /> Sair
-        </button>
+        <div className="colaborador-header-acoes">
+          <button className="btn-editar" onClick={() => navigate('/colaborador/chicotes-eletricos')}>
+            <FiZap /> Chicotes Elétricos
+          </button>
+          <button className="btn-editar" onClick={onLogout}>
+            <FiLogOut /> Sair
+          </button>
+        </div>
       </header>
 
       <p className="colaborador-saudacao">
@@ -274,9 +297,14 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
                   </div>
                 )}
 
-                <span className="op-card-itens-count">
-                  {os.itens.length} item(ns) <FiChevronRight />
-                </span>
+                <div className="op-card-footer" onClick={(e) => e.stopPropagation()}>
+                  <button type="button" className="btn-observacao" onClick={(e) => abrirObservacoes(os, e)}>
+                    <FiMessageSquare /> Obs
+                  </button>
+                  <span className="op-card-itens-count">
+                    {os.itens.length} item(ns) <FiChevronRight />
+                  </span>
+                </div>
               </div>
             );
           })}
@@ -392,6 +420,16 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
             </div>
           )}
         </div>
+      )}
+
+      {mostrarModalObs && pedidoParaObs && (
+        <ModalObservacao
+          pedidoSelecionado={pedidoParaObs}
+          observacao={observacaoTexto}
+          setObservacao={setObservacaoTexto}
+          setMostrarModal={setMostrarModalObs}
+          setMensagem={setMensagem}
+        />
       )}
     </div>
   );

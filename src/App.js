@@ -378,6 +378,33 @@ function App() {
             <Navigate to="/login-colaborador" />
           )
         } />
+        <Route path="/colaborador/chicotes-eletricos" element={
+          auth?.tipo === 'colaborador' ? (
+            <ClientesChicotesPage baseRoute="/colaborador/chicotes-eletricos" />
+          ) : (
+            <Navigate to="/login-colaborador" />
+          )
+        } />
+        <Route path="/colaborador/chicotes-eletricos/:cliente" element={
+          auth?.tipo === 'colaborador' ? (
+            <ChicotesClientePage
+              voltarRoute="/colaborador/chicotes-eletricos"
+              destinoChicote={(id) => `/colaborador/chicotes-eletricos/chicote/${id}`}
+            />
+          ) : (
+            <Navigate to="/login-colaborador" />
+          )
+        } />
+        <Route path="/colaborador/chicotes-eletricos/chicote/:id" element={
+          auth?.tipo === 'colaborador' ? (
+            <ChicoteDetalhePage
+              voltarRoute={(cliente) => `/colaborador/chicotes-eletricos/${encodeURIComponent(cliente)}`}
+              somenteLeitura
+            />
+          ) : (
+            <Navigate to="/login-colaborador" />
+          )
+        } />
         <Route
           element={
             isAuthenticated ? (

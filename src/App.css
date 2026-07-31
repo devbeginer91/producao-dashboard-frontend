@@ -2267,6 +2267,19 @@ body {
   font-weight: 600;
 }
 
+.colaborador-header-acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.op-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
 .op-card-execucao-toggle {
   display: flex;
   align-items: center;
@@ -2719,6 +2732,38 @@ body {
   border-radius: var(--radius-sm);
   font-size: 14px;
   font-family: inherit;
+}
+
+.chicote-dados-leitura {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-sm) var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  margin: 0;
+}
+
+.chicote-dados-leitura div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chicote-dados-leitura dt {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chicote-dados-leitura dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .chicote-etapas-list {
