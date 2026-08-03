@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FiMenu, FiArrowLeft, FiPlus, FiCheckCircle, FiZap, FiDollarSign, FiEdit2 } from 'react-icons/fi';
 import api from '../api';
 import { formatarDataHora } from '../utils';
+import DesenhosVinculadosModal from './DesenhosVinculadosModal';
 
 const formatarData = (data) => {
   if (!data || typeof data !== 'string' || data.includes('undefined')) {
@@ -25,6 +26,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const [faturando, setFaturando] = useState({});
+  const [desenhosModalItem, setDesenhosModalItem] = useState(null);
 
   const carregar = () => {
     setCarregando(true);
@@ -181,7 +183,16 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                       <td>{formatarData(item.dataEntrada)}</td>
                       <td>{item.ocCliente || '—'}</td>
                       <td>{item.numeroOS}</td>
-                      <td>{item.codigoDesenho}</td>
+                      <td>
+                      <button
+                        type="button"
+                        className="btn-codigo-desenho"
+                        onClick={() => setDesenhosModalItem(item)}
+                        title="Ver desenhos técnicos vinculados"
+                      >
+                        {item.codigoDesenho}
+                      </button>
+                    </td>
                       <td>{item.quantidadePedido}</td>
                       <td>{temValor ? formatarMoeda(item.valorUnitario) : '—'}</td>
                       <td>{temValor ? formatarMoeda(item.valorUnitario * (item.quantidadePedido || 0)) : '—'}</td>
@@ -242,7 +253,16 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                     <td>{formatarData(item.dataEntrada)}</td>
                     <td>{item.ocCliente || '—'}</td>
                     <td>{item.numeroOS}</td>
-                    <td>{item.codigoDesenho}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-codigo-desenho"
+                        onClick={() => setDesenhosModalItem(item)}
+                        title="Ver desenhos técnicos vinculados"
+                      >
+                        {item.codigoDesenho}
+                      </button>
+                    </td>
                     <td>{item.quantidadeEntregue}</td>
                     <td>{formatarMoeda(item.valorUnitario)}</td>
                     <td><FiCheckCircle className="financeiro-faturado-icon" /> {formatarMoeda(item.valorFaturado)}</td>
@@ -253,6 +273,14 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
             </table>
           )}
         </>
+      )}
+
+      {desenhosModalItem && (
+        <DesenhosVinculadosModal
+          chicoteId={desenhosModalItem.chicoteId}
+          codigoDesenho={desenhosModalItem.codigoDesenho}
+          onClose={() => setDesenhosModalItem(null)}
+        />
       )}
     </>
   );

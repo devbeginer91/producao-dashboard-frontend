@@ -4,6 +4,7 @@ import { FiLogOut, FiPlay, FiPause, FiCheckCircle, FiClipboard, FiArrowLeft, FiC
 import api from '../api';
 import { RESPOSTA_LABELS } from './AvisosSeraoPage';
 import ModalObservacao from './ModalObservacao';
+import DesenhosVinculadosModal from './DesenhosVinculadosModal';
 
 const formatarDataSerao = (data) => {
   const parsedDate = new Date(`${data}T00:00:00`);
@@ -53,6 +54,7 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
   const [mostrarModalObs, setMostrarModalObs] = useState(false);
   const [pedidoParaObs, setPedidoParaObs] = useState(null);
   const [observacaoTexto, setObservacaoTexto] = useState('');
+  const [desenhosModalItem, setDesenhosModalItem] = useState(null);
   const navigate = useNavigate();
 
   const carregar = async () => {
@@ -324,12 +326,22 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
           ) : (
             <div className="op-itens-list">
               {osAtual.itens.map((item) => (
-                <button
+                <div
                   key={item.id}
+                  role="button"
+                  tabIndex={0}
                   className={`op-item-row ${temExecucaoAtiva(item) ? 'op-item-row-ativo' : ''}`}
                   onClick={() => abrirItem(item.id)}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && abrirItem(item.id)}
                 >
-                  <span className="op-item-codigo">{item.codigoDesenho}</span>
+                  <button
+                    type="button"
+                    className="btn-codigo-desenho op-item-codigo"
+                    onClick={(e) => { e.stopPropagation(); setDesenhosModalItem(item); }}
+                    title="Ver desenhos técnicos vinculados"
+                  >
+                    {item.codigoDesenho}
+                  </button>
                   <span className="op-item-info">
                     {item.quantidadePedido != null && (
                       <span className="op-item-info-badge">Qtd {item.quantidadePedido}</span>
@@ -347,7 +359,7 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
                     {contarConcluidas(item)}/{item.etapas.length} etapas concluídas
                   </span>
                   <FiChevronRight />
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -429,6 +441,14 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
           setObservacao={setObservacaoTexto}
           setMostrarModal={setMostrarModalObs}
           setMensagem={setMensagem}
+        />
+      )}
+
+      {desenhosModalItem && (
+        <DesenhosVinculadosModal
+          chicoteId={desenhosModalItem.chicoteId}
+          codigoDesenho={desenhosModalItem.codigoDesenho}
+          onClose={() => setDesenhosModalItem(null)}
         />
       )}
     </div>

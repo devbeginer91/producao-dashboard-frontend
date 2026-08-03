@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FiMenu, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiCheckCircle, FiRefreshCw, FiUser } from 'react-icons/fi';
 import api from '../api';
+import DesenhosVinculadosModal from './DesenhosVinculadosModal';
 
 const formatarCronometro = (segundos) => {
   const totalSegundos = Math.max(0, Math.round(segundos));
@@ -24,6 +25,7 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
   const [osSelecionadaId, setOsSelecionadaId] = useState(null);
   const [itemSelecionadoId, setItemSelecionadoId] = useState(null);
   const [osExpandidas, setOsExpandidas] = useState({});
+  const [desenhosModalItem, setDesenhosModalItem] = useState(null);
   const [, forcarTick] = useState(0);
   const referencias = useRef({});
 
@@ -199,12 +201,22 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
           ) : (
             <div className="op-itens-list">
               {osAtual.itens.map((item) => (
-                <button
+                <div
                   key={item.id}
+                  role="button"
+                  tabIndex={0}
                   className={`op-item-row ${temExecucaoAtiva(item) ? 'op-item-row-ativo' : ''}`}
                   onClick={() => abrirItem(item.id)}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && abrirItem(item.id)}
                 >
-                  <span className="op-item-codigo">{item.codigoDesenho}</span>
+                  <button
+                    type="button"
+                    className="btn-codigo-desenho op-item-codigo"
+                    onClick={(e) => { e.stopPropagation(); setDesenhosModalItem(item); }}
+                    title="Ver desenhos técnicos vinculados"
+                  >
+                    {item.codigoDesenho}
+                  </button>
                   <span className="op-item-info">
                     {item.quantidadePedido != null && (
                       <span className="op-item-info-badge">Qtd {item.quantidadePedido}</span>
@@ -222,7 +234,7 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
                     {contarConcluidas(item)}/{item.etapas.length} etapas concluídas
                   </span>
                   <FiChevronRight />
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -273,6 +285,14 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
             )}
           </div>
         </div>
+      )}
+
+      {desenhosModalItem && (
+        <DesenhosVinculadosModal
+          chicoteId={desenhosModalItem.chicoteId}
+          codigoDesenho={desenhosModalItem.codigoDesenho}
+          onClose={() => setDesenhosModalItem(null)}
+        />
       )}
     </div>
   );

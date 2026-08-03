@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { formatarDataHora } from '../utils';
 import { FiEdit2, FiTrash2, FiSave, FiX, FiCheckCircle, FiPackage } from 'react-icons/fi';
+import DesenhosVinculadosModal from './DesenhosVinculadosModal';
 import './ModalPesoVolume.css';
 
 const ModalPesoVolume = ({
@@ -24,6 +25,7 @@ const ModalPesoVolume = ({
   const [pedidoCompleto, setPedidoCompleto] = useState(false);
   const [editandoEntrega, setEditandoEntrega] = useState(null);
   const [novaQuantidadeEntregue, setNovaQuantidadeEntregue] = useState('');
+  const [desenhosModalItem, setDesenhosModalItem] = useState(null);
 
   const formatDateToLocalISO = (date, context = 'unknown') => {
     const d = date ? new Date(date) : new Date();
@@ -248,7 +250,17 @@ const ModalPesoVolume = ({
                   return (
                     <div key={index} className="item-row">
                       <div className="item-info">
-                        <span><strong>Código:</strong> {item.codigoDesenho}</span>
+                        <span>
+                          <strong>Código:</strong>{' '}
+                          <button
+                            type="button"
+                            className="btn-codigo-desenho"
+                            onClick={() => setDesenhosModalItem(item)}
+                            title="Ver desenhos técnicos vinculados"
+                          >
+                            {item.codigoDesenho}
+                          </button>
+                        </span>
                         <span><strong>Qtd Pedida:</strong> {item.quantidadePedido}</span>
                         <span><strong>Qtd Entregue:</strong> {item.quantidadeEntregue || 0}</span>
                         <span><strong>A Entregar:</strong> {quantidadeRestante - (parseInt(quantidadesParaAdicionar[index], 10) || 0)}</span>
@@ -369,6 +381,14 @@ const ModalPesoVolume = ({
           )}
         </form>
       </div>
+
+      {desenhosModalItem && (
+        <DesenhosVinculadosModal
+          chicoteId={desenhosModalItem.chicoteId}
+          codigoDesenho={desenhosModalItem.codigoDesenho}
+          onClose={() => setDesenhosModalItem(null)}
+        />
+      )}
     </div>
   );
 };

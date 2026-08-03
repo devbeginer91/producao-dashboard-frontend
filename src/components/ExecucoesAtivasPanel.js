@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FiActivity, FiUser } from 'react-icons/fi';
 import api from '../api';
+import DesenhosVinculadosModal from './DesenhosVinculadosModal';
 
 const formatarCronometro = (segundos) => {
   const totalSegundos = Math.max(0, Math.round(segundos));
@@ -28,6 +29,7 @@ const agruparPorOs = (execucoes) => {
     ...os,
     itens: Array.from(os.itens.entries()).map(([codigoDesenho, execs]) => ({
       codigoDesenho,
+      chicoteId: execs[0]?.chicoteId,
       execucoes: [...execs].sort((a, b) => a.etapaOrdem - b.etapaOrdem),
     })),
   }));
@@ -38,6 +40,7 @@ const ExecucoesAtivasPanel = () => {
   const [carregado, setCarregado] = useState(false);
   const [, forcarTick] = useState(0);
   const referencias = useRef({});
+  const [desenhosModalItem, setDesenhosModalItem] = useState(null);
 
   const carregar = () => {
     api.get('/execucoes-etapa/ativas')
@@ -89,7 +92,14 @@ const ExecucoesAtivasPanel = () => {
             </div>
             {os.itens.map((item) => (
               <div key={item.codigoDesenho} className="execucao-ativa-item-grupo">
-                <div className="execucao-ativa-item">{item.codigoDesenho}</div>
+                <button
+                  type="button"
+                  className="btn-codigo-desenho execucao-ativa-item"
+                  onClick={() => setDesenhosModalItem(item)}
+                  title="Ver desenhos técnicos vinculados"
+                >
+                  {item.codigoDesenho}
+                </button>
                 {item.execucoes.map((exec) => (
                   <div key={exec.id} className="execucao-ativa-etapa-linha">
                     <span className="execucao-ativa-etapa">{exec.etapaOrdem}. {exec.etapaNome}</span>
@@ -102,6 +112,14 @@ const ExecucoesAtivasPanel = () => {
           </div>
         ))}
       </div>
+
+      {desenhosModalItem && (
+        <DesenhosVinculadosModal
+          chicoteId={desenhosModalItem.chicoteId}
+          codigoDesenho={desenhosModalItem.codigoDesenho}
+          onClose={() => setDesenhosModalItem(null)}
+        />
+      )}
     </div>
   );
 };

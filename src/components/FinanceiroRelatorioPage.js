@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FiMenu, FiDollarSign } from 'react-icons/fi';
 import api from '../api';
 import { formatarDataHora } from '../utils';
+import DesenhosVinculadosModal from './DesenhosVinculadosModal';
 
 const formatarMoeda = (valor) =>
   (Number(valor) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -14,6 +15,7 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
   const [relatorio, setRelatorio] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
+  const [desenhosModalItem, setDesenhosModalItem] = useState(null);
 
   // Carrega a lista de clientes com faturamento (sem filtro), só uma vez, pro seletor.
   useEffect(() => {
@@ -126,7 +128,16 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
                     <td>{item.empresa}</td>
                     <td>{item.ocCliente || '—'}</td>
                     <td>{item.numeroOS}</td>
-                    <td>{item.codigoDesenho}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-codigo-desenho"
+                        onClick={() => setDesenhosModalItem(item)}
+                        title="Ver desenhos técnicos vinculados"
+                      >
+                        {item.codigoDesenho}
+                      </button>
+                    </td>
                     <td>{item.quantidadeEntregue}</td>
                     <td>{formatarMoeda(item.valorUnitario)}</td>
                     <td>{formatarMoeda(item.valorFaturado)}</td>
@@ -136,6 +147,14 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
             </table>
           )}
         </>
+      )}
+
+      {desenhosModalItem && (
+        <DesenhosVinculadosModal
+          chicoteId={desenhosModalItem.chicoteId}
+          codigoDesenho={desenhosModalItem.codigoDesenho}
+          onClose={() => setDesenhosModalItem(null)}
+        />
       )}
     </>
   );

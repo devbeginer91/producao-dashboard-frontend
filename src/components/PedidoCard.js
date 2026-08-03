@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../api';
 import { formatarDataHora, isPastDue } from '../utils';
+import DesenhosVinculadosModal from './DesenhosVinculadosModal';
 import {
   FiCheckCircle,
   FiEdit2,
@@ -54,6 +55,7 @@ const PedidoCard = ({
   const [obsPreviewLoading, setObsPreviewLoading] = useState(false);
   const [showObsTooltip, setShowObsTooltip] = useState(false);
   const [itemTemposAbertos, setItemTemposAbertos] = useState({});
+  const [desenhosModalItem, setDesenhosModalItem] = useState(null);
 
   const formatDateToLocalISO = (date) => {
     const d = date ? new Date(date) : new Date();
@@ -250,7 +252,20 @@ const PedidoCard = ({
                 return (
                   <React.Fragment key={idx}>
                     <tr>
-                      <td>{item.codigoDesenho || 'Não informado'}</td>
+                      <td>
+                        {item.codigoDesenho ? (
+                          <button
+                            type="button"
+                            className="btn-codigo-desenho"
+                            onClick={() => setDesenhosModalItem(item)}
+                            title="Ver desenhos técnicos vinculados"
+                          >
+                            {item.codigoDesenho}
+                          </button>
+                        ) : (
+                          'Não informado'
+                        )}
+                      </td>
                       <td>{qtdPedido}</td>
                       <td>{qtdEntregue}</td>
                       <td>{isNaN(saldo) ? '0' : saldo}</td>
@@ -315,6 +330,14 @@ const PedidoCard = ({
         <button className="btn-observacao" onClick={abrirModalObservacao}><FiMessageSquare /> Obs</button>
         <button className="btn-excluir" onClick={excluirPedido}><FiTrash2 /> Excluir</button>
       </div>
+
+      {desenhosModalItem && (
+        <DesenhosVinculadosModal
+          chicoteId={desenhosModalItem.chicoteId}
+          codigoDesenho={desenhosModalItem.codigoDesenho}
+          onClose={() => setDesenhosModalItem(null)}
+        />
+      )}
     </div>
   );
 };
