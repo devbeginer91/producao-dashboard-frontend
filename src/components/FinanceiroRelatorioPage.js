@@ -117,6 +117,7 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
                   <th>OS DCA</th>
                   <th>Item</th>
                   <th>Quantidade</th>
+                  <th>Status</th>
                   <th>Valor</th>
                   <th>Valor Faturado</th>
                 </tr>
@@ -138,7 +139,14 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
                         {item.codigoDesenho}
                       </button>
                     </td>
-                    <td>{item.quantidadeEntregue}</td>
+                    <td>{item.quantidadeFaturada} de {item.quantidadePedido}</td>
+                    <td>
+                      {item.parcial ? (
+                        <span className="financeiro-badge-parcial">Parcial</span>
+                      ) : (
+                        <span className="financeiro-badge-completo">Completo</span>
+                      )}
+                    </td>
                     <td>{formatarMoeda(item.valorUnitario)}</td>
                     <td>{formatarMoeda(item.valorFaturado)}</td>
                   </tr>

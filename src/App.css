@@ -3231,3 +3231,27 @@ body {
   vertical-align: middle;
   margin-right: 4px;
 }
+
+.financeiro-badge-parcial {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+}
+
+.financeiro-badge-completo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--color-success);
+}

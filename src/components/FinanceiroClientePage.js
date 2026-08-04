@@ -27,17 +27,33 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
   const [mensagem, setMensagem] = useState('');
   const [faturando, setFaturando] = useState({});
   const [desenhosModalItem, setDesenhosModalItem] = useState(null);
+  // null = ainda não pedido. Itens faturados só são buscados quando o usuário clica
+  // em "Ver itens faturados" — evita carregar o histórico inteiro (às vezes anos) de cara.
+  const [itensFaturados, setItensFaturados] = useState(null);
+  const [carregandoFaturados, setCarregandoFaturados] = useState(false);
 
   const carregar = () => {
     setCarregando(true);
-    api.get('/pedidos', { params: { empresa: cliente } })
+    api.get('/pedidos', { params: { empresa: cliente, faturado: false } })
       .then((r) => setPedidos(r.data))
       .catch((e) => setMensagem('Erro: ' + (e.response?.data?.message || e.message)))
       .finally(() => setCarregando(false));
   };
 
+  // Cada linha aqui é um EVENTO de faturamento (não o item) — um item faturado em duas
+  // vezes (parcial) aparece duas vezes, cada uma com sua data/quantidade/valor, que é
+  // como o Financeiro enxerga que aquele item não foi faturado de uma vez só.
+  const carregarFaturados = () => {
+    setCarregandoFaturados(true);
+    api.get('/financeiro/relatorio', { params: { cliente } })
+      .then((r) => setItensFaturados(r.data.itens))
+      .catch((e) => setMensagem('Erro: ' + (e.response?.data?.message || e.message)))
+      .finally(() => setCarregandoFaturados(false));
+  };
+
   useEffect(() => {
     carregar();
+    setItensFaturados(null);
     // eslint-disable-next-line
   }, [cliente]);
 
@@ -72,6 +88,10 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
     try {
       await api.put(`/itens-pedidos/${item.id}/faturar`);
       carregar();
+      // Se a lista de faturados já tinha sido aberta, recarrega ela também pra incluir o item recém-faturado.
+      if (itensFaturados !== null) {
+        carregarFaturados();
+      }
     } catch (error) {
       setMensagem('Erro ao faturar: ' + (error.response?.data?.message || error.message));
       setFaturando((prev) => ({ ...prev, [item.id]: false }));
@@ -79,17 +99,24 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
   };
 
   const editarPedido = (pedidoId) => {
-    const pedido = pedidos.find((p) => p.id === pedidoId);
-    if (!pedido) return;
-    setPedidoParaEditar(pedido);
-    setNovoPedido({
-      ...pedido,
-      itens: (pedido.itens || []).map((item) => ({
-        ...item,
-        quantidadePedido: item.quantidadePedido != null ? item.quantidadePedido.toString() : '',
-      })),
-    });
-    setMostrarFormulario(true);
+    // Busca o pedido sem o filtro de faturado: a lista carregada aqui só tem itens em
+    // aberto, mas o formulário de edição precisa de todos os itens do pedido, senão
+    // salvar de novo apagaria os itens já faturados que ficaram de fora.
+    api.get('/pedidos', { params: { id: pedidoId } })
+      .then((r) => {
+        const pedido = r.data[0];
+        if (!pedido) return;
+        setPedidoParaEditar(pedido);
+        setNovoPedido({
+          ...pedido,
+          itens: (pedido.itens || []).map((item) => ({
+            ...item,
+            quantidadePedido: item.quantidadePedido != null ? item.quantidadePedido.toString() : '',
+          })),
+        });
+        setMostrarFormulario(true);
+      })
+      .catch((e) => setMensagem('Erro: ' + (e.response?.data?.message || e.message)));
   };
 
   // Achata pedidos -> itens (todos, com ou sem valor cadastrado), carregando os dados do pedido junto.
@@ -114,12 +141,12 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
     return String(b.numeroOS).localeCompare(String(a.numeroOS));
   };
 
-  const itensAberto = linhas.filter((l) => !l.faturado).sort(porOSDecrescente);
-  const itensFaturados = linhas.filter((l) => l.faturado).sort(porOSDecrescente);
-  const valorEmAberto = itensAberto.reduce(
-    (soma, item) => soma + (item.valorUnitario != null ? item.valorUnitario * (item.quantidadePedido || 0) : 0),
-    0
-  );
+  // `pedidos` já vem filtrado (quantidadeFaturada < quantidadePedido) do backend.
+  const itensAberto = linhas.sort(porOSDecrescente);
+  const valorEmAberto = itensAberto.reduce((soma, item) => {
+    const saldoAFaturar = (item.quantidadePedido || 0) - (item.quantidadeFaturada || 0);
+    return soma + (item.valorUnitario != null ? item.valorUnitario * saldoAFaturar : 0);
+  }, 0);
 
   return (
     <>
@@ -166,6 +193,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                   <th>OS DCA</th>
                   <th>Item</th>
                   <th>Quantidade</th>
+                  <th>Já Faturado</th>
                   <th>Valor</th>
                   <th>Valor Total</th>
                   <th>Saldo</th>
@@ -176,7 +204,10 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
               <tbody>
                 {itensAberto.map((item) => {
                   const temValor = item.valorUnitario != null;
-                  const prontoParaFaturar = temValor && (item.quantidadeEntregue || 0) > 0;
+                  const quantidadeFaturada = item.quantidadeFaturada || 0;
+                  const saldoFaturavel = (item.quantidadeEntregue || 0) - quantidadeFaturada;
+                  const prontoParaFaturar = temValor && saldoFaturavel > 0;
+                  const parcial = quantidadeFaturada > 0;
                   const saldo = (item.quantidadePedido || 0) - (item.quantidadeEntregue || 0);
                   return (
                     <tr key={item.id} className={prontoParaFaturar ? 'financeiro-item-pronto' : ''}>
@@ -194,6 +225,13 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                       </button>
                     </td>
                       <td>{item.quantidadePedido}</td>
+                      <td>
+                        {parcial ? (
+                          <span className="financeiro-badge-parcial" title={`${quantidadeFaturada} de ${item.quantidadePedido} já faturado(s)`}>
+                            Parcial ({quantidadeFaturada})
+                          </span>
+                        ) : '—'}
+                      </td>
                       <td>{temValor ? formatarMoeda(item.valorUnitario) : '—'}</td>
                       <td>{temValor ? formatarMoeda(item.valorUnitario * (item.quantidadePedido || 0)) : '—'}</td>
                       <td>{saldo}</td>
@@ -213,9 +251,9 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                             className="btn-editar financeiro-btn-faturar"
                             onClick={() => faturar(item)}
                             disabled={faturando[item.id]}
-                            title={`Pronto pra faturar: ${item.quantidadeEntregue} unidade(s) já entregue(s)`}
+                            title={`Pronto pra faturar: ${saldoFaturavel} unidade(s) entregue(s) e ainda não faturada(s)`}
                           >
-                            <FiZap className="financeiro-alerta-icon" /> Faturado
+                            <FiZap className="financeiro-alerta-icon" /> Faturar
                           </button>
                         ) : !temValor ? (
                           <span className="financeiro-sem-entrega">Sem valor cadastrado</span>
@@ -231,7 +269,11 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
           )}
 
           <h2 className="op-detalhe-titulo secao-titulo">Itens Faturados</h2>
-          {itensFaturados.length === 0 ? (
+          {itensFaturados === null ? (
+            <button type="button" className="btn-editar" onClick={carregarFaturados} disabled={carregandoFaturados}>
+              {carregandoFaturados ? 'Carregando...' : 'Ver itens faturados'}
+            </button>
+          ) : itensFaturados.length === 0 ? (
             <p className="pedido-grid-empty">Nenhum item faturado ainda.</p>
           ) : (
             <table className="tabela-itens">
@@ -242,6 +284,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                   <th>OS DCA</th>
                   <th>Item</th>
                   <th>Quantidade Faturada</th>
+                  <th>Status</th>
                   <th>Valor</th>
                   <th>Valor Faturado</th>
                   <th>Data Faturamento</th>
@@ -263,7 +306,14 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                         {item.codigoDesenho}
                       </button>
                     </td>
-                    <td>{item.quantidadeEntregue}</td>
+                    <td>{item.quantidadeFaturada} de {item.quantidadePedido}</td>
+                    <td>
+                      {item.parcial ? (
+                        <span className="financeiro-badge-parcial">Parcial</span>
+                      ) : (
+                        <span className="financeiro-badge-completo"><FiCheckCircle /> Completo</span>
+                      )}
+                    </td>
                     <td>{formatarMoeda(item.valorUnitario)}</td>
                     <td><FiCheckCircle className="financeiro-faturado-icon" /> {formatarMoeda(item.valorFaturado)}</td>
                     <td>{formatarDataHora(item.dataFaturamento)}</td>
