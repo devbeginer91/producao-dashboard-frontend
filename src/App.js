@@ -390,6 +390,7 @@ function App() {
             <ChicotesClientePage
               voltarRoute="/colaborador/chicotes-eletricos"
               destinoChicote={(id) => `/colaborador/chicotes-eletricos/chicote/${id}`}
+              permitirCriar={false}
             />
           ) : (
             <Navigate to="/login-colaborador" />
@@ -523,7 +524,7 @@ function App() {
           />
           <Route
             path="/chicotes-eletricos"
-            element={<ClientesChicotesPage setSidebarOpen={setSidebarOpen} />}
+            element={<ClientesChicotesPage setSidebarOpen={setSidebarOpen} mostrarBuscaChicote />}
           />
           <Route
             path="/chicotes-eletricos/:cliente"
@@ -557,6 +558,7 @@ function App() {
                 voltarRoute="/relatorios/colaboradores"
                 destinoChicote={(id) => `/relatorios/colaboradores/chicote/${id}`}
                 mostrarTemExecucoes
+                permitirCriar={false}
               />
             }
           />
@@ -585,6 +587,7 @@ function App() {
                 voltarRoute="/relatorios/chicotes"
                 destinoChicote={(id) => `/relatorios/chicotes/chicote/${id}`}
                 mostrarTemExecucoes
+                permitirCriar={false}
               />
             }
           />

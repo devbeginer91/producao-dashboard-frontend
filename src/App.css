@@ -654,6 +654,20 @@ body {
   outline: none;
 }
 
+.chicotes-cliente-acoes {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.chicotes-cliente-acoes .busca-inline {
+  flex-grow: 1;
+  min-width: 220px;
+  margin-bottom: 0;
+}
+
 .btn-exportar {
   display: inline-flex;
   align-items: center;
@@ -2543,6 +2557,15 @@ body {
   font-weight: 400;
   color: var(--color-text-muted);
   font-size: 12px;
+}
+
+.chicote-btn-historico {
+  margin-bottom: var(--space-md);
+}
+
+.op-item-row-historico {
+  opacity: 0.75;
+  background: var(--color-bg);
 }
 
 .op-item-info {

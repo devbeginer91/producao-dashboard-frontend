@@ -34,6 +34,7 @@ const ChicoteDetalhePage = ({
   const [mostrarFormNovaEtapa, setMostrarFormNovaEtapa] = useState(false);
   const [novaEtapa, setNovaEtapa] = useState(etapaVazia);
   const [calculandoMedia, setCalculandoMedia] = useState(false);
+  const [historicoAberto, setHistoricoAberto] = useState(false);
 
   const carregar = () => {
     setCarregando(true);
@@ -144,6 +145,16 @@ const ChicoteDetalhePage = ({
     }
   };
 
+  const excluirDesenho = async (desenhoId) => {
+    if (!window.confirm('Excluir essa versão antiga do desenho permanentemente? Essa ação não pode ser desfeita.')) return;
+    try {
+      await api.delete(`/desenhos/${desenhoId}`);
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao excluir desenho: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
   const iniciarEdicaoEtapa = (etapa) => {
     setEtapaEmEdicaoId(etapa.id);
     setFormEtapa({
@@ -250,6 +261,9 @@ const ChicoteDetalhePage = ({
 
   if (carregando) return <p className="loading">Carregando chicote...</p>;
   if (!chicote) return <p className="erro">{mensagem || 'Chicote não encontrado.'}</p>;
+
+  const desenhosAtivos = chicote.desenhos.filter((d) => d.ativo);
+  const desenhosHistorico = chicote.desenhos.filter((d) => !d.ativo);
 
   return (
     <>
@@ -468,11 +482,11 @@ const ChicoteDetalhePage = ({
       ))}
 
       <h2 className="op-detalhe-titulo secao-titulo">Desenhos técnicos</h2>
-      {chicote.desenhos.length === 0 ? (
+      {desenhosAtivos.length === 0 ? (
         <p className="pedido-grid-empty">Nenhum desenho vinculado ainda.</p>
       ) : (
         <div className="op-itens-list">
-          {chicote.desenhos.map((d) => (
+          {desenhosAtivos.map((d) => (
             <div key={d.id} className="op-item-row op-item-row-estatico">
               <span className="op-item-codigo">
                 <FiFile /> {d.nomeArquivo} <span className="chicote-desenho-tamanho">({formatarTamanho(d.tamanho)})</span>
@@ -493,6 +507,38 @@ const ChicoteDetalhePage = ({
             </div>
           ))}
         </div>
+      )}
+
+      {desenhosHistorico.length > 0 && (
+        <>
+          <button type="button" className="btn-editar chicote-btn-historico" onClick={() => setHistoricoAberto((v) => !v)}>
+            <FiFileText /> {historicoAberto ? 'Ocultar' : 'Ver'} versões antigas ({desenhosHistorico.length})
+          </button>
+          {historicoAberto && (
+            <div className="op-itens-list">
+              {desenhosHistorico.map((d) => (
+                <div key={d.id} className="op-item-row op-item-row-estatico op-item-row-historico">
+                  <span className="op-item-codigo">
+                    <FiFile /> {d.nomeArquivo} <span className="chicote-desenho-tamanho">({formatarTamanho(d.tamanho)} · versão antiga)</span>
+                  </span>
+                  <a
+                    className="btn-editar"
+                    href={`${api.defaults.baseURL}/desenhos/${d.id}/arquivo`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <FiDownload /> Baixar
+                  </a>
+                  {!somenteLeitura && (
+                    <button type="button" className="btn-excluir" onClick={() => excluirDesenho(d.id)}>
+                      <FiTrash2 /> Excluir
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {!somenteLeitura && (desenhosDisponiveis.length === 0 ? (

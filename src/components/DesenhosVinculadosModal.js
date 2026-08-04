@@ -18,7 +18,7 @@ const DesenhosVinculadosModal = ({ chicoteId, codigoDesenho, onClose }) => {
     if (!chicoteId) return;
     setCarregando(true);
     setErro('');
-    api.get('/desenhos', { params: { chicoteId } })
+    api.get('/desenhos', { params: { chicoteId, ativo: true } })
       .then((r) => setDesenhos(r.data))
       .catch((e) => setErro('Erro ao carregar desenhos: ' + (e.response?.data?.message || e.message)))
       .finally(() => setCarregando(false));
