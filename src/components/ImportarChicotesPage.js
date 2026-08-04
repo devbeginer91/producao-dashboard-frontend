@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FiMenu, FiUpload, FiAlertTriangle, FiCheckCircle, FiXCircle, FiRefreshCw, FiFile, FiLink } from 'react-icons/fi';
 import api from '../api';
 
@@ -175,6 +175,17 @@ const ImportarDesenhosTab = () => {
   const [resultado, setResultado] = useState(null);
   const [mensagem, setMensagem] = useState('');
 
+  const [arquivosAvulsos, setArquivosAvulsos] = useState([]);
+  const [clienteAvulso, setClienteAvulso] = useState('');
+  const [clientesExistentes, setClientesExistentes] = useState([]);
+  const [importandoAvulsos, setImportandoAvulsos] = useState(false);
+  const [resultadoAvulsos, setResultadoAvulsos] = useState(null);
+  const [mensagemAvulsos, setMensagemAvulsos] = useState('');
+
+  useEffect(() => {
+    api.get('/chicotes/clientes').then((r) => setClientesExistentes(r.data)).catch(() => setClientesExistentes([]));
+  }, []);
+
   const handleSelecionarZip = (e) => {
     setArquivoZip(e.target.files?.[0] || null);
     setResultado(null);
@@ -197,6 +208,33 @@ const ImportarDesenhosTab = () => {
       setMensagem('Erro ao importar desenhos: ' + (error.response?.data?.message || error.message));
     } finally {
       setImportando(false);
+    }
+  };
+
+  const handleSelecionarAvulsos = (e) => {
+    setArquivosAvulsos(Array.from(e.target.files || []));
+    setResultadoAvulsos(null);
+    setMensagemAvulsos('');
+  };
+
+  const importarAvulsos = async () => {
+    if (arquivosAvulsos.length === 0) {
+      setMensagemAvulsos('Selecione ao menos um arquivo (PDF ou outro formato).');
+      return;
+    }
+    setImportandoAvulsos(true);
+    setMensagemAvulsos('');
+    try {
+      const formData = new FormData();
+      arquivosAvulsos.forEach((file) => formData.append('arquivos', file));
+      if (clienteAvulso) formData.append('cliente', clienteAvulso);
+      const response = await api.post('/desenhos/importar-arquivos', formData);
+      setResultadoAvulsos(response.data);
+      setArquivosAvulsos([]);
+    } catch (error) {
+      setMensagemAvulsos('Erro ao importar arquivos: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setImportandoAvulsos(false);
     }
   };
 
@@ -267,6 +305,75 @@ const ImportarDesenhosTab = () => {
               <div className="import-review-title">Arquivos ignorados</div>
               {resultado.ignorados.map((ig, i) => (
                 <div key={i}><code>{ig.arquivo}</code> — {ig.motivo}</div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      <h2 className="op-detalhe-titulo secao-titulo">Enviar PDF (ou outro arquivo) avulso</h2>
+
+      {mensagemAvulsos && <p className="erro">{mensagemAvulsos}</p>}
+
+      <p className="import-desenhos-instrucoes">
+        Envie um ou mais arquivos direto, sem precisar montar um .zip. O nome do arquivo (sem a
+        extensão) precisa ser igual ao código do item do chicote. Se souber o cliente, selecione
+        pra evitar ambiguidade; se deixar em branco, o sistema tenta achar sozinho pelo código —
+        só vincula automático se o código bater com um único chicote na base.
+      </p>
+
+      <div className="import-uploader">
+        <select value={clienteAvulso} onChange={(e) => setClienteAvulso(e.target.value)}>
+          <option value="">— detectar cliente automaticamente pelo código —</option>
+          {clientesExistentes.map((c) => (
+            <option key={c.cliente} value={c.cliente}>{c.cliente}</option>
+          ))}
+        </select>
+        <input
+          type="file"
+          multiple
+          onChange={handleSelecionarAvulsos}
+          id="import-arquivos-input"
+        />
+        <label htmlFor="import-arquivos-input" className="btn-editar">
+          <FiUpload /> {arquivosAvulsos.length > 0 ? `${arquivosAvulsos.length} arquivo(s) selecionado(s)` : 'Escolher arquivo(s)'}
+        </label>
+        <button className="btn-adicionar-pedido" onClick={importarAvulsos} disabled={importandoAvulsos}>
+          {importandoAvulsos ? 'Importando...' : 'Importar arquivo(s)'}
+        </button>
+      </div>
+
+      {resultadoAvulsos && (
+        <>
+          <div className="stats-bar">
+            <div className="stat-card">
+              <span className="stat-icon stat-icon-accent"><FiFile /></span>
+              <div className="stat-card-body">
+                <span className="stat-value">{resultadoAvulsos.importados}</span>
+                <span className="stat-label">Arquivos importados</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <span className="stat-icon stat-icon-success"><FiLink /></span>
+              <div className="stat-card-body">
+                <span className="stat-value">{resultadoAvulsos.vinculados}</span>
+                <span className="stat-label">Vinculados automaticamente</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <span className="stat-icon stat-icon-warning"><FiAlertTriangle /></span>
+              <div className="stat-card-body">
+                <span className="stat-value">{resultadoAvulsos.semVinculo}</span>
+                <span className="stat-label">Sem vínculo (vincular manualmente)</span>
+              </div>
+            </div>
+          </div>
+
+          {resultadoAvulsos.arquivosSemVinculo.length > 0 && (
+            <div className="import-review" style={{ margin: 0 }}>
+              <div className="import-review-title">Arquivos sem chicote correspondente</div>
+              {resultadoAvulsos.arquivosSemVinculo.map((a, i) => (
+                <div key={i}>{a.cliente} — <code>{a.arquivo}</code></div>
               ))}
             </div>
           )}
