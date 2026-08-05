@@ -6,7 +6,6 @@ import PedidoForm from './pedidoForm';
 import ModalObservacao from './ModalObservacao';
 import ModalPesoVolume from './ModalPesoVolume';
 import NotificacoesSino from './NotificacoesSino';
-import CobreTicker from './CobreTicker';
 
 const Layout = ({
   isAdmin,
@@ -52,7 +51,6 @@ const Layout = ({
         onClose={() => setSidebarOpen(false)}
       />
 
-      <CobreTicker />
       <NotificacoesSino />
 
       <main className="app-main">
