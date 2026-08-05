@@ -15,9 +15,11 @@
     <!-- Manifest para Android -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <!-- Ajustado o Content-Security-Policy para produção no Render -->
+    <!-- script-src/frame-src liberam o TradingView só pro widget de cotação do cobre —
+         o script vem de s3.tradingview.com, mas o iframe do widget é tradingview-widget.com -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://producao-dashboard-backend.onrender.com ws://producao-dashboard-frontend.onrender.com;"
+      content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://s3.tradingview.com; style-src 'self' 'unsafe-inline'; frame-src https://*.tradingview-widget.com; connect-src 'self' https://producao-dashboard-backend.onrender.com ws://producao-dashboard-frontend.onrender.com;"
     />
     <base href="/">
     <title>CONTROLE DE PRODUÇÃO</title>
