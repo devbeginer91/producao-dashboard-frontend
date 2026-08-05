@@ -5,6 +5,7 @@ import api from '../api';
 
 const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) => {
   const [chicotes, setChicotes] = useState([]);
+  const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +33,7 @@ const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) 
   const irParaChicote = (id) => {
     navigate(`/chicotes-eletricos/chicote/${id}`);
     setBusca('');
+    setMostrarSugestoes(false);
   };
 
   const pedidosEncontrados = filtrarPedidos(todosPedidos);
@@ -48,24 +50,41 @@ const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) 
             name="buscaInput"
             placeholder="Buscar por Empresa, Nº OS ou Chicote"
             value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+            onChange={(e) => { setBusca(e.target.value); setMostrarSugestoes(true); }}
+            onFocus={() => setMostrarSugestoes(true)}
+            onBlur={() => setTimeout(() => setMostrarSugestoes(false), 150)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                setMostrarSugestoes(false);
+              }
+            }}
           />
         </div>
         <button className="btn-exportar" onClick={exportarPDF}><FiDownload /> Exportar PDF</button>
       </div>
-      {busca && (
+      {busca && mostrarSugestoes && (
         <ul className="lista-suspensa">
           {pedidosEncontrados.length === 0 && chicotesEncontrados.length === 0 ? (
             <li>Nenhum resultado encontrado</li>
           ) : (
             <>
               {pedidosEncontrados.map((pedido) => (
-                <li key={`pedido-${pedido.id}`}>
+                <li
+                  key={`pedido-${pedido.id}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setMostrarSugestoes(false)}
+                >
                   {pedido.empresa} - {pedido.numeroOS} ({pedido.status})
                 </li>
               ))}
               {chicotesEncontrados.map((c) => (
-                <li key={`chicote-${c.id}`} className="lista-suspensa-chicote" onClick={() => irParaChicote(c.id)}>
+                <li
+                  key={`chicote-${c.id}`}
+                  className="lista-suspensa-chicote"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => irParaChicote(c.id)}
+                >
                   <FiZap /> {c.cliente} · {c.codigoItemCliente}{c.codigoDca ? ` (DCA ${c.codigoDca})` : ''}
                 </li>
               ))}
