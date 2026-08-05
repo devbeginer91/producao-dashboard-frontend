@@ -31,6 +31,10 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
   // em "Ver itens faturados" — evita carregar o histórico inteiro (às vezes anos) de cara.
   const [itensFaturados, setItensFaturados] = useState(null);
   const [carregandoFaturados, setCarregandoFaturados] = useState(false);
+  // Itens já 100% entregues mas sem valor unitário cadastrado (nunca foram precificados)
+  // ficam escondidos por padrão — senão pedido antigo de mais de um ano, esquecido sem
+  // preço, entope a lista de quem está de fato ativo.
+  const [mostrarSemValor, setMostrarSemValor] = useState(false);
 
   const carregar = () => {
     setCarregando(true);
@@ -148,6 +152,11 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
     return soma + (item.valorUnitario != null ? item.valorUnitario * saldoAFaturar : 0);
   }, 0);
 
+  const semValorJaEntregue = (item) =>
+    item.valorUnitario == null && (item.quantidadePedido || 0) - (item.quantidadeEntregue || 0) <= 0;
+  const itensAtivos = itensAberto.filter((item) => !semValorJaEntregue(item));
+  const itensSemValor = itensAberto.filter(semValorJaEntregue);
+
   return (
     <>
       <header className="topbar">
@@ -182,7 +191,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
           </div>
 
           <h2 className="op-detalhe-titulo secao-titulo">Itens em Aberto</h2>
-          {itensAberto.length === 0 ? (
+          {itensAtivos.length === 0 ? (
             <p className="pedido-grid-empty">Nenhum item em aberto pra esse cliente.</p>
           ) : (
             <table className="tabela-itens">
@@ -202,7 +211,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                 </tr>
               </thead>
               <tbody>
-                {itensAberto.map((item) => {
+                {itensAtivos.map((item) => {
                   const temValor = item.valorUnitario != null;
                   const quantidadeFaturada = item.quantidadeFaturada || 0;
                   const saldoFaturavel = (item.quantidadeEntregue || 0) - quantidadeFaturada;
@@ -266,6 +275,65 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                 })}
               </tbody>
             </table>
+          )}
+
+          {itensSemValor.length > 0 && (
+            <>
+              <h2 className="op-detalhe-titulo secao-titulo">Itens Sem Valor Cadastrado</h2>
+              <button
+                type="button"
+                className="btn-editar"
+                onClick={() => setMostrarSemValor((v) => !v)}
+              >
+                {mostrarSemValor ? 'Ocultar' : 'Ver'} itens já entregues sem valor ({itensSemValor.length})
+              </button>
+              {mostrarSemValor && (
+                <table className="tabela-itens">
+                  <thead>
+                    <tr>
+                      <th>Data Entrada</th>
+                      <th>OC Cliente</th>
+                      <th>OS DCA</th>
+                      <th>Item</th>
+                      <th>Quantidade</th>
+                      <th>Previsão de Entrega</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itensSemValor.map((item) => (
+                      <tr key={item.id}>
+                        <td>{formatarData(item.dataEntrada)}</td>
+                        <td>{item.ocCliente || '—'}</td>
+                        <td>{item.numeroOS}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn-codigo-desenho"
+                            onClick={() => setDesenhosModalItem(item)}
+                            title="Ver desenhos técnicos vinculados"
+                          >
+                            {item.codigoDesenho}
+                          </button>
+                        </td>
+                        <td>{item.quantidadePedido}</td>
+                        <td>{formatarData(item.previsaoEntrega)}</td>
+                        <td className="financeiro-acoes-cell">
+                          <button
+                            type="button"
+                            className="btn-editar financeiro-btn-editar"
+                            onClick={() => editarPedido(item.pedidoId)}
+                            title="Editar pedido (OC, valores, itens)"
+                          >
+                            <FiEdit2 />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </>
           )}
 
           <h2 className="op-detalhe-titulo secao-titulo">Itens Faturados</h2>
