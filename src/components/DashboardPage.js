@@ -11,6 +11,7 @@ const DashboardPage = ({
   novos,
   andamento,
   concluidos,
+  concluidosTotal,
   busca,
   setBusca,
   carregarPedidos,
@@ -41,7 +42,7 @@ const DashboardPage = ({
       {mensagem && <p className={mensagem.includes('Erro') ? 'erro' : 'sucesso'}>{mensagem}</p>}
       {isLoading && <p className="loading">Carregando pedidos...</p>}
 
-      <StatsBar novos={novos} andamento={andamento} concluidos={concluidos} />
+      <StatsBar novos={novos} andamento={andamento} concluidosTotal={concluidosTotal} />
 
       <ExecucoesAtivasPanel />
 

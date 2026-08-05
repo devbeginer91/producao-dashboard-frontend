@@ -6,11 +6,29 @@ import api from '../api';
 const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) => {
   const [chicotes, setChicotes] = useState([]);
   const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
+  // `todosPedidos` só tem os pedidos ativos (novo/andamento) carregados em memória — pedidos
+  // concluídos não ficam mais todos ali. Pra continuar achando OS antigas, complementa com
+  // uma busca leve no backend (debounced), que varre o histórico inteiro sem trazer produção.
+  const [resultadosBackend, setResultadosBackend] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     api.get('/chicotes').then((r) => setChicotes(r.data)).catch(() => setChicotes([]));
   }, []);
+
+  useEffect(() => {
+    const termo = busca.trim();
+    if (termo.length < 2) {
+      setResultadosBackend([]);
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      api.get('/pedidos/buscar', { params: { termo } })
+        .then((r) => setResultadosBackend(r.data))
+        .catch(() => setResultadosBackend([]));
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [busca]);
 
   const filtrarPedidos = (lista) => {
     if (!busca) return [];
@@ -36,7 +54,12 @@ const Busca = ({ busca, setBusca, carregarPedidos, todosPedidos, exportarPDF }) 
     setMostrarSugestoes(false);
   };
 
-  const pedidosEncontrados = filtrarPedidos(todosPedidos);
+  const pedidosLocais = filtrarPedidos(todosPedidos);
+  const idsLocais = new Set(pedidosLocais.map((p) => p.id));
+  const pedidosEncontrados = [
+    ...pedidosLocais,
+    ...resultadosBackend.filter((p) => !idsLocais.has(p.id)),
+  ];
   const chicotesEncontrados = filtrarChicotes(chicotes);
 
   return (

@@ -2,13 +2,13 @@ import React from 'react';
 import { FiInbox, FiClock, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
 import { isPastDue } from '../utils';
 
-const StatsBar = ({ novos, andamento, concluidos }) => {
+const StatsBar = ({ novos, andamento, concluidosTotal }) => {
   const atrasados = [...novos, ...andamento].filter((p) => isPastDue(p.previsaoEntrega, p.status)).length;
 
   const tiles = [
     { label: 'Novos', value: novos.length, icon: FiInbox, tone: 'info' },
     { label: 'Em Andamento', value: andamento.length, icon: FiClock, tone: 'accent' },
-    { label: 'Concluídos', value: concluidos.length, icon: FiCheckCircle, tone: 'success' },
+    { label: 'Concluídos', value: concluidosTotal || 0, icon: FiCheckCircle, tone: 'success' },
     { label: 'Atrasados', value: atrasados, icon: FiAlertTriangle, tone: 'danger' },
   ];
 

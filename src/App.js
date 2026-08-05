@@ -97,6 +97,10 @@ function App() {
   }, [auth]);
   const [pedidos, setPedidos] = useState([]);
   const [pedidosAndamento, setPedidosAndamento] = useState([]);
+  // Total de concluídos vem de um resumo leve (GET /pedidos/concluidos/resumo) — os
+  // pedidos concluídos em si (centenas) só são buscados sob demanda, por ano, na própria
+  // tela de Concluídos (PedidoListPage), não ficam carregados o tempo todo aqui.
+  const [totalConcluidos, setTotalConcluidos] = useState(0);
   const [pedidosConcluidos, setPedidosConcluidos] = useState([]);
   const [novoPedido, setNovoPedido] = useState(() => {
     const inicioInicial = formatDateToLocalISO(new Date(), 'novoPedido init');
@@ -184,7 +188,14 @@ function App() {
     }
     isFetching.current = true;
     try {
-      const response = dados ? { data: dados } : await api.get('/pedidos');
+      // status=ativo traz só novo+andamento — concluídos (centenas) são buscados sob
+      // demanda, por ano, direto na tela de Concluídos (ver PedidoListPage).
+      const [response] = await Promise.all([
+        dados ? Promise.resolve({ data: dados }) : api.get('/pedidos', { params: { status: 'ativo' } }),
+        dados
+          ? Promise.resolve()
+          : api.get('/pedidos/concluidos/resumo').then((r) => setTotalConcluidos(r.data.total)).catch(() => {}),
+      ]);
       const pedidosAtualizados = response.data.map((pedido) => {
         const inicioValido = formatDateToLocalISO(pedido.inicio, `fetchPedidos - pedido ${pedido.id}`);
         const dataConclusaoValida = pedido.dataConclusao ? formatDateToLocalISO(pedido.dataConclusao) : null;
@@ -227,7 +238,6 @@ function App() {
       };
       setPedidos(pedidosAtualizados.filter((p) => p.status === 'andamento').sort(sortByPrevisaoEntrega));
       setPedidosAndamento(pedidosAtualizados.filter((p) => p.status === 'novo').sort(sortByPrevisaoEntrega));
-      setPedidosConcluidos(pedidosAtualizados.filter((p) => p.status === 'concluido'));
       setIsLoading(false);
       lastFetchTimestamp.current = now;
 
@@ -290,7 +300,7 @@ function App() {
     };
   }, [isAuthenticated]);
 
-  const exportarPDF = () => {
+  const exportarPDF = async () => {
     const doc = new jsPDF();
     const headersAndamento = ['Empresa', 'Nº OS', 'Data Entrada', 'Previsão', 'Responsável', 'Início', 'Tempo'];
     const headersNovos = ['Empresa', 'Nº OS', 'Data Entrada', 'Previsão', 'Responsável', 'Início', 'Tempo'];
@@ -317,7 +327,17 @@ function App() {
     doc.addPage();
     addTable('Pedidos Novos', pedidosAndamento, headersNovos);
     doc.addPage();
-    addTable('Pedidos Concluídos', pedidosConcluidos, headersConcluidos);
+    // Concluídos não ficam pré-carregados (são centenas) — o PDF traz só o ano corrente;
+    // pra outros anos, exportar direto da tela de Concluídos com o ano selecionado.
+    const anoAtual = new Date().getFullYear();
+    let concluidosDoAno = [];
+    try {
+      const resposta = await api.get('/pedidos', { params: { status: 'concluido', ano: anoAtual } });
+      concluidosDoAno = resposta.data;
+    } catch (error) {
+      setMensagem('Erro ao buscar concluídos pra exportar: ' + error.message);
+    }
+    addTable(`Pedidos Concluídos (${anoAtual})`, concluidosDoAno, headersConcluidos);
     doc.save('pedidos_controle_producao.pdf');
   };
 
@@ -414,7 +434,7 @@ function App() {
                 sidebarCounts={{
                   novo: pedidosAndamento.length,
                   andamento: pedidos.length,
-                  concluido: pedidosConcluidos.length,
+                  concluido: totalConcluidos,
                 }}
                 onNavigateAndamento={onNavigateAndamento}
                 onLogout={handleLogout}
@@ -460,6 +480,7 @@ function App() {
                 novos={pedidosAndamento}
                 andamento={pedidos}
                 concluidos={pedidosConcluidos}
+                concluidosTotal={totalConcluidos}
                 busca={busca}
                 setBusca={setBusca}
                 carregarPedidos={carregarPedidos}
