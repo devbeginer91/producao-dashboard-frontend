@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMenu, FiChevronRight, FiSearch, FiZap, FiFileText } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiChevronRight, FiSearch, FiZap, FiFileText } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import api from '../api';
@@ -12,6 +12,7 @@ const ClientesChicotesPage = ({
   mostrarBuscaChicote = false,
   destinoBuscaChicote = (id) => `/chicotes-eletricos/chicote/${id}`,
   mostrarPdfPorCliente = false,
+  voltarRoute = null,
 }) => {
   const [clientes, setClientes] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -100,6 +101,12 @@ const ClientesChicotesPage = ({
         )}
         <h1>{titulo}</h1>
       </header>
+
+      {voltarRoute && (
+        <button className="op-voltar" onClick={() => navigate(voltarRoute)}>
+          <FiArrowLeft /> Voltar
+        </button>
+      )}
 
       {mostrarPdfPorCliente && todosChicotes.length > 0 && (
         <button type="button" className="btn-editar chicote-btn-pdf" onClick={emitirPdfPorCliente}>
