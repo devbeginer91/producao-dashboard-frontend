@@ -95,6 +95,33 @@ function App() {
     }
     localStorage.removeItem('isAuthenticated');
   }, [auth]);
+
+  // Sinal de "reiniciar app": recarrega a página sozinho quando o admin dispara um
+  // reinício (pós-deploy). Roda independente de login/tela — colaborador e PCP também
+  // recebem. Na primeira checagem só memoriza o valor atual (não recarrega quem acabou
+  // de abrir o app); só reage a mudanças depois disso.
+  useEffect(() => {
+    let ultimoValorVisto;
+    let primeiraChecagem = true;
+    const checarSinal = async () => {
+      try {
+        const { data } = await api.get('/app/reload-sinal');
+        if (primeiraChecagem) {
+          ultimoValorVisto = data.reloadEm;
+          primeiraChecagem = false;
+          return;
+        }
+        if (data.reloadEm && data.reloadEm !== ultimoValorVisto) {
+          window.location.reload();
+        }
+      } catch {
+        // Sem sinal de rede, sem problema — tenta de novo na próxima checagem.
+      }
+    };
+    checarSinal();
+    const poll = setInterval(checarSinal, 30000);
+    return () => clearInterval(poll);
+  }, []);
   const [pedidos, setPedidos] = useState([]);
   const [pedidosAndamento, setPedidosAndamento] = useState([]);
   // Total de concluídos vem de um resumo leve (GET /pedidos/concluidos/resumo) — os
@@ -345,6 +372,18 @@ function App() {
     setAuth(null);
   };
 
+  const dispararReiniciarApp = async () => {
+    if (!window.confirm('Reiniciar o app pra todo mundo agora? Quem estiver com a tela aberta (colaborador ou PCP) vai recarregar sozinho em até 30 segundos. Use depois de publicar uma atualização.')) {
+      return;
+    }
+    try {
+      await api.post('/app/reload-sinal/disparar');
+      setMensagem('Sinal enviado — todo mundo com o app aberto vai recarregar em até 30 segundos.');
+    } catch (error) {
+      setMensagem('Erro ao disparar reinício: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
   const cardActionProps = {
     setPedidos,
     setPedidosAndamento,
@@ -438,6 +477,7 @@ function App() {
                 }}
                 onNavigateAndamento={onNavigateAndamento}
                 onLogout={handleLogout}
+                onReiniciarApp={dispararReiniciarApp}
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
                 mostrarFormulario={mostrarFormulario}

@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX, FiUsers, FiTrendingUp, FiDollarSign, FiBarChart2, FiAlertCircle } from 'react-icons/fi';
+import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX, FiUsers, FiTrendingUp, FiDollarSign, FiBarChart2, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
 
-const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, isOpen, onClose }) => {
+const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, onReiniciarApp, isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const irParaHome = () => {
@@ -160,6 +160,9 @@ const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, isOpen, onClo
             </button>
             <button className="sidebar-nav-item" onClick={irParaUsuarios}>
               <FiUsers /> <span>Criar Usuários</span>
+            </button>
+            <button className="sidebar-nav-item" onClick={onReiniciarApp}>
+              <FiRefreshCw /> <span>Reiniciar App pra Todos</span>
             </button>
           </nav>
         )}

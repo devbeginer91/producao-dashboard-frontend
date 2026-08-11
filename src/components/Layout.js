@@ -12,6 +12,7 @@ const Layout = ({
   sidebarCounts,
   onNavigateAndamento,
   onLogout,
+  onReiniciarApp,
   sidebarOpen,
   setSidebarOpen,
   mostrarFormulario,
@@ -47,6 +48,7 @@ const Layout = ({
         counts={sidebarCounts}
         onNavigateAndamento={onNavigateAndamento}
         onLogout={onLogout}
+        onReiniciarApp={onReiniciarApp}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
