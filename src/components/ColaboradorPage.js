@@ -414,7 +414,9 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
                   {etapaAtual.quantidadeProduzida}/{etapaAtual.quantidadeProduzida + etapaAtual.quantidadeRestante} peças produzidas
                 </p>
               )}
-              <div className="op-cronometro">{formatarCronometro(tempoAtualEtapa(etapaAtual))}</div>
+              {!etapaAtual.concluida && (
+                <div className="op-cronometro">{formatarCronometro(tempoAtualEtapa(etapaAtual))}</div>
+              )}
 
               <div className="op-controles">
                 {!etapaAtual.minhaExecucao && !etapaAtual.concluida && (
