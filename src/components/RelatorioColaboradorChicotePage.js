@@ -192,6 +192,7 @@ const RelatorioColaboradorChicotePage = ({ setSidebarOpen }) => {
                       <th>OS</th>
                       <th>Início</th>
                       <th>Fim</th>
+                      <th>Peças</th>
                       <th>Tempo</th>
                     </tr>
                   </thead>
@@ -201,6 +202,7 @@ const RelatorioColaboradorChicotePage = ({ setSidebarOpen }) => {
                         <td>{ex.empresa} — {ex.numeroOS}</td>
                         <td>{formatarDataHora(ex.inicio)}</td>
                         <td>{formatarDataHora(ex.dataConclusao)}</td>
+                        <td>{ex.quantidadeProduzida}</td>
                         <td className="tabela-itens-tempo">{formatarCronometro(ex.tempoSegundos)}</td>
                       </tr>
                     ))}

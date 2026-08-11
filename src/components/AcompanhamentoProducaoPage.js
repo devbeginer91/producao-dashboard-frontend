@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiMenu, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiCheckCircle, FiRefreshCw, FiUser } from 'react-icons/fi';
+import { FiMenu, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiCheckCircle, FiRefreshCw, FiUser, FiPlay } from 'react-icons/fi';
 import api from '../api';
 import DesenhosVinculadosModal from './DesenhosVinculadosModal';
 
@@ -85,6 +85,16 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
       carregar();
     } catch (error) {
       setMensagem('Erro ao zerar tempo: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const retomarEtapa = async (execucaoId) => {
+    if (!window.confirm('Retomar essa etapa? Ela volta para "em andamento" mantendo o tempo já registrado (a contagem continua de onde parou) — use quando ela foi concluída por engano. A quantidade de peças registrada nessa conclusão será apagada.')) return;
+    try {
+      await api.put(`/execucoes-etapa/${execucaoId}/reabrir`);
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao retomar etapa: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -275,6 +285,11 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen }) => {
                     </div>
                     <div className="monitor-etapa-acoes">
                       <span className="monitor-etapa-tempo">{formatarCronometro(tempoDeExecucao(ex))}</span>
+                      {ex.status === 'concluido' && (
+                        <button className="btn-editar" onClick={() => retomarEtapa(ex.id)}>
+                          <FiPlay /> Retomar
+                        </button>
+                      )}
                       <button className="btn-excluir" onClick={() => zerarTempo(ex.id)}>
                         <FiRefreshCw /> Zerar
                       </button>

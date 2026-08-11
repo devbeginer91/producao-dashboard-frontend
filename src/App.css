@@ -2689,6 +2689,14 @@ body {
   margin: 0;
 }
 
+.op-etapa-progresso {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+
 .op-cronometro {
   font-family: ui-monospace, "SF Mono", Consolas, monospace;
   font-size: 34px;

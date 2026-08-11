@@ -55,6 +55,8 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
   const [pedidoParaObs, setPedidoParaObs] = useState(null);
   const [observacaoTexto, setObservacaoTexto] = useState('');
   const [desenhosModalItem, setDesenhosModalItem] = useState(null);
+  const [execucaoParaConcluir, setExecucaoParaConcluir] = useState(null);
+  const [quantidadeConcluir, setQuantidadeConcluir] = useState('');
   const navigate = useNavigate();
 
   const carregar = async () => {
@@ -153,7 +155,22 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
     executar(() => api.post('/execucoes-etapa/iniciar', { itemPedidoId: item.id, etapaChicoteId: etapa.id, colaboradorId: colaborador.id }));
   const pausar = (execucaoId) => executar(() => api.put(`/execucoes-etapa/${execucaoId}/pausar`));
   const retomar = (execucaoId) => executar(() => api.put(`/execucoes-etapa/${execucaoId}/retomar`));
-  const concluir = (execucaoId) => executar(() => api.put(`/execucoes-etapa/${execucaoId}/concluir`));
+
+  const abrirModalConcluir = (etapa) => {
+    setExecucaoParaConcluir(etapa.minhaExecucao.id);
+    setQuantidadeConcluir(etapa.quantidadeRestante != null ? String(etapa.quantidadeRestante) : '');
+  };
+
+  const confirmarConclusao = async () => {
+    const quantidade = parseInt(quantidadeConcluir, 10);
+    if (!quantidade || quantidade <= 0) {
+      setMensagem('Informe quantas peças foram feitas.');
+      return;
+    }
+    await executar(() => api.put(`/execucoes-etapa/${execucaoParaConcluir}/concluir`, { quantidadeProduzida: quantidade }));
+    setExecucaoParaConcluir(null);
+    setQuantidadeConcluir('');
+  };
 
   const abrirOs = (id) => {
     setOsSelecionadaId(id);
@@ -380,10 +397,10 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
             {itemAtual.etapas.map((etapa) => (
               <button
                 key={etapa.id}
-                className={`op-etapa-tab op-etapa-${etapa.execucaoAtual?.status || 'pendente'} ${etapaSelecionadaId === etapa.id ? 'ativa' : ''}`}
+                className={`op-etapa-tab op-etapa-${etapa.concluida ? 'concluido' : etapa.execucaoAtual?.status || 'pendente'} ${etapaSelecionadaId === etapa.id ? 'ativa' : ''}`}
                 onClick={() => setEtapaSelecionadaId(etapa.id)}
               >
-                {etapa.ordem}. {etapa.nome} {etapa.execucaoAtual?.status === 'concluido' && <FiCheckCircle />}
+                {etapa.ordem}. {etapa.nome} {etapa.concluida && <FiCheckCircle />}
               </button>
             ))}
           </div>
@@ -392,10 +409,15 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
             <div className="op-etapa-painel">
               <p className="op-etapa-meta">{etapaAtual.setor} · {etapaAtual.quemTexto}</p>
               {etapaAtual.instrucoes && <p className="op-etapa-instrucoes">{etapaAtual.instrucoes}</p>}
+              {etapaAtual.quantidadeRestante != null && (
+                <p className="op-etapa-progresso">
+                  {etapaAtual.quantidadeProduzida}/{etapaAtual.quantidadeProduzida + etapaAtual.quantidadeRestante} peças produzidas
+                </p>
+              )}
               <div className="op-cronometro">{formatarCronometro(tempoAtualEtapa(etapaAtual))}</div>
 
               <div className="op-controles">
-                {!etapaAtual.minhaExecucao && (
+                {!etapaAtual.minhaExecucao && !etapaAtual.concluida && (
                   <button className="btn-concluir" onClick={() => iniciar(itemAtual, etapaAtual)}>
                     <FiPlay /> Início
                   </button>
@@ -410,12 +432,12 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
                     <FiPlay /> Retomar
                   </button>
                 )}
-                {etapaAtual.minhaExecucao && etapaAtual.minhaExecucao.status !== 'concluido' && (
-                  <button className="btn-excluir" onClick={() => concluir(etapaAtual.minhaExecucao.id)}>
+                {etapaAtual.minhaExecucao && (
+                  <button className="btn-excluir" onClick={() => abrirModalConcluir(etapaAtual)}>
                     <FiCheckCircle /> Concluir
                   </button>
                 )}
-                {etapaAtual.minhaExecucao?.status === 'concluido' && (
+                {etapaAtual.concluida && (
                   <p className="op-etapa-concluida">
                     <FiCheckCircle /> Etapa concluída
                   </p>
@@ -427,6 +449,7 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
                 .map((ex) => (
                   <p key={ex.id} className="op-etapa-outro-colaborador">
                     <FiUser /> Também executado por {ex.colaboradorNome} — {statusLabel[ex.status]} · {formatarCronometro(tempoDeExecucao(ex))}
+                    {ex.status === 'concluido' && ex.quantidadeProduzida != null && ` · ${ex.quantidadeProduzida} peça(s)`}
                   </p>
                 ))}
             </div>
@@ -450,6 +473,28 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
           codigoDesenho={desenhosModalItem.codigoDesenho}
           onClose={() => setDesenhosModalItem(null)}
         />
+      )}
+
+      {execucaoParaConcluir && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2><FiCheckCircle /> Quantas peças foram feitas?</h2>
+            <input
+              type="number"
+              min="1"
+              autoFocus
+              value={quantidadeConcluir}
+              onChange={(e) => setQuantidadeConcluir(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && confirmarConclusao()}
+            />
+            <button onClick={confirmarConclusao}>
+              <FiCheckCircle /> Confirmar
+            </button>
+            <button className="btn-fechar-modal" onClick={() => { setExecucaoParaConcluir(null); setQuantidadeConcluir(''); }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

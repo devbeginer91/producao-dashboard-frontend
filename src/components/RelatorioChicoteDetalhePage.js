@@ -82,7 +82,7 @@ const RelatorioChicoteDetalhePage = ({ setSidebarOpen }) => {
                 <tr>
                   <th>OS</th>
                   <th>Concluído em</th>
-                  <th>Qtd</th>
+                  <th>Peças produzidas</th>
                   <th>Tempo real (por peça)</th>
                   <th>Situação</th>
                 </tr>
@@ -94,7 +94,7 @@ const RelatorioChicoteDetalhePage = ({ setSidebarOpen }) => {
                     <tr key={ex.itemPedidoId}>
                       <td>{ex.empresa} — {ex.numeroOS}</td>
                       <td>{formatarDataHora(ex.dataConclusao)}</td>
-                      <td>{ex.quantidadePedido}</td>
+                      <td>{ex.quantidadeProduzida}/{ex.quantidadePedido}</td>
                       <td className="tabela-itens-tempo">{formatarCronometro(ex.tempoRealSegundos)}</td>
                       <td>
                         {info ? (
