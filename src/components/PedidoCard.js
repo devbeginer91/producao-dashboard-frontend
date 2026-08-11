@@ -49,8 +49,9 @@ const PedidoCard = ({
   setPedidoParaEditar,
   setNovoPedido,
   setMostrarFormulario,
+  readOnly,
 }) => {
-  const [expandido, setExpandido] = useState(false);
+  const [expandido, setExpandido] = useState(!!readOnly);
   const [obsPreview, setObsPreview] = useState(null);
   const [obsPreviewLoading, setObsPreviewLoading] = useState(false);
   const [showObsTooltip, setShowObsTooltip] = useState(false);
@@ -317,19 +318,21 @@ const PedidoCard = ({
         </table>
       )}
 
-      <div className="pedido-card-actions">
-        {tipo === 'andamento' && (
-          <button className="btn-concluir" onClick={concluirPedido}><FiCheckCircle /> Concluir</button>
-        )}
-        {tipo === 'andamento' && (
-          <button className="btn-editar" onClick={editarQuantidadeEntregue}><FiPackage /> Entregas</button>
-        )}
-        {tipo === 'novo' && (
-          <button className="btn-editar" onClick={editarPedidoNovo}><FiEdit2 /> Editar</button>
-        )}
-        <button className="btn-observacao" onClick={abrirModalObservacao}><FiMessageSquare /> Obs</button>
-        <button className="btn-excluir" onClick={excluirPedido}><FiTrash2 /> Excluir</button>
-      </div>
+      {!readOnly && (
+        <div className="pedido-card-actions">
+          {tipo === 'andamento' && (
+            <button className="btn-concluir" onClick={concluirPedido}><FiCheckCircle /> Concluir</button>
+          )}
+          {tipo === 'andamento' && (
+            <button className="btn-editar" onClick={editarQuantidadeEntregue}><FiPackage /> Entregas</button>
+          )}
+          {tipo === 'novo' && (
+            <button className="btn-editar" onClick={editarPedidoNovo}><FiEdit2 /> Editar</button>
+          )}
+          <button className="btn-observacao" onClick={abrirModalObservacao}><FiMessageSquare /> Obs</button>
+          <button className="btn-excluir" onClick={excluirPedido}><FiTrash2 /> Excluir</button>
+        </div>
+      )}
 
       {desenhosModalItem && (
         <DesenhosVinculadosModal

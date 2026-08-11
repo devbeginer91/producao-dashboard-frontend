@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FiMenu, FiArrowLeft, FiArrowUp, FiArrowDown, FiMinus } from 'react-icons/fi';
 import api from '../api';
 import { formatarDataHora } from '../utils';
+import OsCardModal from './OsCardModal';
 
 const formatarCronometro = (segundos) => {
   if (segundos == null) return '—';
@@ -26,6 +27,7 @@ const RelatorioChicoteDetalhePage = ({ setSidebarOpen }) => {
   const [relatorio, setRelatorio] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
+  const [osCardAbertaId, setOsCardAbertaId] = useState(null);
 
   useEffect(() => {
     setCarregando(true);
@@ -92,7 +94,11 @@ const RelatorioChicoteDetalhePage = ({ setSidebarOpen }) => {
                   const info = ex.classificacao ? classificacaoInfo[ex.classificacao] : null;
                   return (
                     <tr key={ex.itemPedidoId}>
-                      <td>{ex.empresa} — {ex.numeroOS}</td>
+                      <td>
+                        <button type="button" className="btn-os-clicavel" onClick={() => setOsCardAbertaId(ex.pedidoId)}>
+                          {ex.empresa} — {ex.numeroOS}
+                        </button>
+                      </td>
                       <td>{formatarDataHora(ex.dataConclusao)}</td>
                       <td>{ex.quantidadeProduzida}/{ex.quantidadePedido}</td>
                       <td className="tabela-itens-tempo">{formatarCronometro(ex.tempoRealSegundos)}</td>
@@ -108,6 +114,10 @@ const RelatorioChicoteDetalhePage = ({ setSidebarOpen }) => {
             </table>
           )}
         </>
+      )}
+
+      {osCardAbertaId && (
+        <OsCardModal pedidoId={osCardAbertaId} onClose={() => setOsCardAbertaId(null)} />
       )}
     </>
   );

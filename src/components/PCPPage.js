@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { FiMenu, FiStar, FiSearch } from 'react-icons/fi';
 import api from '../api';
 import { filtrarPedidosPorBusca } from '../utils';
+import OsCardModal from './OsCardModal';
 
 const PCPPage = ({ setSidebarOpen, pcpNome, onLogout }) => {
   const [pedidos, setPedidos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const [busca, setBusca] = useState('');
+  const [osCardAbertaId, setOsCardAbertaId] = useState(null);
 
   const carregar = async () => {
     setCarregando(true);
@@ -106,14 +108,18 @@ const PCPPage = ({ setSidebarOpen, pcpNome, onLogout }) => {
           </h2>
           <div className="pcp-list">
             {porCliente.get(cliente).map((pedido) => (
-              <div key={pedido.id} className={`pcp-row ${pedido.prioritario ? 'pcp-row-prioritario' : ''}`}>
+              <div
+                key={pedido.id}
+                className={`pcp-row pcp-row-clicavel ${pedido.prioritario ? 'pcp-row-prioritario' : ''}`}
+                onClick={() => setOsCardAbertaId(pedido.id)}
+              >
                 <div className="pcp-row-info">
                   <span className="pcp-row-os">OS {pedido.numeroOS}</span>
                   <span className={`pcp-status pcp-status-${pedido.status}`}>{pedido.status}</span>
                 </div>
 
                 {pedido.prioritario && (
-                  <div className="pcp-row-ordem">
+                  <div className="pcp-row-ordem" onClick={(e) => e.stopPropagation()}>
                     <label htmlFor={`ordem-${pedido.id}`}>Ordem</label>
                     <input
                       id={`ordem-${pedido.id}`}
@@ -127,7 +133,7 @@ const PCPPage = ({ setSidebarOpen, pcpNome, onLogout }) => {
 
                 <button
                   className={pedido.prioritario ? 'btn-concluir' : 'btn-observacao'}
-                  onClick={() => alternarPrioridade(pedido)}
+                  onClick={(e) => { e.stopPropagation(); alternarPrioridade(pedido); }}
                 >
                   <FiStar /> {pedido.prioritario ? 'Prioridade ativa' : 'Marcar prioridade'}
                 </button>
@@ -136,6 +142,10 @@ const PCPPage = ({ setSidebarOpen, pcpNome, onLogout }) => {
           </div>
         </div>
       ))}
+
+      {osCardAbertaId && (
+        <OsCardModal pedidoId={osCardAbertaId} onClose={() => setOsCardAbertaId(null)} />
+      )}
     </>
   );
 };

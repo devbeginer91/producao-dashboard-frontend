@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FiMenu, FiArrowLeft, FiChevronRight, FiAward } from 'react-icons/fi';
 import api from '../api';
 import { formatarDataHora } from '../utils';
+import OsCardModal from './OsCardModal';
 
 const formatarCronometro = (segundos) => {
   if (segundos == null) return '—';
@@ -28,6 +29,7 @@ const RelatorioColaboradorChicotePage = ({ setSidebarOpen }) => {
   const [colaboradorSelecionado, setColaboradorSelecionado] = useState(null);
   const [detalheColaborador, setDetalheColaborador] = useState(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
+  const [osCardAbertaId, setOsCardAbertaId] = useState(null);
 
   useEffect(() => {
     setCarregando(true);
@@ -199,7 +201,11 @@ const RelatorioColaboradorChicotePage = ({ setSidebarOpen }) => {
                   <tbody>
                     {detalheColaborador.execucoes.map((ex) => (
                       <tr key={ex.id}>
-                        <td>{ex.empresa} — {ex.numeroOS}</td>
+                        <td>
+                          <button type="button" className="btn-os-clicavel" onClick={() => setOsCardAbertaId(ex.pedidoId)}>
+                            {ex.empresa} — {ex.numeroOS}
+                          </button>
+                        </td>
                         <td>{formatarDataHora(ex.inicio)}</td>
                         <td>{formatarDataHora(ex.dataConclusao)}</td>
                         <td>{ex.quantidadeProduzida}</td>
@@ -212,6 +218,10 @@ const RelatorioColaboradorChicotePage = ({ setSidebarOpen }) => {
             </>
           )}
         </>
+      )}
+
+      {osCardAbertaId && (
+        <OsCardModal pedidoId={osCardAbertaId} onClose={() => setOsCardAbertaId(null)} />
       )}
     </>
   );

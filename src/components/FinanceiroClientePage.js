@@ -4,6 +4,7 @@ import { FiMenu, FiArrowLeft, FiPlus, FiCheckCircle, FiZap, FiDollarSign, FiEdit
 import api from '../api';
 import { formatarDataHora } from '../utils';
 import DesenhosVinculadosModal from './DesenhosVinculadosModal';
+import OsCardModal from './OsCardModal';
 
 const formatarData = (data) => {
   if (!data || typeof data !== 'string' || data.includes('undefined')) {
@@ -27,6 +28,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
   const [mensagem, setMensagem] = useState('');
   const [faturando, setFaturando] = useState({});
   const [desenhosModalItem, setDesenhosModalItem] = useState(null);
+  const [osCardAbertaId, setOsCardAbertaId] = useState(null);
   // null = ainda não pedido. Itens faturados só são buscados quando o usuário clica
   // em "Ver itens faturados" — evita carregar o histórico inteiro (às vezes anos) de cara.
   const [itensFaturados, setItensFaturados] = useState(null);
@@ -222,7 +224,11 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                     <tr key={item.id} className={prontoParaFaturar ? 'financeiro-item-pronto' : ''}>
                       <td>{formatarData(item.dataEntrada)}</td>
                       <td>{item.ocCliente || '—'}</td>
-                      <td>{item.numeroOS}</td>
+                      <td>
+                        <button type="button" className="btn-os-clicavel" onClick={() => setOsCardAbertaId(item.pedidoId)}>
+                          {item.numeroOS}
+                        </button>
+                      </td>
                       <td>
                       <button
                         type="button"
@@ -305,7 +311,11 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                       <tr key={item.id}>
                         <td>{formatarData(item.dataEntrada)}</td>
                         <td>{item.ocCliente || '—'}</td>
-                        <td>{item.numeroOS}</td>
+                        <td>
+                        <button type="button" className="btn-os-clicavel" onClick={() => setOsCardAbertaId(item.pedidoId)}>
+                          {item.numeroOS}
+                        </button>
+                      </td>
                         <td>
                           <button
                             type="button"
@@ -363,7 +373,11 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                   <tr key={item.id}>
                     <td>{formatarData(item.dataEntrada)}</td>
                     <td>{item.ocCliente || '—'}</td>
-                    <td>{item.numeroOS}</td>
+                    <td>
+                        <button type="button" className="btn-os-clicavel" onClick={() => setOsCardAbertaId(item.pedidoId)}>
+                          {item.numeroOS}
+                        </button>
+                      </td>
                     <td>
                       <button
                         type="button"
@@ -399,6 +413,10 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
           codigoDesenho={desenhosModalItem.codigoDesenho}
           onClose={() => setDesenhosModalItem(null)}
         />
+      )}
+
+      {osCardAbertaId && (
+        <OsCardModal pedidoId={osCardAbertaId} onClose={() => setOsCardAbertaId(null)} />
       )}
     </>
   );

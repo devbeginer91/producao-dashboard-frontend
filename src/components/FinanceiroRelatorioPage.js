@@ -3,6 +3,7 @@ import { FiMenu, FiDollarSign } from 'react-icons/fi';
 import api from '../api';
 import { formatarDataHora } from '../utils';
 import DesenhosVinculadosModal from './DesenhosVinculadosModal';
+import OsCardModal from './OsCardModal';
 
 const formatarMoeda = (valor) =>
   (Number(valor) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -16,6 +17,7 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const [desenhosModalItem, setDesenhosModalItem] = useState(null);
+  const [osCardAbertaId, setOsCardAbertaId] = useState(null);
 
   // Carrega a lista de clientes com faturamento (sem filtro), só uma vez, pro seletor.
   useEffect(() => {
@@ -128,7 +130,11 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
                     <td>{formatarDataHora(item.dataFaturamento)}</td>
                     <td>{item.empresa}</td>
                     <td>{item.ocCliente || '—'}</td>
-                    <td>{item.numeroOS}</td>
+                    <td>
+                      <button type="button" className="btn-os-clicavel" onClick={() => setOsCardAbertaId(item.pedidoId)}>
+                        {item.numeroOS}
+                      </button>
+                    </td>
                     <td>
                       <button
                         type="button"
@@ -163,6 +169,10 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
           codigoDesenho={desenhosModalItem.codigoDesenho}
           onClose={() => setDesenhosModalItem(null)}
         />
+      )}
+
+      {osCardAbertaId && (
+        <OsCardModal pedidoId={osCardAbertaId} onClose={() => setOsCardAbertaId(null)} />
       )}
     </>
   );

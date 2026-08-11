@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FiMenu, FiUserPlus, FiTrash2, FiUser, FiHash, FiLock, FiBriefcase, FiChevronDown, FiChevronUp, FiClock } from 'react-icons/fi';
 import api from '../api';
 import { formatarDataHora } from '../utils';
+import OsCardModal from './OsCardModal';
 
 const formatarCronometro = (segundos) => {
   if (segundos == null) return '—';
@@ -164,6 +165,7 @@ const ColaboradoresTab = () => {
   const [historicoAbertoId, setHistoricoAbertoId] = useState(null);
   const [historico, setHistorico] = useState(null);
   const [carregandoHistorico, setCarregandoHistorico] = useState(false);
+  const [osCardAbertaId, setOsCardAbertaId] = useState(null);
 
   const toggleHistorico = (colaborador) => {
     if (historicoAbertoId === colaborador.id) {
@@ -316,7 +318,11 @@ const ColaboradoresTab = () => {
                           <tr key={ex.id}>
                             <td>{ex.cliente} — {ex.codigoItemCliente}</td>
                             <td>{ex.etapaNome}</td>
-                            <td>{ex.empresa} — {ex.numeroOS}</td>
+                            <td>
+                              <button type="button" className="btn-os-clicavel" onClick={() => setOsCardAbertaId(ex.pedidoId)}>
+                                {ex.empresa} — {ex.numeroOS}
+                              </button>
+                            </td>
                             <td>{formatarDataHora(ex.inicio)}</td>
                             <td>{ex.dataConclusao ? formatarDataHora(ex.dataConclusao) : '—'}</td>
                             <td className="tabela-itens-tempo">{formatarCronometro(ex.tempoSegundos)}</td>
@@ -336,6 +342,10 @@ const ColaboradoresTab = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {osCardAbertaId && (
+        <OsCardModal pedidoId={osCardAbertaId} onClose={() => setOsCardAbertaId(null)} />
       )}
     </>
   );

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { FiActivity, FiUser } from 'react-icons/fi';
 import api from '../api';
 import DesenhosVinculadosModal from './DesenhosVinculadosModal';
+import OsCardModal from './OsCardModal';
 
 const formatarCronometro = (segundos) => {
   const totalSegundos = Math.max(0, Math.round(segundos));
@@ -17,7 +18,7 @@ const agruparPorOs = (execucoes) => {
   execucoes.forEach((exec) => {
     const chaveOs = `${exec.empresa}__${exec.numeroOS}`;
     if (!porOs.has(chaveOs)) {
-      porOs.set(chaveOs, { empresa: exec.empresa, numeroOS: exec.numeroOS, itens: new Map() });
+      porOs.set(chaveOs, { empresa: exec.empresa, numeroOS: exec.numeroOS, pedidoId: exec.pedidoId, itens: new Map() });
     }
     const os = porOs.get(chaveOs);
     if (!os.itens.has(exec.codigoDesenho)) {
@@ -41,6 +42,7 @@ const ExecucoesAtivasPanel = () => {
   const [, forcarTick] = useState(0);
   const referencias = useRef({});
   const [desenhosModalItem, setDesenhosModalItem] = useState(null);
+  const [osCardAbertaId, setOsCardAbertaId] = useState(null);
 
   const carregar = () => {
     api.get('/execucoes-etapa/ativas')
@@ -86,10 +88,10 @@ const ExecucoesAtivasPanel = () => {
       <div className="execucoes-ativas-grid">
         {ordens.map((os) => (
           <div key={`${os.empresa}__${os.numeroOS}`} className="execucao-ativa-card">
-            <div className="execucao-ativa-header">
+            <button type="button" className="execucao-ativa-header btn-os-clicavel" onClick={() => setOsCardAbertaId(os.pedidoId)}>
               <span className="execucao-ativa-empresa">{os.empresa}</span>
               <span className="execucao-ativa-os">OS {os.numeroOS}</span>
-            </div>
+            </button>
             {os.itens.map((item) => (
               <div key={item.codigoDesenho} className="execucao-ativa-item-grupo">
                 <button
@@ -119,6 +121,10 @@ const ExecucoesAtivasPanel = () => {
           codigoDesenho={desenhosModalItem.codigoDesenho}
           onClose={() => setDesenhosModalItem(null)}
         />
+      )}
+
+      {osCardAbertaId && (
+        <OsCardModal pedidoId={osCardAbertaId} onClose={() => setOsCardAbertaId(null)} />
       )}
     </div>
   );
