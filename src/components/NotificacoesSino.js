@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiBell, FiX } from 'react-icons/fi';
+import { FiBell, FiX, FiSmartphone } from 'react-icons/fi';
 import api from '../api';
 import { formatarDataHora } from '../utils';
+import { suportaPush, obterInscricaoAtual, ativarPush, desativarPush } from '../pushNotifications';
 
 const POLL_MS = 8000;
 const TOAST_DURACAO_MS = 8000;
@@ -14,6 +15,30 @@ const NotificacoesSino = () => {
   const ultimoIdVistoRef = useRef(null);
   const navigate = useNavigate();
   const containerRef = useRef(null);
+  const [pushAtivo, setPushAtivo] = useState(false);
+  const [pushCarregando, setPushCarregando] = useState(false);
+
+  useEffect(() => {
+    if (!suportaPush()) return;
+    obterInscricaoAtual().then((sub) => setPushAtivo(!!sub)).catch(() => {});
+  }, []);
+
+  const alternarPush = async () => {
+    setPushCarregando(true);
+    try {
+      if (pushAtivo) {
+        await desativarPush();
+        setPushAtivo(false);
+      } else {
+        await ativarPush();
+        setPushAtivo(true);
+      }
+    } catch (error) {
+      window.alert(error.message);
+    } finally {
+      setPushCarregando(false);
+    }
+  };
 
   const dispensarToast = (toastId) => {
     setToasts((prev) => prev.filter((t) => t.toastId !== toastId));
@@ -87,6 +112,21 @@ const NotificacoesSino = () => {
                   <span className="notificacoes-sino-item-data">{formatarDataHora(n.criadoEm)}</span>
                 </button>
               ))
+            )}
+            {suportaPush() && (
+              <button
+                type="button"
+                className="notificacoes-sino-push-toggle"
+                onClick={alternarPush}
+                disabled={pushCarregando}
+              >
+                <FiSmartphone />
+                {pushCarregando
+                  ? 'Aguarde...'
+                  : pushAtivo
+                    ? 'Desativar notificações no celular'
+                    : 'Ativar notificações no celular'}
+              </button>
             )}
           </div>
         )}
