@@ -163,7 +163,7 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
 
   const confirmarConclusao = async () => {
     const quantidade = parseInt(quantidadeConcluir, 10);
-    if (!quantidade || quantidade <= 0) {
+    if (isNaN(quantidade) || quantidade < 0) {
       setMensagem('Informe quantas peças foram feitas.');
       return;
     }
@@ -481,7 +481,7 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
             <h2><FiCheckCircle /> Quantas peças foram feitas?</h2>
             <input
               type="number"
-              min="1"
+              min="0"
               autoFocus
               value={quantidadeConcluir}
               onChange={(e) => setQuantidadeConcluir(e.target.value)}
