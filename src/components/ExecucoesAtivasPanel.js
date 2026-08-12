@@ -105,8 +105,10 @@ const ExecucoesAtivasPanel = () => {
                 {item.execucoes.map((exec) => (
                   <div key={exec.id} className="execucao-ativa-etapa-linha">
                     <span className="execucao-ativa-etapa">{exec.etapaOrdem}. {exec.etapaNome}</span>
-                    <span className="execucao-ativa-colaborador"><FiUser /> {exec.colaboradorNome}</span>
-                    <span className="execucao-ativa-tempo">{formatarCronometro(tempoAtual(exec))}</span>
+                    <span className="execucao-ativa-etapa-meta">
+                      <span className="execucao-ativa-colaborador"><FiUser /> {exec.colaboradorNome}</span>
+                      <span className="execucao-ativa-tempo">{formatarCronometro(tempoAtual(exec))}</span>
+                    </span>
                   </div>
                 ))}
               </div>
