@@ -33,6 +33,10 @@ const ChicoteDetalhePage = ({
   const [formEtapa, setFormEtapa] = useState(etapaVazia);
   const [mostrarFormNovaEtapa, setMostrarFormNovaEtapa] = useState(false);
   const [novaEtapa, setNovaEtapa] = useState(etapaVazia);
+  const [mostrarCopiarEtapas, setMostrarCopiarEtapas] = useState(false);
+  const [chicotesParaCopiar, setChicotesParaCopiar] = useState([]);
+  const [chicoteOrigemId, setChicoteOrigemId] = useState('');
+  const [copiandoEtapas, setCopiandoEtapas] = useState(false);
   const [calculandoMedia, setCalculandoMedia] = useState(false);
   const [historicoAberto, setHistoricoAberto] = useState(false);
 
@@ -232,6 +236,34 @@ const ChicoteDetalhePage = ({
     }
   };
 
+  const abrirCopiarEtapas = () => {
+    setMostrarCopiarEtapas(true);
+    if (chicotesParaCopiar.length === 0) {
+      api.get('/chicotes')
+        .then((r) => setChicotesParaCopiar(r.data.filter((c) => c.temEtapas && c.id !== Number(id))))
+        .catch((error) => setMensagem('Erro ao carregar chicotes: ' + (error.response?.data?.message || error.message)));
+    }
+  };
+
+  const copiarEtapas = async () => {
+    if (!chicoteOrigemId) {
+      setMensagem('Escolha de qual chicote copiar.');
+      return;
+    }
+    setCopiandoEtapas(true);
+    try {
+      const { data } = await api.post(`/chicotes/${id}/etapas/copiar`, { origemChicoteId: Number(chicoteOrigemId) });
+      setMensagem(`${data.copiadas} etapa(s) copiada(s) com sucesso.`);
+      setMostrarCopiarEtapas(false);
+      setChicoteOrigemId('');
+      carregar();
+    } catch (error) {
+      setMensagem('Erro ao copiar etapas: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setCopiandoEtapas(false);
+    }
+  };
+
   const emitirPdfEtapas = () => {
     const doc = new jsPDF();
     doc.setFontSize(14);
@@ -337,6 +369,32 @@ const ChicoteDetalhePage = ({
       )}
       {chicote.etapas.length === 0 && !mostrarFormNovaEtapa && (
         <p className="pedido-grid-empty">Nenhuma etapa cadastrada ainda. Cadastre o passo a passo pra poder vincular pedidos a esse chicote.</p>
+      )}
+
+      {!somenteLeitura && !mostrarCopiarEtapas && (
+        <button type="button" className="btn-editar" onClick={abrirCopiarEtapas}>
+          <FiFile /> Copiar etapas de outro chicote
+        </button>
+      )}
+
+      {!somenteLeitura && mostrarCopiarEtapas && (
+        <div className="chicote-copiar-etapas">
+          <label htmlFor="chicote-origem">Copiar o passo a passo de:</label>
+          <select id="chicote-origem" value={chicoteOrigemId} onChange={(e) => setChicoteOrigemId(e.target.value)}>
+            <option value="">Selecione um chicote...</option>
+            {chicotesParaCopiar.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.cliente} — {c.codigoItemCliente}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="btn-submit" onClick={copiarEtapas} disabled={copiandoEtapas}>
+            <FiFile /> {copiandoEtapas ? 'Copiando...' : 'Copiar'}
+          </button>
+          <button type="button" className="btn-editar" onClick={() => { setMostrarCopiarEtapas(false); setChicoteOrigemId(''); }}>
+            <FiX /> Cancelar
+          </button>
+        </div>
       )}
 
       {chicote.etapas.length > 0 && (
