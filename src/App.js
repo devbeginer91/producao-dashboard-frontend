@@ -597,7 +597,7 @@ function App() {
           />
           <Route
             path="/acompanhamento-producao"
-            element={<AcompanhamentoProducaoPage setSidebarOpen={setSidebarOpen} />}
+            element={<AcompanhamentoProducaoPage setSidebarOpen={setSidebarOpen} isAdmin={isAdmin} />}
           />
           <Route
             path="/relatorios/colaboradores"
