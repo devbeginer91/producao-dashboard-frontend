@@ -26,8 +26,10 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
   const [itemSelecionadoId, setItemSelecionadoId] = useState(null);
   const [osExpandidas, setOsExpandidas] = useState({});
   const [desenhosModalItem, setDesenhosModalItem] = useState(null);
-  const [execucaoParaConcluir, setExecucaoParaConcluir] = useState(null);
+  const [modalConcluir, setModalConcluir] = useState(null);
   const [quantidadeConcluir, setQuantidadeConcluir] = useState('');
+  const [colaboradorConcluirId, setColaboradorConcluirId] = useState('');
+  const [colaboradores, setColaboradores] = useState([]);
   const [, forcarTick] = useState(0);
   const referencias = useRef({});
 
@@ -70,6 +72,11 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    api.get('/colaboradores').then((r) => setColaboradores(r.data)).catch(() => {});
+  }, [isAdmin]);
+
   const tempoDeExecucao = (exec) => {
     if (!exec) return 0;
     if (exec.status === 'em_andamento') {
@@ -100,12 +107,29 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
     }
   };
 
-  // Escape hatch de admin: colaborador pausou e nunca voltou pra concluir, o que trava a
-  // etapa e impede o cálculo de média de tempos do chicote (só roda com tudo concluído).
-  // Usa o mesmo endpoint de conclusão do colaborador — tempo pausado não soma nada a mais.
+  // Escape hatch de admin: colaborador pausou (ou nunca chegou a iniciar) e ninguém volta
+  // pra concluir, o que trava a etapa e impede o cálculo de média de tempos do chicote (só
+  // roda com tudo concluído). Tempo pausado/nunca iniciado não soma nada a mais no total.
+  const fecharModalConcluir = () => {
+    setModalConcluir(null);
+    setQuantidadeConcluir('');
+    setColaboradorConcluirId('');
+  };
+
   const abrirModalConcluir = (ex, etapa) => {
-    setExecucaoParaConcluir(ex.id);
+    setModalConcluir({ execucaoId: ex.id });
     setQuantidadeConcluir(etapa.quantidadeRestante != null ? String(etapa.quantidadeRestante) : '');
+    setColaboradorConcluirId('');
+  };
+
+  const abrirModalConcluirNaoIniciada = (item, etapa) => {
+    setModalConcluir({ itemPedidoId: item.id, etapaChicoteId: etapa.id });
+    setQuantidadeConcluir(
+      etapa.quantidadeRestante != null
+        ? String(etapa.quantidadeRestante)
+        : item.quantidadePedido != null ? String(item.quantidadePedido) : ''
+    );
+    setColaboradorConcluirId('');
   };
 
   const confirmarConclusao = async () => {
@@ -115,9 +139,21 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
       return;
     }
     try {
-      await api.put(`/execucoes-etapa/${execucaoParaConcluir}/concluir`, { quantidadeProduzida: quantidade });
-      setExecucaoParaConcluir(null);
-      setQuantidadeConcluir('');
+      if (modalConcluir.execucaoId) {
+        await api.put(`/execucoes-etapa/${modalConcluir.execucaoId}/concluir`, { quantidadeProduzida: quantidade });
+      } else {
+        if (!colaboradorConcluirId) {
+          setMensagem('Selecione o colaborador.');
+          return;
+        }
+        await api.post('/execucoes-etapa/concluir-direto', {
+          itemPedidoId: modalConcluir.itemPedidoId,
+          etapaChicoteId: modalConcluir.etapaChicoteId,
+          colaboradorId: Number(colaboradorConcluirId),
+          quantidadeProduzida: quantidade,
+        });
+      }
+      fecharModalConcluir();
       carregar();
     } catch (error) {
       setMensagem('Erro ao concluir etapa: ' + (error.response?.data?.message || error.message));
@@ -295,6 +331,13 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
                     <span className="monitor-etapa-nome">{etapa.ordem}. {etapa.nome}</span>
                     <span className="monitor-etapa-status">Não iniciado</span>
                   </div>
+                  {isAdmin && (
+                    <div className="monitor-etapa-acoes">
+                      <button className="btn-concluir" onClick={() => abrirModalConcluirNaoIniciada(itemAtual, etapa)}>
+                        <FiCheckCircle /> Concluir
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 etapa.execucoes.map((ex) => (
@@ -341,10 +384,18 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
         />
       )}
 
-      {execucaoParaConcluir && (
+      {modalConcluir && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2><FiCheckCircle /> Quantas peças foram feitas?</h2>
+            {!modalConcluir.execucaoId && (
+              <select value={colaboradorConcluirId} onChange={(e) => setColaboradorConcluirId(e.target.value)}>
+                <option value="">Selecione o colaborador</option>
+                {colaboradores.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nome}</option>
+                ))}
+              </select>
+            )}
             <input
               type="number"
               min="0"
@@ -356,7 +407,7 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
             <button onClick={confirmarConclusao}>
               <FiCheckCircle /> Confirmar
             </button>
-            <button className="btn-fechar-modal" onClick={() => { setExecucaoParaConcluir(null); setQuantidadeConcluir(''); }}>
+            <button className="btn-fechar-modal" onClick={fecharModalConcluir}>
               Cancelar
             </button>
           </div>
