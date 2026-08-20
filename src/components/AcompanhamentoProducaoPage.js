@@ -122,7 +122,11 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
     setColaboradorConcluirId('');
   };
 
-  const abrirModalConcluirNaoIniciada = (item, etapa) => {
+  // Cobre tanto etapa nunca iniciada quanto etapa com execuções concluídas cuja soma de
+  // peças produzidas não bateu o total do item (ex: 2 colaboradores concluíram parte cada
+  // e ninguém fechou o restante) — nos dois casos não sobra execução "pendente" pra usar
+  // o botão de concluir por execução, então isso cria uma execução nova já concluída.
+  const abrirModalCompletarRestante = (item, etapa) => {
     setModalConcluir({ itemPedidoId: item.id, etapaChicoteId: etapa.id });
     setQuantidadeConcluir(
       etapa.quantidadeRestante != null
@@ -324,54 +328,64 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
           </h2>
 
           <div className="monitor-etapas-list">
-            {itemAtual.etapas.map((etapa) =>
-              etapa.execucoes.length === 0 ? (
-                <div key={etapa.id} className="monitor-etapa-item op-etapa-pendente">
-                  <div className="monitor-etapa-info">
-                    <span className="monitor-etapa-nome">{etapa.ordem}. {etapa.nome}</span>
-                    <span className="monitor-etapa-status">Não iniciado</span>
-                  </div>
-                  {isAdmin && (
-                    <div className="monitor-etapa-acoes">
-                      <button className="btn-concluir" onClick={() => abrirModalConcluirNaoIniciada(itemAtual, etapa)}>
-                        <FiCheckCircle /> Concluir
-                      </button>
-                    </div>
+            {itemAtual.etapas.map((etapa) => (
+              <div key={etapa.id} className="monitor-etapa-grupo">
+                <div className="monitor-etapa-grupo-header">
+                  <span className="monitor-etapa-nome">{etapa.ordem}. {etapa.nome}</span>
+                  {etapa.quantidadeRestante != null && (
+                    <span className={`monitor-etapa-qtd ${etapa.concluida ? 'monitor-etapa-qtd-completa' : ''}`}>
+                      {etapa.quantidadeProduzida}/{etapa.quantidadeProduzida + etapa.quantidadeRestante} peças
+                    </span>
+                  )}
+                  {isAdmin && !etapa.concluida && (
+                    <button className="btn-concluir" onClick={() => abrirModalCompletarRestante(itemAtual, etapa)}>
+                      <FiCheckCircle /> Completar restante
+                    </button>
                   )}
                 </div>
-              ) : (
-                etapa.execucoes.map((ex) => (
-                  <div key={ex.id} className={`monitor-etapa-item op-etapa-${ex.status}`}>
+
+                {etapa.execucoes.length === 0 ? (
+                  <div className="monitor-etapa-item op-etapa-pendente">
                     <div className="monitor-etapa-info">
-                      <span className="monitor-etapa-nome">{etapa.ordem}. {etapa.nome}</span>
-                      <span className="monitor-etapa-status">
-                        {statusLabel[ex.status] || ex.status}
-                        {ex.colaboradorNome && (
-                          <> · <FiUser /> {ex.colaboradorNome}</>
-                        )}
-                        {ex.status === 'concluido' && <> <FiCheckCircle /></>}
-                      </span>
-                    </div>
-                    <div className="monitor-etapa-acoes">
-                      <span className="monitor-etapa-tempo">{formatarCronometro(tempoDeExecucao(ex))}</span>
-                      {ex.status === 'concluido' && (
-                        <button className="btn-editar" onClick={() => retomarEtapa(ex.id)}>
-                          <FiPlay /> Retomar
-                        </button>
-                      )}
-                      {isAdmin && ex.status !== 'concluido' && (
-                        <button className="btn-concluir" onClick={() => abrirModalConcluir(ex, etapa)}>
-                          <FiCheckCircle /> Concluir
-                        </button>
-                      )}
-                      <button className="btn-excluir" onClick={() => zerarTempo(ex.id)}>
-                        <FiRefreshCw /> Zerar
-                      </button>
+                      <span className="monitor-etapa-status">Não iniciado</span>
                     </div>
                   </div>
-                ))
-              )
-            )}
+                ) : (
+                  etapa.execucoes.map((ex) => (
+                    <div key={ex.id} className={`monitor-etapa-item op-etapa-${ex.status}`}>
+                      <div className="monitor-etapa-info">
+                        <span className="monitor-etapa-status">
+                          {statusLabel[ex.status] || ex.status}
+                          {ex.colaboradorNome && (
+                            <> · <FiUser /> {ex.colaboradorNome}</>
+                          )}
+                          {ex.status === 'concluido' && <> <FiCheckCircle /></>}
+                          {ex.status === 'concluido' && ex.quantidadeProduzida != null && (
+                            <> · {ex.quantidadeProduzida} peça(s)</>
+                          )}
+                        </span>
+                      </div>
+                      <div className="monitor-etapa-acoes">
+                        <span className="monitor-etapa-tempo">{formatarCronometro(tempoDeExecucao(ex))}</span>
+                        {ex.status === 'concluido' && (
+                          <button className="btn-editar" onClick={() => retomarEtapa(ex.id)}>
+                            <FiPlay /> Retomar
+                          </button>
+                        )}
+                        {isAdmin && ex.status !== 'concluido' && (
+                          <button className="btn-concluir" onClick={() => abrirModalConcluir(ex, etapa)}>
+                            <FiCheckCircle /> Concluir
+                          </button>
+                        )}
+                        <button className="btn-excluir" onClick={() => zerarTempo(ex.id)}>
+                          <FiRefreshCw /> Zerar
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

@@ -3089,6 +3089,33 @@ body {
   gap: var(--space-sm);
 }
 
+.monitor-etapa-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.monitor-etapa-grupo-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 0 2px;
+}
+
+.monitor-etapa-grupo-header .monitor-etapa-nome {
+  flex: 1;
+}
+
+.monitor-etapa-qtd {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.monitor-etapa-qtd-completa {
+  color: var(--color-success);
+}
+
 .monitor-etapa-item {
   display: flex;
   align-items: center;
