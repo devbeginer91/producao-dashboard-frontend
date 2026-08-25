@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiLogOut, FiPlay, FiPause, FiCheckCircle, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiUser, FiAlertCircle, FiLock, FiMessageSquare } from 'react-icons/fi';
+import { FiLogOut, FiPlay, FiPause, FiCheckCircle, FiClipboard, FiArrowLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiZap, FiUser, FiAlertCircle, FiLock, FiMessageSquare, FiLink } from 'react-icons/fi';
 import api from '../api';
 import { RESPOSTA_LABELS } from './AvisosSeraoPage';
 import ModalObservacao from './ModalObservacao';
@@ -57,6 +57,8 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
   const [desenhosModalItem, setDesenhosModalItem] = useState(null);
   const [execucaoParaConcluir, setExecucaoParaConcluir] = useState(null);
   const [quantidadeConcluir, setQuantidadeConcluir] = useState('');
+  const [etapaParaMesclar, setEtapaParaMesclar] = useState(null);
+  const [etapaMescladaId, setEtapaMescladaId] = useState('');
   const navigate = useNavigate();
 
   const carregar = async () => {
@@ -151,10 +153,27 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
     }
   };
 
-  const iniciar = (item, etapa) =>
-    executar(() => api.post('/execucoes-etapa/iniciar', { itemPedidoId: item.id, etapaChicoteId: etapa.id, colaboradorId: colaborador.id }));
+  const iniciar = (item, etapa, etapaChicoteIdMesclada) =>
+    executar(() => api.post('/execucoes-etapa/iniciar', {
+      itemPedidoId: item.id,
+      etapaChicoteId: etapa.id,
+      colaboradorId: colaborador.id,
+      ...(etapaChicoteIdMesclada ? { etapaChicoteIdMesclada } : {}),
+    }));
   const pausar = (execucaoId) => executar(() => api.put(`/execucoes-etapa/${execucaoId}/pausar`));
   const retomar = (execucaoId) => executar(() => api.put(`/execucoes-etapa/${execucaoId}/retomar`));
+
+  const abrirModalMesclar = (etapa) => {
+    setEtapaParaMesclar(etapa);
+    setEtapaMescladaId('');
+  };
+
+  const confirmarMesclagem = async () => {
+    if (!etapaMescladaId) return;
+    await iniciar(itemAtual, etapaParaMesclar, etapaMescladaId);
+    setEtapaParaMesclar(null);
+    setEtapaMescladaId('');
+  };
 
   const abrirModalConcluir = (etapa) => {
     setExecucaoParaConcluir(etapa.minhaExecucao.id);
@@ -424,6 +443,12 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
                     <FiPlay /> Início
                   </button>
                 )}
+                {!etapaAtual.minhaExecucao && !etapaAtual.concluida &&
+                  itemAtual.etapas.some((e) => e.id !== etapaAtual.id && !e.concluida) && (
+                  <button className="btn-editar" onClick={() => abrirModalMesclar(etapaAtual)}>
+                    <FiLink /> Mesclar
+                  </button>
+                )}
                 {etapaAtual.minhaExecucao?.status === 'em_andamento' && (
                   <button className="btn-pausar" onClick={() => pausar(etapaAtual.minhaExecucao.id)}>
                     <FiPause /> Pausa
@@ -446,14 +471,19 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
                 )}
               </div>
 
-              {etapaAtual.execucoes
-                .filter((ex) => ex.colaboradorId !== colaborador.id)
-                .map((ex) => (
-                  <p key={ex.id} className="op-etapa-outro-colaborador">
-                    <FiUser /> Também executado por {ex.colaboradorNome} — {statusLabel[ex.status]} · {formatarCronometro(tempoDeExecucao(ex))}
-                    {ex.status === 'concluido' && ex.quantidadeProduzida != null && ` · ${ex.quantidadeProduzida} peça(s)`}
-                  </p>
-                ))}
+              {etapaAtual.execucoes.filter((ex) => ex.id !== etapaAtual.minhaExecucao?.id).length > 0 && (
+                <div className="op-etapa-historico">
+                  <p className="op-etapa-historico-titulo">Histórico da etapa</p>
+                  {etapaAtual.execucoes
+                    .filter((ex) => ex.id !== etapaAtual.minhaExecucao?.id)
+                    .map((ex) => (
+                      <p key={ex.id} className="op-etapa-outro-colaborador">
+                        <FiUser /> {ex.colaboradorId === colaborador.id ? 'Você' : ex.colaboradorNome} — {statusLabel[ex.status]} · {formatarCronometro(tempoDeExecucao(ex))}
+                        {ex.status === 'concluido' && ex.quantidadeProduzida != null && ` · ${ex.quantidadeProduzida} peça(s)`}
+                      </p>
+                    ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -493,6 +523,31 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
               <FiCheckCircle /> Confirmar
             </button>
             <button className="btn-fechar-modal" onClick={() => { setExecucaoParaConcluir(null); setQuantidadeConcluir(''); }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {etapaParaMesclar && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2><FiLink /> Mesclar com qual etapa?</h2>
+            <p className="op-etapa-meta">
+              Você vai iniciar "{etapaParaMesclar.nome}" junto com a etapa escolhida, contando o tempo das duas ao mesmo tempo.
+            </p>
+            <select value={etapaMescladaId} onChange={(e) => setEtapaMescladaId(e.target.value)}>
+              <option value="">Selecione uma etapa...</option>
+              {itemAtual.etapas
+                .filter((e) => e.id !== etapaParaMesclar.id && !e.concluida)
+                .map((e) => (
+                  <option key={e.id} value={e.id}>{e.ordem}. {e.nome}</option>
+                ))}
+            </select>
+            <button onClick={confirmarMesclagem} disabled={!etapaMescladaId}>
+              <FiPlay /> Iniciar mesclada
+            </button>
+            <button className="btn-fechar-modal" onClick={() => { setEtapaParaMesclar(null); setEtapaMescladaId(''); }}>
               Cancelar
             </button>
           </div>
