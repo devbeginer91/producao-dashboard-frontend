@@ -118,7 +118,10 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
 
   const abrirModalConcluir = (ex, etapa) => {
     setModalConcluir({ execucaoId: ex.id });
-    setQuantidadeConcluir(etapa.quantidadeRestante != null ? String(etapa.quantidadeRestante) : '');
+    // Campo começa vazio de propósito: essa execução é de UM colaborador entre possivelmente
+    // vários na mesma etapa, então pré-preencher com o total restante convida a fechar a
+    // etapa inteira sozinho sem querer (foi exatamente isso que aconteceu na OS 929 etapa 8).
+    setQuantidadeConcluir('');
     setColaboradorConcluirId('');
   };
 

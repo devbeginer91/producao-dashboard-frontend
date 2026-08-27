@@ -177,7 +177,10 @@ const ColaboradorPage = ({ colaborador, onLogout }) => {
 
   const abrirModalConcluir = (etapa) => {
     setExecucaoParaConcluir(etapa.minhaExecucao.id);
-    setQuantidadeConcluir(etapa.quantidadeRestante != null ? String(etapa.quantidadeRestante) : '');
+    // Campo começa vazio de propósito: várias pessoas podem estar na mesma etapa ao mesmo
+    // tempo, e pré-preencher com o total restante fazia gente confirmar sem querer a etapa
+    // inteira como se tivesse feito sozinha.
+    setQuantidadeConcluir('');
   };
 
   const confirmarConclusao = async () => {
