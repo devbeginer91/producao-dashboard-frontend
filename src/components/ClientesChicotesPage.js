@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMenu, FiArrowLeft, FiChevronRight, FiSearch, FiZap, FiFileText } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiChevronRight, FiSearch, FiZap, FiFileText, FiPlus } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import api from '../api';
@@ -13,13 +13,27 @@ const ClientesChicotesPage = ({
   destinoBuscaChicote = (id) => `/chicotes-eletricos/chicote/${id}`,
   mostrarPdfPorCliente = false,
   voltarRoute = null,
+  permitirCriarCliente = true,
 }) => {
   const [clientes, setClientes] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const [todosChicotes, setTodosChicotes] = useState([]);
   const [busca, setBusca] = useState('');
+  const [mostrarFormClienteNovo, setMostrarFormClienteNovo] = useState(false);
+  const [clienteNovo, setClienteNovo] = useState('');
   const navigate = useNavigate();
+
+  // Essa lista só traz clientes que já têm pelo menos um chicote (GET /chicotes/clientes
+  // agrupa por cliente existente). Pra cadastrar o primeiro chicote de um cliente novo,
+  // precisa de um jeito de entrar na tela do cliente mesmo sem ele aparecer aqui ainda —
+  // o backend não exige que o cliente já exista, só o nome digitado igual em ambos os lugares.
+  const irParaClienteNovo = (e) => {
+    e.preventDefault();
+    const nome = clienteNovo.trim();
+    if (!nome) return;
+    navigate(`${baseRoute}/${encodeURIComponent(nome)}`);
+  };
 
   useEffect(() => {
     api.get('/chicotes/clientes')
@@ -112,6 +126,34 @@ const ClientesChicotesPage = ({
         <button type="button" className="btn-editar chicote-btn-pdf" onClick={emitirPdfPorCliente}>
           <FiFileText /> Emitir PDF
         </button>
+      )}
+
+      {permitirCriarCliente && !mostrarFormClienteNovo && (
+        <button type="button" className="btn-adicionar-pedido" onClick={() => setMostrarFormClienteNovo(true)}>
+          <FiPlus /> Cliente novo
+        </button>
+      )}
+      {permitirCriarCliente && mostrarFormClienteNovo && (
+        <form className="chicote-dados-form" onSubmit={irParaClienteNovo}>
+          <div>
+            <label htmlFor="cliente-novo-nome">Nome do cliente</label>
+            <input
+              id="cliente-novo-nome"
+              value={clienteNovo}
+              onChange={(e) => setClienteNovo(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+          <button type="submit" className="btn-submit">Continuar</button>
+          <button
+            type="button"
+            className="btn-editar"
+            onClick={() => { setMostrarFormClienteNovo(false); setClienteNovo(''); }}
+          >
+            Cancelar
+          </button>
+        </form>
       )}
 
       {mostrarBuscaChicote && (

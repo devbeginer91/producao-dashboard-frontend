@@ -439,7 +439,7 @@ function App() {
         } />
         <Route path="/colaborador/chicotes-eletricos" element={
           auth?.tipo === 'colaborador' ? (
-            <ClientesChicotesPage baseRoute="/colaborador/chicotes-eletricos" voltarRoute="/colaborador" />
+            <ClientesChicotesPage baseRoute="/colaborador/chicotes-eletricos" voltarRoute="/colaborador" permitirCriarCliente={false} />
           ) : (
             <Navigate to="/login-colaborador" />
           )
