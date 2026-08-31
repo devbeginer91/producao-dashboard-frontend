@@ -22,6 +22,14 @@
   --color-text: #1e293b;
   --color-text-muted: #64748b;
 
+  /* Cores categóricas para gráficos (ordem fixa, não trocar por série) */
+  --chart-series-1: #2a78d6;
+  --chart-series-2: #eb6834;
+  --chart-series-3: #1baf7a;
+  --chart-series-4: #eda100;
+  --chart-series-5: #e87ba4;
+  --chart-series-outros: #94a3b8;
+
   /* Shell / sidebar */
   --sidebar-width: 260px;
   --topbar-height: 72px;

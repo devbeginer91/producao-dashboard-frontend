@@ -2,9 +2,34 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMenu, FiPlus, FiDollarSign, FiChevronRight, FiSearch, FiEyeOff, FiEye } from 'react-icons/fi';
 import api from '../api';
+import PieChart from './PieChart';
 
 const formatarMoeda = (valor) =>
   (Number(valor) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+// Ordem fixa das cores categóricas — nunca reatribuir por posição/ranking dos clientes.
+const CORES_PIZZA = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'];
+const COR_OUTROS = '#94a3b8';
+const MAX_FATIAS = 5;
+
+// Top 5 clientes + "Outros" — mantém a pizza legível (soft cap de 5-6 fatias).
+const montarDadosPizza = (clientes) => {
+  const comValor = clientes.filter((c) => c.valorEmAberto > 0);
+  const principais = comValor.slice(0, MAX_FATIAS).map((c, i) => ({
+    label: c.empresa,
+    valor: c.valorEmAberto,
+    cor: CORES_PIZZA[i],
+  }));
+  const restante = comValor.slice(MAX_FATIAS);
+  if (restante.length > 0) {
+    principais.push({
+      label: 'Outros',
+      valor: restante.reduce((soma, c) => soma + c.valorEmAberto, 0),
+      cor: COR_OUTROS,
+    });
+  }
+  return principais;
+};
 
 const FinanceiroPage = ({ setSidebarOpen, mostrarFormulario, setMostrarFormulario }) => {
   const [resumo, setResumo] = useState(null);
@@ -87,6 +112,14 @@ const FinanceiroPage = ({ setSidebarOpen, mostrarFormulario, setMostrarFormulari
               </div>
             </div>
           </div>
+
+          {resumo.clientes.length > 0 && (
+            <PieChart
+              titulo="Valor em aberto por cliente"
+              dados={montarDadosPizza(resumo.clientes)}
+              formatarValor={formatarMoeda}
+            />
+          )}
 
           {resumo.clientes.length === 0 ? (
             <p className="pedido-grid-empty">

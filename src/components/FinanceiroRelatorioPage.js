@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { FiMenu, FiDollarSign } from 'react-icons/fi';
+import { FiMenu, FiDollarSign, FiDownload } from 'react-icons/fi';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import api from '../api';
 import { formatarDataHora } from '../utils';
 import DesenhosVinculadosModal from './DesenhosVinculadosModal';
@@ -38,6 +40,51 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
       .finally(() => setCarregando(false));
   }, [cliente, inicio, fim]);
 
+  const emitirPdfRelatorio = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Relatório de Faturamento', 14, 18);
+    doc.setFontSize(10);
+    doc.text(`Cliente: ${cliente || 'Todos os clientes'}`, 14, 26);
+    doc.text(`Período: ${inicio || '—'} até ${fim || '—'}`, 14, 32);
+    doc.text(`Total faturado: ${formatarMoeda(relatorio.totalFaturado)}`, 14, 38);
+
+    let proximoY = 44;
+
+    if (!cliente && relatorio.porCliente.length > 1) {
+      doc.setFontSize(12);
+      doc.text('Total por Cliente', 14, proximoY + 4);
+      autoTable(doc, {
+        head: [['Cliente', 'Total Faturado']],
+        body: relatorio.porCliente.map((c) => [c.empresa, formatarMoeda(c.total)]),
+        startY: proximoY + 8,
+        styles: { fontSize: 9 },
+      });
+      proximoY = doc.lastAutoTable.finalY + 10;
+    }
+
+    doc.setFontSize(12);
+    doc.text('Itens Faturados', 14, proximoY + 4);
+    autoTable(doc, {
+      head: [['Data', 'Cliente', 'OC Cliente', 'OS DCA', 'Item', 'Qtd.', 'Status', 'Valor Faturado']],
+      body: relatorio.itens.map((item) => [
+        formatarDataHora(item.dataFaturamento),
+        item.empresa,
+        item.ocCliente || '—',
+        item.numeroOS,
+        item.codigoDesenho,
+        `${item.quantidadeFaturada} de ${item.quantidadePedido}`,
+        item.parcial ? 'Parcial' : 'Completo',
+        formatarMoeda(item.valorFaturado),
+      ]),
+      startY: proximoY + 8,
+      styles: { fontSize: 8, cellWidth: 'wrap' },
+    });
+
+    const nomeArquivo = `relatorio_faturamento_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(nomeArquivo);
+  };
+
   return (
     <>
       <header className="topbar">
@@ -72,6 +119,10 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
 
       {!carregando && relatorio && (
         <>
+          <button type="button" className="btn-exportar-pdf" onClick={emitirPdfRelatorio}>
+            <FiDownload /> Exportar PDF
+          </button>
+
           <div className="stats-bar">
             <div className="stat-card">
               <span className="stat-icon stat-icon-accent">
