@@ -3489,7 +3489,7 @@ body {
   flex-direction: column;
   gap: var(--space-sm);
   min-width: 220px;
-  flex: 1;
+  max-width: 320px;
 }
 
 .pizza-legenda-item {

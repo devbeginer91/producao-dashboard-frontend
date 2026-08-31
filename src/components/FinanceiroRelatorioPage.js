@@ -6,9 +6,34 @@ import api from '../api';
 import { formatarDataHora } from '../utils';
 import DesenhosVinculadosModal from './DesenhosVinculadosModal';
 import OsCardModal from './OsCardModal';
+import PieChart from './PieChart';
 
 const formatarMoeda = (valor) =>
   (Number(valor) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+// Ordem fixa das cores categóricas — nunca reatribuir por posição/ranking dos clientes.
+const CORES_PIZZA = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'];
+const COR_OUTROS = '#94a3b8';
+const MAX_FATIAS = 5;
+
+// Top 5 clientes + "Outros" — mantém a pizza legível (soft cap de 5-6 fatias).
+const montarDadosPizza = (porCliente) => {
+  const comValor = porCliente.filter((c) => c.total > 0);
+  const principais = comValor.slice(0, MAX_FATIAS).map((c, i) => ({
+    label: c.empresa,
+    valor: c.total,
+    cor: CORES_PIZZA[i],
+  }));
+  const restante = comValor.slice(MAX_FATIAS);
+  if (restante.length > 0) {
+    principais.push({
+      label: 'Outros',
+      valor: restante.reduce((soma, c) => soma + c.total, 0),
+      cor: COR_OUTROS,
+    });
+  }
+  return principais;
+};
 
 const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
   const [cliente, setCliente] = useState('');
@@ -137,6 +162,12 @@ const FinanceiroRelatorioPage = ({ setSidebarOpen }) => {
 
           {!cliente && relatorio.porCliente.length > 1 && (
             <>
+              <PieChart
+                titulo="Faturado por Cliente"
+                dados={montarDadosPizza(relatorio.porCliente)}
+                formatarValor={formatarMoeda}
+              />
+
               <h2 className="op-detalhe-titulo secao-titulo">Total por Cliente</h2>
               <table className="tabela-itens">
                 <thead>
