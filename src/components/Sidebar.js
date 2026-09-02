@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX, FiUsers, FiTrendingUp, FiDollarSign, FiBarChart2, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
+import { FiInbox, FiClock, FiCheckCircle, FiFileText, FiUpload, FiStar, FiZap, FiActivity, FiLogOut, FiX, FiUsers, FiTrendingUp, FiDollarSign, FiBarChart2, FiAlertCircle, FiRefreshCw, FiXCircle } from 'react-icons/fi';
 
 const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, onReiniciarApp, isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -33,6 +33,11 @@ const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, onReiniciarAp
 
   const irParaUsuarios = () => {
     navigate('/usuarios');
+    onClose();
+  };
+
+  const irParaCancelarExecucao = () => {
+    navigate('/cancelar-execucao');
     onClose();
   };
 
@@ -160,6 +165,9 @@ const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, onReiniciarAp
             </button>
             <button className="sidebar-nav-item" onClick={irParaUsuarios}>
               <FiUsers /> <span>Criar Usuários</span>
+            </button>
+            <button className="sidebar-nav-item" onClick={irParaCancelarExecucao}>
+              <FiXCircle /> <span>Cancelar Execução</span>
             </button>
             <button className="sidebar-nav-item" onClick={onReiniciarApp}>
               <FiRefreshCw /> <span>Reiniciar App pra Todos</span>

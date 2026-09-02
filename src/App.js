@@ -9,6 +9,7 @@ import DashboardPage from './components/DashboardPage';
 import PedidoListPage from './components/PedidoListPage';
 import ImportarChicotesPage from './components/ImportarChicotesPage';
 import UsuariosPage from './components/UsuariosPage';
+import CancelarExecucaoPage from './components/CancelarExecucaoPage';
 import ClientesChicotesPage from './components/ClientesChicotesPage';
 import ChicotesClientePage from './components/ChicotesClientePage';
 import ChicoteDetalhePage from './components/ChicoteDetalhePage';
@@ -575,6 +576,10 @@ function App() {
           <Route
             path="/usuarios"
             element={isAdmin ? <UsuariosPage setSidebarOpen={setSidebarOpen} /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/cancelar-execucao"
+            element={isAdmin ? <CancelarExecucaoPage setSidebarOpen={setSidebarOpen} /> : <Navigate to="/" />}
           />
           <Route
             path="/priorizar-producao"
