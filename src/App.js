@@ -460,6 +460,7 @@ function App() {
             <ChicoteDetalhePage
               voltarRoute={(cliente) => `/colaborador/chicotes-eletricos/${encodeURIComponent(cliente)}`}
               somenteLeitura
+              permitirGerenciarEtapas
             />
           ) : (
             <Navigate to="/login-colaborador" />

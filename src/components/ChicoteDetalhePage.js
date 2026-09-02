@@ -18,7 +18,12 @@ const ChicoteDetalhePage = ({
   setSidebarOpen,
   voltarRoute = (cliente) => `/chicotes-eletricos/${encodeURIComponent(cliente)}`,
   somenteLeitura = false,
+  // Permite criar, excluir e reordenar etapas mesmo em modo somenteLeitura — usado pra liberar
+  // só isso pro colaborador, sem abrir o resto da tela (editar etapa, copiar etapas, vincular
+  // pedido/desenho, editar dados do chicote continuam travados).
+  permitirGerenciarEtapas = false,
 }) => {
+  const podeGerenciarEtapas = !somenteLeitura || permitirGerenciarEtapas;
   const { id } = useParams();
   const navigate = useNavigate();
   const [chicote, setChicote] = useState(null);
@@ -438,7 +443,7 @@ const ChicoteDetalhePage = ({
                     </div>
                     {e.instrucoes && <div className="chicote-etapa-instrucoes">{e.instrucoes}</div>}
                   </div>
-                  {!somenteLeitura && (
+                  {podeGerenciarEtapas && (
                     <div className="chicote-etapa-acoes">
                       <button
                         type="button"
@@ -458,7 +463,9 @@ const ChicoteDetalhePage = ({
                       >
                         <FiArrowDown />
                       </button>
-                      <button type="button" className="btn-editar" onClick={() => iniciarEdicaoEtapa(e)}><FiEdit2 /></button>
+                      {!somenteLeitura && (
+                        <button type="button" className="btn-editar" onClick={() => iniciarEdicaoEtapa(e)}><FiEdit2 /></button>
+                      )}
                       <button type="button" className="btn-excluir" onClick={() => removerEtapa(e.id)}><FiTrash2 /></button>
                     </div>
                   )}
@@ -469,7 +476,7 @@ const ChicoteDetalhePage = ({
         </ol>
       )}
 
-      {!somenteLeitura && (mostrarFormNovaEtapa ? (
+      {podeGerenciarEtapas && (mostrarFormNovaEtapa ? (
         <form className="chicote-etapa-form chicote-etapa-form-nova" onSubmit={adicionarEtapa}>
           <div>
             <label>Nome da etapa</label>
