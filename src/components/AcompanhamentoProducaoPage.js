@@ -107,6 +107,17 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
     }
   };
 
+  // Corrige a quantidade de uma execução já concluída sem apagar o tempo registrado nem o
+  // colaborador — ao contrário de "zerar" (apaga tudo) ou "retomar" (some com o tempo pausado
+  // de outro colaborador que já esteja em andamento). Usado quando alguém concluiu com a
+  // quantidade errada (etapa não estava de fato pronta): corrigir pra baixo libera a etapa pra
+  // outro colaborador iniciar, preservando o tempo dela nos relatórios.
+  const abrirModalCorrigirQuantidade = (ex) => {
+    setModalConcluir({ execucaoId: ex.id, corrigir: true });
+    setQuantidadeConcluir(String(ex.quantidadeProduzida ?? 0));
+    setColaboradorConcluirId('');
+  };
+
   // Escape hatch de admin: colaborador pausou (ou nunca chegou a iniciar) e ninguém volta
   // pra concluir, o que trava a etapa e impede o cálculo de média de tempos do chicote (só
   // roda com tudo concluído). Tempo pausado/nunca iniciado não soma nada a mais no total.
@@ -146,7 +157,9 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
       return;
     }
     try {
-      if (modalConcluir.execucaoId) {
+      if (modalConcluir.corrigir) {
+        await api.put(`/execucoes-etapa/${modalConcluir.execucaoId}/corrigir-quantidade`, { quantidadeProduzida: quantidade });
+      } else if (modalConcluir.execucaoId) {
         await api.put(`/execucoes-etapa/${modalConcluir.execucaoId}/concluir`, { quantidadeProduzida: quantidade });
       } else {
         if (!colaboradorConcluirId) {
@@ -163,7 +176,8 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
       fecharModalConcluir();
       carregar();
     } catch (error) {
-      setMensagem('Erro ao concluir etapa: ' + (error.response?.data?.message || error.message));
+      const acao = modalConcluir.corrigir ? 'corrigir quantidade' : 'concluir etapa';
+      setMensagem(`Erro ao ${acao}: ` + (error.response?.data?.message || error.message));
     }
   };
 
@@ -375,6 +389,11 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
                             <FiPlay /> Retomar
                           </button>
                         )}
+                        {isAdmin && ex.status === 'concluido' && (
+                          <button className="btn-editar" onClick={() => abrirModalCorrigirQuantidade(ex)}>
+                            <FiRefreshCw /> Corrigir quantidade
+                          </button>
+                        )}
                         {isAdmin && ex.status !== 'concluido' && (
                           <button className="btn-concluir" onClick={() => abrirModalConcluir(ex, etapa)}>
                             <FiCheckCircle /> Concluir
@@ -404,7 +423,10 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
       {modalConcluir && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h2><FiCheckCircle /> Quantas peças foram feitas?</h2>
+            <h2><FiCheckCircle /> {modalConcluir.corrigir ? 'Qual é a quantidade correta?' : 'Quantas peças foram feitas?'}</h2>
+            {modalConcluir.corrigir && (
+              <p className="pedido-grid-empty">O tempo já registrado dessa execução não é alterado — só a quantidade de peças.</p>
+            )}
             {!modalConcluir.execucaoId && (
               <select value={colaboradorConcluirId} onChange={(e) => setColaboradorConcluirId(e.target.value)}>
                 <option value="">Selecione o colaborador</option>
