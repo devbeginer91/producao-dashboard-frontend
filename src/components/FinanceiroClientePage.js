@@ -27,6 +27,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const [faturando, setFaturando] = useState({});
+  const [faturandoPedido, setFaturandoPedido] = useState({});
   const [desenhosModalItem, setDesenhosModalItem] = useState(null);
   const [osCardAbertaId, setOsCardAbertaId] = useState(null);
   // null = ainda não pedido. Itens faturados só são buscados quando o usuário clica
@@ -101,6 +102,23 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
     } catch (error) {
       setMensagem('Erro ao faturar: ' + (error.response?.data?.message || error.message));
       setFaturando((prev) => ({ ...prev, [item.id]: false }));
+    }
+  };
+
+  // Fatura de uma vez todos os itens já entregues e com valor cadastrado dessa OS —
+  // itens sem entrega ou sem valor cadastrado são pulados pelo backend, não bloqueiam os demais.
+  const faturarPedido = async (pedidoId) => {
+    setFaturandoPedido((prev) => ({ ...prev, [pedidoId]: true }));
+    try {
+      await api.put(`/pedidos/${pedidoId}/faturar`);
+      carregar();
+      if (itensFaturados !== null) {
+        carregarFaturados();
+      }
+    } catch (error) {
+      setMensagem('Erro ao faturar OS: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setFaturandoPedido((prev) => ({ ...prev, [pedidoId]: false }));
     }
   };
 
@@ -213,13 +231,23 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                 </tr>
               </thead>
               <tbody>
-                {itensAtivos.map((item) => {
+                {(() => {
+                  const pedidosJaRenderizados = new Set();
+                  return itensAtivos.map((item) => {
                   const temValor = item.valorUnitario != null;
                   const quantidadeFaturada = item.quantidadeFaturada || 0;
                   const saldoFaturavel = (item.quantidadeEntregue || 0) - quantidadeFaturada;
                   const prontoParaFaturar = temValor && saldoFaturavel > 0;
                   const parcial = quantidadeFaturada > 0;
                   const saldo = (item.quantidadePedido || 0) - (item.quantidadeEntregue || 0);
+                  const primeiraLinhaDaOS = !pedidosJaRenderizados.has(item.pedidoId);
+                  pedidosJaRenderizados.add(item.pedidoId);
+                  const outrosItensProntosNaOS = itensAtivos.some((outro) => {
+                    if (outro.pedidoId !== item.pedidoId) return false;
+                    const outraFaturada = outro.quantidadeFaturada || 0;
+                    const outroSaldo = (outro.quantidadeEntregue || 0) - outraFaturada;
+                    return outro.valorUnitario != null && outroSaldo > 0;
+                  });
                   return (
                     <tr key={item.id} className={prontoParaFaturar ? 'financeiro-item-pronto' : ''}>
                       <td>{formatarData(item.dataEntrada)}</td>
@@ -228,6 +256,17 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                         <button type="button" className="btn-os-clicavel" onClick={() => setOsCardAbertaId(item.pedidoId)}>
                           {item.numeroOS}
                         </button>
+                        {primeiraLinhaDaOS && outrosItensProntosNaOS && (
+                          <button
+                            type="button"
+                            className="btn-editar financeiro-btn-faturar financeiro-btn-faturar-os"
+                            onClick={() => faturarPedido(item.pedidoId)}
+                            disabled={faturandoPedido[item.pedidoId]}
+                            title="Fatura de uma vez todos os itens já entregues e com valor cadastrado dessa OS"
+                          >
+                            <FiZap className="financeiro-alerta-icon" /> Faturar OS
+                          </button>
+                        )}
                       </td>
                       <td>
                       <button
@@ -278,7 +317,8 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                       </td>
                     </tr>
                   );
-                })}
+                });
+                })()}
               </tbody>
             </table>
           )}
