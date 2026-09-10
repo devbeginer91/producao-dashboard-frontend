@@ -3125,6 +3125,11 @@ body {
   flex: 1;
 }
 
+.monitor-etapa-meta {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
 .monitor-etapa-qtd {
   font-size: 12.5px;
   font-weight: 600;

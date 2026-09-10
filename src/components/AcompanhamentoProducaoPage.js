@@ -348,7 +348,12 @@ const AcompanhamentoProducaoPage = ({ setSidebarOpen, isAdmin }) => {
             {itemAtual.etapas.map((etapa) => (
               <div key={etapa.id} className="monitor-etapa-grupo">
                 <div className="monitor-etapa-grupo-header">
-                  <span className="monitor-etapa-nome">{etapa.ordem}. {etapa.nome}</span>
+                  <span className="monitor-etapa-nome">
+                    {etapa.ordem}. {etapa.nome}
+                    {etapa.tempoIdeal != null && (
+                      <span className="op-item-info-badge monitor-etapa-meta">Meta {etapa.tempoIdeal} min</span>
+                    )}
+                  </span>
                   {etapa.quantidadeRestante != null && (
                     <span className={`monitor-etapa-qtd ${etapa.concluida ? 'monitor-etapa-qtd-completa' : ''}`}>
                       {etapa.quantidadeProduzida}/{etapa.quantidadeProduzida + etapa.quantidadeRestante} peças
