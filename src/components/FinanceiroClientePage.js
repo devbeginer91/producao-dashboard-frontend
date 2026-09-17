@@ -287,7 +287,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                         ) : '—'}
                       </td>
                       <td>{temValor ? formatarMoeda(item.valorUnitario) : '—'}</td>
-                      <td>{temValor ? formatarMoeda(item.valorUnitario * (item.quantidadePedido || 0)) : '—'}</td>
+                      <td>{temValor ? formatarMoeda(item.valorUnitario * saldo) : '—'}</td>
                       <td>{saldo}</td>
                       <td>{formatarData(item.previsaoEntrega)}</td>
                       <td className="financeiro-acoes-cell">
