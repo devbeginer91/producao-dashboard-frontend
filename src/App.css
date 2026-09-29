@@ -3537,3 +3537,27 @@ body {
   color: var(--color-text-muted);
   white-space: nowrap;
 }
+
+/* Ajuste de Etapas */
+.ajuste-etapa-acoes {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ajuste-pausa-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-warning);
+  border-radius: var(--radius-sm);
+}
+
+.ajuste-pausa-form label {
+  font-weight: 700;
+  font-size: 14px;
+}

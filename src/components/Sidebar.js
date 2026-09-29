@@ -167,7 +167,7 @@ const Sidebar = ({ isAdmin, counts, onNavigateAndamento, onLogout, onReiniciarAp
               <FiUsers /> <span>Criar Usuários</span>
             </button>
             <button className="sidebar-nav-item" onClick={irParaCancelarExecucao}>
-              <FiXCircle /> <span>Cancelar Execução</span>
+              <FiXCircle /> <span>Ajuste de Etapas</span>
             </button>
             <button className="sidebar-nav-item" onClick={onReiniciarApp}>
               <FiRefreshCw /> <span>Reiniciar App pra Todos</span>
