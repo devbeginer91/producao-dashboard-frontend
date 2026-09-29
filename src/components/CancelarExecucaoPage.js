@@ -84,11 +84,18 @@ const CancelarExecucaoPage = ({ setSidebarOpen }) => {
 
   const abrirAjustePausa = (ex) => {
     setMensagem('');
-    setAjustePausa({ id: ex.id, fim: paraInputDataHora(new Date()) });
+    const fim = ex.status === 'pausado' ? paraInputDataHora(ex.dataPausada) : paraInputDataHora(new Date());
+    setAjustePausa({ id: ex.id, fim });
   };
 
+  // Limite mínimo do horário da pausa: início/retomada do trecho que ela encerra.
+  const inicioDoTrecho = (ex) => (ex.status === 'pausado' ? ex.inicioUltimoTrecho : ex.referenciaInicio);
+
+  // Em andamento soma o trecho até o horário escolhido; pausada ajusta pela diferença
+  // entre o horário escolhido e o da pausa atual (mesma conta do backend).
   const tempoComPausaEm = (ex, fim) => {
     const segundos = (new Date(fim).getTime() - new Date(ex.referenciaInicio).getTime()) / 1000;
+    if (ex.status === 'pausado') return Math.max(0, ex.tempoAcumuladoBase + segundos);
     return ex.tempoAcumuladoBase + Math.max(0, segundos);
   };
 
@@ -119,7 +126,7 @@ const CancelarExecucaoPage = ({ setSidebarOpen }) => {
         chicote de um item). Cancelar apaga o tempo dessa execução específica e libera o
         colaborador pra iniciar outra etapa. Corrigir pausa serve pra quando o colaborador esqueceu
         de pausar: informe o horário em que ele parou e a etapa fica pausada nesse horário, sem
-        alterar o início.
+        alterar o início. Em etapas já pausadas, dá pra mudar o horário da pausa.
       </p>
 
       {mensagem && <p className="erro">{mensagem}</p>}
@@ -137,6 +144,7 @@ const CancelarExecucaoPage = ({ setSidebarOpen }) => {
                 <FiUser /> {ex.colaboradorNome}
                 {' · '}
                 {statusLabel[ex.status] || ex.status}
+                {ex.status === 'pausado' && ex.dataPausada && ` em ${paraInputDataHora(ex.dataPausada).replace('T', ' ')}`}
                 {ex.orfao && (
                   <>
                     {' · '}
@@ -158,11 +166,9 @@ const CancelarExecucaoPage = ({ setSidebarOpen }) => {
               </span>
               <span className="execucao-ativa-tempo"><FiClock /> {formatarCronometro(tempoDeExecucao(ex))}</span>
               <span className="ajuste-etapa-acoes">
-                {ex.status === 'em_andamento' && (
-                  <button type="button" className="btn-pausar" onClick={() => abrirAjustePausa(ex)}>
-                    <FiPause /> Corrigir pausa
-                  </button>
-                )}
+                <button type="button" className="btn-pausar" onClick={() => abrirAjustePausa(ex)}>
+                  <FiPause /> {ex.status === 'pausado' ? 'Mudar horário da pausa' : 'Corrigir pausa'}
+                </button>
                 <button type="button" className="btn-excluir" onClick={() => cancelarExecucao(ex)}>
                   <FiX /> Cancelar
                 </button>
@@ -175,12 +181,12 @@ const CancelarExecucaoPage = ({ setSidebarOpen }) => {
                   id={`fim-pausa-${ex.id}`}
                   type="datetime-local"
                   value={ajustePausa.fim}
-                  min={paraInputDataHora(ex.referenciaInicio)}
+                  min={paraInputDataHora(inicioDoTrecho(ex))}
                   max={paraInputDataHora(new Date())}
                   onChange={(e) => setAjustePausa({ ...ajustePausa, fim: e.target.value })}
                 />
                 <span className="chicote-desenho-tamanho">
-                  Início/retomada: {paraInputDataHora(ex.referenciaInicio).replace('T', ' ')}
+                  Início/retomada: {paraInputDataHora(inicioDoTrecho(ex)).replace('T', ' ')}
                   {ajustePausa.fim && <> · tempo fica <FiClock /> {formatarCronometro(tempoComPausaEm(ex, ajustePausa.fim))}</>}
                 </span>
                 <button type="button" className="btn-pausar" disabled={!ajustePausa.fim} onClick={() => confirmarAjustePausa(ex)}>
