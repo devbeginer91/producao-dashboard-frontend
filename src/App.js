@@ -17,6 +17,7 @@ import PCPPage from './components/PCPPage';
 import AvisosSeraoPage from './components/AvisosSeraoPage';
 import AcompanhamentoProducaoPage from './components/AcompanhamentoProducaoPage';
 import RelatorioColaboradorChicotePage from './components/RelatorioColaboradorChicotePage';
+import RelatorioColaboradorPeriodoPage from './components/RelatorioColaboradorPeriodoPage';
 import RelatorioChicoteDetalhePage from './components/RelatorioChicoteDetalhePage';
 import FinanceiroPage from './components/FinanceiroPage';
 import FinanceiroClientePage from './components/FinanceiroClientePage';
@@ -614,8 +615,13 @@ function App() {
                 baseRoute="/relatorios/colaboradores"
                 mostrarBuscaChicote
                 destinoBuscaChicote={(id) => `/relatorios/colaboradores/chicote/${id}`}
+                rotaRelatorioPeriodo="/relatorios/colaboradores/periodo"
               />
             }
+          />
+          <Route
+            path="/relatorios/colaboradores/periodo"
+            element={<RelatorioColaboradorPeriodoPage setSidebarOpen={setSidebarOpen} />}
           />
           <Route
             path="/relatorios/colaboradores/:cliente"

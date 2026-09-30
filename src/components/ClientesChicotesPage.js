@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMenu, FiArrowLeft, FiChevronRight, FiSearch, FiZap, FiFileText, FiPlus } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiChevronRight, FiSearch, FiZap, FiFileText, FiPlus, FiCalendar } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import api from '../api';
@@ -14,6 +14,7 @@ const ClientesChicotesPage = ({
   mostrarPdfPorCliente = false,
   voltarRoute = null,
   permitirCriarCliente = true,
+  rotaRelatorioPeriodo = null,
 }) => {
   const [clientes, setClientes] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -119,6 +120,12 @@ const ClientesChicotesPage = ({
       {voltarRoute && (
         <button className="op-voltar" onClick={() => navigate(voltarRoute)}>
           <FiArrowLeft /> Voltar
+        </button>
+      )}
+
+      {rotaRelatorioPeriodo && (
+        <button type="button" className="btn-editar chicote-btn-pdf" onClick={() => navigate(rotaRelatorioPeriodo)}>
+          <FiCalendar /> Por colaborador e período
         </button>
       )}
 
