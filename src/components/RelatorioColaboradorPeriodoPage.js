@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMenu, FiArrowLeft, FiClock } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiClock, FiFileText } from 'react-icons/fi';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import api from '../api';
 import OsCardModal from './OsCardModal';
 
@@ -90,6 +92,69 @@ const RelatorioColaboradorPeriodoPage = ({ setSidebarOpen }) => {
     dias[dias.length - 1].execucoes.push(ex);
   });
 
+  const descricaoPeriodo = () => {
+    if (tipoPeriodo === 'dia') return dataBR(de);
+    if (tipoPeriodo === 'mes') return `${mes.slice(5, 7)}/${mes.slice(0, 4)}`;
+    return ano;
+  };
+
+  const emitirPdf = () => {
+    const colaborador = colaboradores.find((c) => String(c.id) === String(colaboradorId));
+    const nome = colaborador?.nome || '';
+    const doc = new jsPDF({ orientation: 'landscape' });
+
+    doc.setFontSize(14);
+    doc.text('Relatório de Produção por Colaborador', 14, 16);
+    doc.setFontSize(10);
+    doc.text(`Colaborador: ${nome}`, 14, 23);
+    doc.text(`Período: ${descricaoPeriodo()}`, 14, 28);
+    doc.text(
+      `Tempo total: ${formatarCronometro(totalSegundos(execucoes))} (${execucoes.length} execuç${execucoes.length === 1 ? 'ão' : 'ões'}${dias.length > 1 ? ` em ${dias.length} dias` : ''})`,
+      14, 33
+    );
+    doc.setFontSize(8);
+    doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, 14, 38);
+
+    let cursorY = 45;
+    dias.forEach((grupo) => {
+      if (cursorY > 180) {
+        doc.addPage();
+        cursorY = 16;
+      }
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.text(dataBR(grupo.dia), 14, cursorY);
+      doc.setFont(undefined, 'normal');
+      cursorY += 3;
+
+      autoTable(doc, {
+        head: [['Início', 'Fim', 'OS', 'Item', 'Etapa', 'Peças', 'Status', 'Tempo']],
+        body: grupo.execucoes.map((ex) => [
+          hora(ex.inicio),
+          dataHoraCurta(ex.dataConclusao || ex.dataPausada, grupo.dia),
+          ex.pedidoId ? `${ex.empresa} — ${ex.numeroOS}` : 'pedido removido',
+          [ex.codigoDesenho || '—', ex.codigoItemCliente && ex.codigoItemCliente !== ex.codigoDesenho ? ex.codigoItemCliente : null]
+            .filter(Boolean).join(' · '),
+          ex.etapaNome ? `${ex.etapaOrdem}. ${ex.etapaNome}` : 'etapa removida',
+          `${ex.quantidadeProduzida ?? '—'}${ex.quantidadePedido != null ? ` / ${ex.quantidadePedido}` : ''}`,
+          statusLabel[ex.status] || ex.status,
+          formatarCronometro(ex.tempoSegundos),
+        ]),
+        foot: [['', '', '', '', '', '', 'Total do dia', formatarCronometro(totalSegundos(grupo.execucoes))]],
+        showFoot: 'lastPage',
+        startY: cursorY,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [60, 60, 60] },
+        footStyles: { fillColor: [235, 235, 235], textColor: 20, fontStyle: 'bold' },
+        margin: { left: 14, right: 14 },
+      });
+      cursorY = doc.lastAutoTable.finalY + 10;
+    });
+
+    const arquivoNome = nome.trim().toLowerCase().replace(/\s+/g, '_') || 'colaborador';
+    doc.save(`producao_${arquivoNome}_${de}${ate !== de ? `_a_${ate}` : ''}.pdf`);
+  };
+
   return (
     <>
       <header className="topbar">
@@ -162,6 +227,10 @@ const RelatorioColaboradorPeriodoPage = ({ setSidebarOpen }) => {
             {' '}({execucoes.length} execuç{execucoes.length === 1 ? 'ão' : 'ões'}
             {dias.length > 1 && ` em ${dias.length} dias`})
           </p>
+
+          <button type="button" className="btn-editar chicote-btn-pdf" onClick={emitirPdf}>
+            <FiFileText /> Gerar PDF
+          </button>
 
           {dias.map((grupo) => (
             <section key={grupo.dia} className="relatorio-periodo-dia">
