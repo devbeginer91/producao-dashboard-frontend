@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiMenu, FiArrowLeft, FiPlus, FiCheckCircle, FiZap, FiDollarSign, FiEdit2 } from 'react-icons/fi';
+import { FiMenu, FiArrowLeft, FiPlus, FiCheckCircle, FiZap, FiDollarSign, FiEdit2, FiRotateCcw } from 'react-icons/fi';
 import api from '../api';
 import { formatarDataHora } from '../utils';
 import DesenhosVinculadosModal from './DesenhosVinculadosModal';
@@ -34,6 +34,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
   // em "Ver itens faturados" — evita carregar o histórico inteiro (às vezes anos) de cara.
   const [itensFaturados, setItensFaturados] = useState(null);
   const [carregandoFaturados, setCarregandoFaturados] = useState(false);
+  const [desfazendo, setDesfazendo] = useState({});
   // Itens já 100% entregues mas sem valor unitário cadastrado (nunca foram precificados)
   // ficam escondidos por padrão — senão pedido antigo de mais de um ano, esquecido sem
   // preço, entope a lista de quem está de fato ativo.
@@ -119,6 +120,21 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
       setMensagem('Erro ao faturar OS: ' + (error.response?.data?.message || error.message));
     } finally {
       setFaturandoPedido((prev) => ({ ...prev, [pedidoId]: false }));
+    }
+  };
+
+  // Desfaz um evento de faturamento lançado por engano — o saldo volta pra lista "a faturar".
+  const desfazerFaturamento = async (evento) => {
+    if (!window.confirm(`Desfazer o faturamento de ${evento.quantidadeFaturada} un. do item ${evento.codigoDesenho} (OS ${evento.numeroOS})?`)) return;
+    setDesfazendo((prev) => ({ ...prev, [evento.id]: true }));
+    try {
+      await api.delete(`/historico-faturamentos/${evento.id}`);
+      carregar();
+      carregarFaturados();
+    } catch (error) {
+      setMensagem('Erro ao desfazer faturamento: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setDesfazendo((prev) => ({ ...prev, [evento.id]: false }));
     }
   };
 
@@ -406,6 +422,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                   <th>Valor</th>
                   <th>Valor Faturado</th>
                   <th>Data Faturamento</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -439,6 +456,17 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                     <td>{formatarMoeda(item.valorUnitario)}</td>
                     <td><FiCheckCircle className="financeiro-faturado-icon" /> {formatarMoeda(item.valorFaturado)}</td>
                     <td>{formatarDataHora(item.dataFaturamento)}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-excluir financeiro-btn-faturar"
+                        onClick={() => desfazerFaturamento(item)}
+                        disabled={desfazendo[item.id]}
+                        title="Desfazer esse faturamento (o saldo volta pra lista a faturar)"
+                      >
+                        <FiRotateCcw /> {desfazendo[item.id] ? 'Desfazendo...' : 'Desfazer'}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
