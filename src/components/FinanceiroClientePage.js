@@ -138,6 +138,24 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
     }
   };
 
+  // Desfaz de uma vez todos os faturamentos da OS (todas as linhas dela na tabela de faturados).
+  const desfazerFaturamentoOS = async (evento) => {
+    const eventosDaOS = itensFaturados.filter((i) => i.pedidoId === evento.pedidoId);
+    const total = eventosDaOS.reduce((soma, i) => soma + Number(i.valorFaturado), 0);
+    if (!window.confirm(`Desfazer TODO o faturamento da OS ${evento.numeroOS} (${eventosDaOS.length} lançamento(s), ${formatarMoeda(total)})?`)) return;
+    const chave = `os-${evento.pedidoId}`;
+    setDesfazendo((prev) => ({ ...prev, [chave]: true }));
+    try {
+      await api.delete(`/pedidos/${evento.pedidoId}/faturamentos`);
+      carregar();
+      carregarFaturados();
+    } catch (error) {
+      setMensagem('Erro ao desfazer faturamento da OS: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setDesfazendo((prev) => ({ ...prev, [chave]: false }));
+    }
+  };
+
   const editarPedido = (pedidoId) => {
     // Busca o pedido sem o filtro de faturado: a lista carregada aqui só tem itens em
     // aberto, mas o formulário de edição precisa de todos os itens do pedido, senão
@@ -426,7 +444,7 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                 </tr>
               </thead>
               <tbody>
-                {itensFaturados.map((item) => (
+                {itensFaturados.map((item, idx) => (
                   <tr key={item.id}>
                     <td>{formatarData(item.dataEntrada)}</td>
                     <td>{item.ocCliente || '—'}</td>
@@ -466,6 +484,18 @@ const FinanceiroClientePage = ({ setSidebarOpen, mostrarFormulario, setMostrarFo
                       >
                         <FiRotateCcw /> {desfazendo[item.id] ? 'Desfazendo...' : 'Desfazer'}
                       </button>
+                      {/* Botão da OS inteira só na primeira linha dela, pra não repetir em todas. */}
+                      {itensFaturados.findIndex((i) => i.pedidoId === item.pedidoId) === idx && (
+                        <button
+                          type="button"
+                          className="btn-excluir financeiro-btn-faturar financeiro-btn-faturar-os"
+                          onClick={() => desfazerFaturamentoOS(item)}
+                          disabled={desfazendo[`os-${item.pedidoId}`]}
+                          title="Desfazer todo o faturamento dessa OS"
+                        >
+                          <FiRotateCcw /> {desfazendo[`os-${item.pedidoId}`] ? 'Desfazendo...' : 'Desfazer OS'}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
