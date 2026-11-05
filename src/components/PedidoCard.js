@@ -13,6 +13,7 @@ import {
   FiPackage,
   FiStar,
   FiClock,
+  FiRotateCcw,
 } from 'react-icons/fi';
 
 const formatarData = (data) => {
@@ -81,7 +82,19 @@ const PedidoCard = ({
     }
   };
 
-  const temItemEmExecucao = (pedido.itens || []).some((item) => item.producao?.temExecucaoAtiva);
+  const reabrirPedido = async () => {
+    if (!window.confirm(`Reabrir a OS ${pedido.numeroOS}? Ela volta para "Em andamento".`)) return;
+    try {
+      await api.put(`/pedidos/${pedido.id}/reabrir`);
+      setPedidosConcluidos((prev) => prev.filter((p) => p.id !== pedido.id));
+      setPedidos((prev) => [{ ...pedido, status: 'andamento', dataConclusao: null }, ...prev]);
+      setMensagem('Pedido reaberto com sucesso!');
+    } catch (error) {
+      setMensagem('Erro ao reabrir pedido: ' + error.message);
+    }
+  };
+
+  const temItemEmExecucao =(pedido.itens || []).some((item) => item.producao?.temExecucaoAtiva);
 
   const confirmarSeEmExecucao = () => {
     if (!temItemEmExecucao) return true;
@@ -328,6 +341,9 @@ const PedidoCard = ({
           )}
           {tipo === 'novo' && (
             <button className="btn-editar" onClick={editarPedidoNovo}><FiEdit2 /> Editar</button>
+          )}
+          {tipo === 'concluido' && (
+            <button className="btn-retomar" onClick={reabrirPedido}><FiRotateCcw /> Reabrir</button>
           )}
           <button className="btn-observacao" onClick={abrirModalObservacao}><FiMessageSquare /> Obs</button>
           <button className="btn-excluir" onClick={excluirPedido}><FiTrash2 /> Excluir</button>
