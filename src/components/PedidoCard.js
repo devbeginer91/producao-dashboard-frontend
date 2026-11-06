@@ -85,16 +85,25 @@ const PedidoCard = ({
   const reabrirPedido = async () => {
     if (!window.confirm(`Reabrir a OS ${pedido.numeroOS}? Ela volta para "Em andamento".`)) return;
     try {
-      await api.put(`/pedidos/${pedido.id}/reabrir`);
+      // Concluir lança todos os itens como 100% entregues; se a conclusão foi engano,
+      // essas entregas também foram.
+      const desfazerEntregas = window.confirm(
+        'Desfazer também as entregas lançadas na conclusão?\n\nOK = sim, voltar o entregue de cada item para antes de concluir\nCancelar = não, manter os itens como entregues'
+      );
+      const { data } = await api.put(`/pedidos/${pedido.id}/reabrir`, { desfazerEntregas });
+      const entregues = new Map((data.itens || []).map((i) => [i.id, i.quantidadeEntregue]));
+      const itens = (pedido.itens || []).map((item) =>
+        entregues.has(item.id) ? { ...item, quantidadeEntregue: entregues.get(item.id) } : item
+      );
       setPedidosConcluidos((prev) => prev.filter((p) => p.id !== pedido.id));
-      setPedidos((prev) => [{ ...pedido, status: 'andamento', dataConclusao: null }, ...prev]);
-      setMensagem('Pedido reaberto com sucesso!');
+      setPedidos((prev) => [{ ...pedido, itens, status: 'andamento', dataConclusao: null }, ...prev]);
+      setMensagem(desfazerEntregas ? 'Pedido reaberto e entregas da conclusão desfeitas!' : 'Pedido reaberto com sucesso!');
     } catch (error) {
-      setMensagem('Erro ao reabrir pedido: ' + error.message);
+      setMensagem('Erro ao reabrir pedido: ' + (error.response?.data?.message || error.message));
     }
   };
 
-  const temItemEmExecucao =(pedido.itens || []).some((item) => item.producao?.temExecucaoAtiva);
+  const temItemEmExecucao = (pedido.itens || []).some((item) => item.producao?.temExecucaoAtiva);
 
   const confirmarSeEmExecucao = () => {
     if (!temItemEmExecucao) return true;
